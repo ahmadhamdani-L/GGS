@@ -820,7 +820,13 @@ class _GameSeatCard extends ConsumerWidget {
               if (!isDead && player.role != Role.unknown && player.role.displayName.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4, top: 1),
+                  // Color-blind: prefix with shape (⬡ wolf-team, ○ village-team) not just color
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                      player.role.team == Team.red ? '⬡' : '○',
+                      style: TextStyle(color: roleColor, fontSize: 7, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(width: 1),
                     Text('${player.role.emoji} ', style: const TextStyle(fontSize: 7)),
                     Text(
                       player.role.displayName.toUpperCase(),
@@ -860,15 +866,17 @@ class _GameSeatCard extends ConsumerWidget {
               ),
             ),
           ),
-        // Target indicator
+        // Target indicator — circle + triangle (color-blind accessible shape cue)
         if (isTarget)
           Positioned(
             top: 4, right: 4,
-            child: Container(
-              width: 14, height: 14,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.error.withValues(alpha: 0.8)),
-              child: const Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 9),
-            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(
+                width: 14, height: 14,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.error.withValues(alpha: 0.9)),
+                child: const Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 9),
+              ),
+            ]),
           ),
         // Testament badge (on dead players with wasiat)
         if (isDead && hasTestament)
@@ -884,9 +892,36 @@ class _GameSeatCard extends ConsumerWidget {
               child: const Text('📜', style: TextStyle(fontSize: 8)),
             ),
           ),
+        // Color-blind accessibility: DEAD state — X cross overlay (shape cue, not just grey color)
+        if (isDead)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CustomPaint(painter: _CrossPainter()),
+              ),
+            ),
+          ),
       ],
     );
   }
+}
+
+/// Draws a subtle X-pattern for eliminated players.
+/// Allows color-blind users to identify dead cards by pattern, not only by color.
+class _CrossPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.13)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(8, 8), Offset(size.width - 8, size.height - 8), paint);
+    canvas.drawLine(Offset(size.width - 8, 8), Offset(8, size.height - 8), paint);
+  }
+
+  @override
+  bool shouldRepaint(_CrossPainter old) => false;
 }
 
 class _CircularAvatars extends StatelessWidget {
@@ -2034,13 +2069,14 @@ class _DiscussionScreen extends ConsumerStatefulWidget {
   const _DiscussionScreen({required this.game, this.me});
 
   @override
-  ConsumerState<_DiscussionScreen> createState() => _DiscussionScreenState();
+  ConsumerState<_DiscussionScreen> createState() => _DayDiscussionScreenState();
 }
 
-class _DiscussionScreenState extends ConsumerState<_DiscussionScreen> {
+class _DayDiscussionScreenState extends ConsumerState<_DayDiscussionScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
+  int _chatFlex = 3; // Default size: 3 (Enlarged). Modes: 1 (Collapsed), 3 (Normal), 6 (Expanded)
 
   @override
   void initState() {
@@ -2064,38 +2100,103 @@ class _DiscussionScreenState extends ConsumerState<_DiscussionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final playerCount = widget.game.players.length;
-    final cols = playerCount <= 12 ? 4 : 5;
-
     return Column(children: [
-      // Player grid (5-4-4-5 layout)
+      // Player grid (5-4-4-5 layout) — dynamically adjusts flex based on chat size
       Expanded(
-        flex: 8,
+        flex: 10 - _chatFlex,
         child: _PlayerGrid18(
           players: widget.game.players,
           me: widget.me,
           testamentPlayerIds: widget.game.testaments.map((t) => t.playerId).toList(),
         ),
       ),
-      // Chat area (bottom portion, contained in dark panel)
+      // Expandable & Collapsible Chat Area
       Expanded(
-        flex: 2,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          padding: const EdgeInsets.all(10),
+        flex: _chatFlex,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.fromLTRB(10, 2, 10, 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.7),
+            color: Colors.black.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10),
+            ],
           ),
           child: Column(children: [
-            // Chat header
+            // Chat header with Expand / Collapse controls
             Row(children: [
-              const Text('💬', style: TextStyle(fontSize: 12)),
-              const SizedBox(width: 4),
-              const Text('Chat Room', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w300)),
+              const Text('💬', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 6),
+              const Text('Chat Room', style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
+                child: Text('${_messages.length} pesan', style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
+              ),
               const Spacer(),
-              Text('${_messages.length} pesan', style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
+              // Controls: [Tutup] | [Sedang] | [Perbesar]
+              if (_chatFlex > 1)
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _chatFlex = 1); // Minimize/Collapse
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textMuted, size: 14),
+                      Text('Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.w600)),
+                    ]),
+                  ),
+                ),
+              if (_chatFlex != 3)
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _chatFlex = 3); // Reset to Normal
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('Sedang', style: TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              if (_chatFlex < 6)
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _chatFlex = 6); // Maximize/Expand
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.open_in_full_rounded, color: Colors.black, size: 10),
+                      SizedBox(width: 2),
+                      Text('Perbesar', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w800)),
+                    ]),
+                  ),
+                ),
             ]),
             const SizedBox(height: 3),
             // Messages
@@ -2135,10 +2236,49 @@ class _DiscussionScreenState extends ConsumerState<_DiscussionScreen> {
                   },
                 ),
             ),
+            // Quick Chat / Emote bar for AAA accessibility & fast communication
+            if (widget.me != null && widget.me!.isAlive)
+              Container(
+                margin: const EdgeInsets.only(top: 4, bottom: 4),
+                height: 24,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    '🐺 Curiga!',
+                    '🛡️ Dokter!',
+                    '🔍 Peramal?',
+                    '👍 Setuju',
+                    '🙅 Bukan Saya!',
+                    '❓ Siapa Wolf?',
+                  ].map((preset) => Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        ref.read(webSocketProvider).send(
+                          WsMessage.sendChat(senderId: widget.me!.id, content: preset),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          preset,
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ),
             // Input bar
             if (widget.me != null && widget.me!.isAlive)
               Container(
-                margin: const EdgeInsets.only(top: 6),
+                margin: const EdgeInsets.only(top: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.06),
@@ -2189,6 +2329,7 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
+  int _chatFlex = 3; // Default size: 3. Modes: 1 (Collapsed), 3 (Normal), 6 (Expanded)
 
   @override
   void initState() {
@@ -2248,35 +2389,25 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
         ),
         // Player grid (5-4-4-5 tappable to vote)
         Expanded(
-          flex: 8,
+          flex: 10 - _chatFlex,
           child: _PlayerGrid18(
             players: players,
             me: widget.me,
             cardBuilder: (p, i) {
-              final isPlayerMe = p.id == widget.me?.id;
-              final isDead = !p.isAlive;
-              final isMyVote = myVote == p.id;
+              final isTiedTarget = tiedPlayers != null && tiedPlayers.contains(p.id);
               final votesOnThis = widget.game.votes.votes.values.where((v) => v == p.id).length;
-              // On retry, only allow voting for tied players
-              final isTiedTarget = isRetry && tiedPlayers != null ? tiedPlayers.contains(p.id) : true;
-              final canVote = canIVote && !isPlayerMe && !isDead && isTiedTarget;
-              // Gray out non-tied players during retry
-              final isDisabled = isRetry && tiedPlayers != null && !tiedPlayers.contains(p.id) && !isDead;
-
+              final isDead = !p.isAlive;
               return GestureDetector(
-                onTap: canVote ? () {
-                  HapticFeedback.mediumImpact();
+                onTap: (canIVote && !isDead && (tiedPlayers == null || isTiedTarget)) ? () {
+                  HapticFeedback.heavyImpact();
                   ref.read(gameProvider.notifier).castVote(widget.me!.id, p.id);
                 } : null,
-                onLongPress: isPlayerMe ? null : () => _showReportDialog(context, ref, p),
+                onLongPress: (p.id == widget.me?.id) ? null : () => _showReportDialog(context, ref, p),
                 child: Stack(children: [
-                  Opacity(
-                    opacity: isDisabled ? 0.3 : 1.0,
-                    child: _GameSeatCard(player: p, index: i, isMe: isPlayerMe, isDead: isDead, isTarget: isMyVote),
-                  ),
+                  _GameSeatCard(player: p, index: i, isMe: p.id == widget.me?.id, isDead: isDead, isTarget: myVote == p.id),
                   if (votesOnThis > 0)
-                    Positioned(right: 3, top: 3, child: Container(
-                      width: 16, height: 16,
+                    Positioned(right: 2, top: 2, child: Container(
+                      width: 14, height: 14,
                       decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
                       child: Center(child: Text('$votesOnThis', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900))),
                     )),
@@ -2295,18 +2426,57 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
             },
           ),
         ),
-        // Chat panel (same as discussion — 20%)
+        // Expandable Chat panel
         Expanded(
-          flex: 2,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          flex: _chatFlex,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            margin: const EdgeInsets.fromLTRB(10, 2, 10, 6),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
+              color: Colors.black.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Column(children: [
+              // Header with controls
+              Row(children: [
+                const Text('💬', style: TextStyle(fontSize: 11)),
+                const SizedBox(width: 4),
+                const Text('Chat Voting', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+                const Spacer(),
+                if (_chatFlex > 1)
+                  GestureDetector(
+                    onTap: () => setState(() => _chatFlex = 1),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 8)),
+                    ),
+                  ),
+                if (_chatFlex != 3)
+                  GestureDetector(
+                    onTap: () => setState(() => _chatFlex = 3),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('Sedang', style: TextStyle(color: AppColors.primary, fontSize: 8)),
+                    ),
+                  ),
+                if (_chatFlex < 6)
+                  GestureDetector(
+                    onTap: () => setState(() => _chatFlex = 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
+                      child: const Text('Perbesar', style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+              ]),
+              const SizedBox(height: 2),
               Expanded(child: _messages.isEmpty
                   ? Center(child: Text('💬 Chat aktif saat voting', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 10)))
                   : ListView.builder(

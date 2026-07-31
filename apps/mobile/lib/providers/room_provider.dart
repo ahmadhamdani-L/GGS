@@ -347,6 +347,37 @@ class RoomNotifier extends StateNotifier<RoomState> {
     _ws.send(WsMessage.startGame(roomId: roomId, hostId: hostId));
   }
 
+  /// C-04 FIX: Sends [player_ready] WebSocket event to server.
+  /// Also optimistically marks the player as ready locally so the UI
+  /// updates immediately without waiting for [room_updated] broadcast.
+  void sendPlayerReady({required String userId, required String roomId}) {
+    logger.info(LogCategory.room, 'Sending player_ready', {
+      'userId': userId,
+      'roomId': roomId,
+    });
+    _ws.send(WsMessage(type: 'player_ready', payload: {
+      'userId': userId,
+      'roomId': roomId,
+    }));
+    // Optimistic local update: mark player as ready immediately
+    final updatedPlayers = state.players.map((p) {
+      if (p.userId == userId) {
+        return RoomPlayer(
+          id: p.id,
+          roomId: p.roomId,
+          userId: p.userId,
+          slot: p.slot,
+          isReady: true,
+          joinedAt: p.joinedAt,
+          displayName: p.displayName,
+          avatarId: p.avatarId,
+        );
+      }
+      return p;
+    }).toList();
+    state = state.copyWith(players: updatedPlayers);
+  }
+
   /// Fetch list of public rooms from server
   void fetchPublicRooms() {
     logger.debug(LogCategory.room, 'Fetching public rooms');

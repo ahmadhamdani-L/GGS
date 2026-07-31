@@ -315,6 +315,8 @@ class _ShopPageState extends ConsumerState<ShopPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     if (success) {
+      // Sync coins to auth state / user profile globally
+      ref.read(authProvider.notifier).refreshProfile();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${item.name} berhasil dibeli! ${item.emoji}'),

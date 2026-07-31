@@ -309,6 +309,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Convert a guest account to a registered email account
+  Future<bool> convertGuest({required String email, required String password}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final resp = await _api.convertGuest(email: email, password: password);
+    if (resp.isSuccess && resp.data != null) {
+      final profileData = resp.data!['profile'] as Map<String, dynamic>?;
+      if (profileData != null) {
+        state = state.copyWith(
+          isLoading: false,
+          profile: UserProfile.fromJson(profileData),
+        );
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
+      return true;
+    } else {
+      state = state.copyWith(
+        isLoading: false,
+        error: resp.error ?? 'Gagal menghubungkan akun',
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     _refreshTimer?.cancel();
     

@@ -189,24 +189,14 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                             ),
                           )
                         else if (room.publicRooms.isEmpty)
-                          // Show default 10 empty rooms if no data yet
-                          ...List.generate(10, (index) {
-                            final roomNumber = index + 1;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _RoomCard(
-                                roomNumber: roomNumber,
-                                playerCount: 0,
-                                isFull: false,
-                                isSelected: _selectedRoom == roomNumber,
-                                onTap: () {
-                                  setState(() => _selectedRoom = roomNumber);
-                                  _showJoinOptions(roomNumber);
-                                },
-                              ),
-                            );
-                          })
+                          // UI-05 FIX: Show proper empty state instead of 10 misleading dummy cards.
+                          // Dummy cards caused UX confusion — user tapped them but nothing happened
+                          // because those room IDs don't exist on the server.
+                          _EmptyPublicRoomsState(
+                            onRefresh: () => ref.read(roomProvider.notifier).fetchPublicRooms(),
+                          )
                         else
+
                           // Show real public rooms data
                           ...room.publicRooms.asMap().entries.map((entry) {
                             final index = entry.key;
@@ -860,3 +850,50 @@ class _JoinCodeSheet extends StatelessWidget {
     );
   }
 }
+
+class _EmptyPublicRoomsState extends StatelessWidget {
+  final VoidCallback onRefresh;
+  const _EmptyPublicRoomsState({required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.meeting_room_outlined, size: 40, color: AppColors.textMuted.withValues(alpha: 0.5)),
+          const SizedBox(height: 10),
+          const Text(
+            'Belum ada room publik aktif',
+            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Buat room baru atau segarkan daftar untuk mencari room!',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: onRefresh,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Segarkan', style: TextStyle(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

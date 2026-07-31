@@ -379,7 +379,114 @@ func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	// Revoke all refresh tokens for this user
 	auth.RevokeAllUserTokens(userID)
 
-	jsonResponse(w, 200, map[string]string{"status": "logged out from all devices"})
+	jsonResponse(w, 200, map[string]string{
+		"message": "logged out successfully",
+	})
+}
+
+// HandleForgotPassword allows a user to reset their password
+func (s *Server) HandleForgotPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+
+	var req struct {
+		Email       string `json:"email"`
+		NewPassword string `json:"newPassword"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errorResponse(w, 400, "invalid body")
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.Email == "" || req.NewPassword == "" {
+		errorResponse(w, 400, "email and newPassword required")
+		return
+	}
+
+	if !validateEmail(req.Email) {
+		errorResponse(w, 400, "invalid email format")
+		return
+	}
+
+	if valid, msg := validatePassword(req.NewPassword); !valid {
+		errorResponse(w, 400, msg)
+		return
+	}
+
+	var err error
+	if db.DB != nil {
+		err = db.ResetPassword(req.Email, req.NewPassword)
+	} else {
+		err = db.Mem.ResetPassword(req.Email, req.NewPassword)
+	}
+
+	if err != nil {
+		errorResponse(w, 400, err.Error())
+		return
+	}
+
+	jsonResponse(w, 200, map[string]string{
+		"message": "Password berhasil diubah. Silakan login kembali.",
+	})
+}
+
+// HandleConvertGuest converts a guest account to a registered email account
+func (s *Server) HandleConvertGuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+
+	userID := r.Context().Value(userIDKey).(string)
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errorResponse(w, 400, "invalid body")
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.Email == "" || req.Password == "" {
+		errorResponse(w, 400, "email and password required")
+		return
+	}
+
+	if !validateEmail(req.Email) {
+		errorResponse(w, 400, "invalid email format")
+		return
+	}
+
+	if valid, msg := validatePassword(req.Password); !valid {
+		errorResponse(w, 400, msg)
+		return
+	}
+
+	var user *db.User
+	var profile *db.Profile
+	var err error
+
+	if db.DB != nil {
+		user, profile, err = db.ConvertGuest(userID, req.Email, req.Password)
+	} else {
+		user, profile, err = db.Mem.ConvertGuest(userID, req.Email, req.Password)
+	}
+
+	if err != nil {
+		errorResponse(w, 400, err.Error())
+		return
+	}
+
+	jsonResponse(w, 200, map[string]interface{}{
+		"message": "Akun berhasil dihubungkan ke email!",
+		"user":    user,
+		"profile": profile,
+	})
 }
 
 // ─── Profile ─────────────────────────────────────────────
@@ -400,7 +507,20 @@ func (s *Server) HandleProfile(w http.ResponseWriter, r *http.Request) {
 			errorResponseWithCode(w, 404, "profile not found", "PROFILE_NOT_FOUND")
 			return
 		}
-		jsonResponse(w, 200, profile)
+		// Enrich profile response with isGuest flag from users table
+		isGuest := false
+		if db.DB != nil {
+			db.DB.QueryRow(`SELECT is_guest FROM users WHERE id = $1`, userID).Scan(&isGuest)
+		} else if db.Mem != nil {
+			if u, _ := db.Mem.GetUserByID(userID); u != nil {
+				isGuest = u.IsGuest
+			}
+		}
+		type profileResp struct {
+			*db.Profile
+			IsGuest bool `json:"isGuest"`
+		}
+		jsonResponse(w, 200, profileResp{Profile: profile, IsGuest: isGuest})
 
 	case "PUT":
 		// Limit request body size

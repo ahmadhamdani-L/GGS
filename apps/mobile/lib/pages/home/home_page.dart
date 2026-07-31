@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,12 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   bool _chibiSynced = false;
+  // C-08 FIX: Guard to prevent navigation loop on WS reconnect.
+  // Set to true after first navigation to lobby, reset to false when
+  // state returns to no-room (e.g. after leaving lobby).
+  bool _hasNavigatedToLobby = false;
+  bool _hasNavigatedToGame = false;
+  StreamSubscription<String>? _sessionReplacedSub;
 
   @override
   void initState() {
@@ -38,30 +45,25 @@ class _HomePageState extends ConsumerState<HomePage> {
       
       // Sync chibi config from profile (if available)
       _syncChibiFromProfile();
-      
-      // Listen for room state changes - navigate to lobby when room is created/joined
-      // Using listen here ensures we only navigate ONCE when state changes (not on every rebuild)
-      ref.listen<RoomState>(roomProvider, (previous, next) {
-        if (!mounted) return;
-        // Only navigate if we went from no-room to has-room
-        if (previous?.room == null && next.room != null) {
-          context.go('/lobby/${next.room!.code}');
-        }
-      });
-      
-      // Listen for game state changes - navigate to game when quick play auto-starts
-      ref.listen<GameState?>(gameProvider, (previous, next) {
-        if (!mounted) return;
-        if (next != null && 
-            next.phase != GamePhase.lobby && 
-            next.phase != GamePhase.gameEnd && 
-            next.phase != GamePhase.results &&
-            (previous == null || previous.phase == GamePhase.lobby)) {
-          context.go('/game/${next.id}');
-        }
-      });
     });
     _connectWs();
+    // Listen for session eviction from server (double login protection)
+    _sessionReplacedSub = ref.read(webSocketProvider).sessionReplacedStream.listen((msg) {
+      if (!mounted) return;
+      // Log out the displaced user
+      ref.read(authProvider.notifier).logout();
+      if (mounted) {
+        context.go('/auth');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ref.read(audioServiceProvider).playPhaseMusic('LOBBY');
     });
@@ -78,6 +80,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   void dispose() {
+    _sessionReplacedSub?.cancel();
     super.dispose();
   }
 
@@ -98,9 +101,49 @@ class _HomePageState extends ConsumerState<HomePage> {
     final outfit = ref.watch(outfitProvider);
     final size = MediaQuery.of(context).size;
 
-    // Watch room and game providers to trigger rebuilds (navigation handled in listeners above)
-    ref.watch(roomProvider);
-    ref.watch(gameProvider);
+    // C-08 FIX: ref.listen MUST be called in build(), not in initState/microtask.
+    // This ensures listeners are registered synchronously and survive hot-reload,
+    // and that no WS events are missed between initState and first build.
+    //
+    // Guard with _hasNavigatedToLobby to prevent navigation loop on WS reconnect:
+    // When WS reconnects, server may replay room_created/room_joined, causing
+    // room state to go null -> room again, which would retrigger navigation.
+    ref.listen<RoomState>(roomProvider, (previous, next) {
+      if (!mounted) return;
+      // Reset guard when room state is cleared (player left lobby)
+      if (previous?.room != null && next.room == null) {
+        _hasNavigatedToLobby = false;
+        return;
+      }
+      // Navigate only once: null room -> has room
+      if (!_hasNavigatedToLobby && previous?.room == null && next.room != null) {
+        _hasNavigatedToLobby = true;
+        context.go('/lobby/${next.room!.code}');
+      }
+    });
+
+    ref.listen<GameState?>(gameProvider, (previous, next) {
+      if (!mounted) return;
+      // Reset guard when game clears
+      if (previous != null && next == null) {
+        _hasNavigatedToGame = false;
+        return;
+      }
+      if (!_hasNavigatedToGame &&
+          next != null &&
+          next.phase != GamePhase.lobby &&
+          next.phase != GamePhase.gameEnd &&
+          next.phase != GamePhase.results &&
+          (previous == null || previous.phase == GamePhase.lobby)) {
+        _hasNavigatedToGame = true;
+        context.go('/game/${next.id}');
+      }
+    });
+
+    // Use selectors to avoid unnecessary rebuilds from irrelevant state changes.
+    // These watches are kept here only for triggering rebuilds of the home page UI.
+    ref.watch(roomProvider.select((s) => s.room?.id));
+    ref.watch(gameProvider.select((g) => g?.phase));
 
     return Scaffold(
       body: Stack(

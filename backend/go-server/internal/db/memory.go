@@ -92,6 +92,16 @@ func (m *MemStore) LoginUser(email, password string) (*User, error) {
 	return user, nil
 }
 
+func (m *MemStore) GetUserByID(userID string) (*User, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	user, ok := m.users[userID]
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
 func (m *MemStore) GetProfile(userID string) (*Profile, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -189,3 +199,47 @@ func (m *MemStore) GetLeaderboard(sortBy string, limit int) ([]LeaderboardEntry,
 	}
 	return entries, nil
 }
+
+func (m *MemStore) ConvertGuest(userID, email, password string) (*User, *Profile, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	user, exists := m.users[userID]
+	if !exists || !user.IsGuest {
+		return nil, nil, errors.New("user is not a guest account or not found")
+	}
+
+	if _, emailExists := m.emails[email]; emailExists {
+		return nil, nil, errors.New("email already registered")
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user.Email = &email
+	user.PasswordHash = string(hash)
+	user.IsGuest = false
+
+	m.emails[email] = userID
+	profile := m.profiles[userID]
+
+	return user, profile, nil
+}
+
+func (m *MemStore) ResetPassword(email, newPassword string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	userID, exists := m.emails[email]
+	if !exists {
+		return errors.New("email not found")
+	}
+
+	user, ok := m.users[userID]
+	if !ok {
+		return errors.New("email not found")
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	user.PasswordHash = string(hash)
+	return nil
+}
+

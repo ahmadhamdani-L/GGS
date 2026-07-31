@@ -152,6 +152,8 @@ func main() {
 	mux.HandleFunc("/api/auth/guest", rateLimitMiddleware(authLimiter, server.HandleGuest))
 	mux.HandleFunc("/api/auth/refresh", rateLimitMiddleware(authLimiter, server.HandleRefresh))
 	mux.HandleFunc("/api/auth/logout", rateLimitMiddleware(authLimiter, server.AuthMiddleware(server.HandleLogout)))
+	mux.HandleFunc("/api/auth/forgot-password", rateLimitMiddleware(authLimiter, server.HandleForgotPassword))
+	mux.HandleFunc("/api/auth/convert-guest", rateLimitMiddleware(authLimiter, server.AuthMiddleware(server.HandleConvertGuest)))
 
 	// Profile (protected)
 	mux.HandleFunc("/api/profile", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleProfile)))

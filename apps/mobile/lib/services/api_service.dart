@@ -61,6 +61,26 @@ class ApiService {
     });
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    return _post('/api/auth/forgot-password', {
+      'email': email,
+      'newPassword': newPassword,
+    });
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> convertGuest({
+    required String email,
+    required String password,
+  }) async {
+    return _post('/api/auth/convert-guest', {
+      'email': email,
+      'password': password,
+    });
+  }
+
   /// Refresh access token using refresh token
   Future<ApiResponse<Map<String, dynamic>>> refreshToken(String refreshToken) async {
     return _post('/api/auth/refresh', {

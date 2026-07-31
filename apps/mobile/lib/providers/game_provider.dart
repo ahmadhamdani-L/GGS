@@ -48,8 +48,12 @@ class GameNotifier extends StateNotifier<GameState?> {
         }
         break;
       case 'game_ended':
+        // C-01 FIX: The backend sends rewards via the FINAL game_state_update
+        // (phase=GAME_END) with rewards attached per-player. By the time
+        // game_ended arrives, state already contains the rewards. We must
+        // preserve ALL existing state fields — especially [rewards] — and
+        // only update [phase] and [winner].
         if (state != null && msg.payload['winner'] != null) {
-          // Preserve all game state fields, just update phase + winner
           final winner = Team.values.byName(msg.payload['winner'] as String);
           state = GameState(
             id: state!.id,
@@ -69,6 +73,8 @@ class GameNotifier extends StateNotifier<GameState?> {
             testaments: state!.testaments,
             pendingTestamentPlayerId: null,
             teammates: const [],
+            // CRITICAL: preserve rewards from prior game_state_update broadcast
+            rewards: state!.rewards,
           );
         }
         break;

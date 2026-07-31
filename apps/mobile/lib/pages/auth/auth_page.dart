@@ -302,9 +302,114 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
         _input(_emailController, 'Email', Icons.email_outlined, keyboard: TextInputType.emailAddress),
         const SizedBox(height: 14),
         _input(_passwordController, 'Password', Icons.lock_outline, obscure: true),
-        const SizedBox(height: 28),
+        const SizedBox(height: 6),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => _showForgotPasswordDialog(context),
+            child: const Text('Lupa Password?', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
+        ),
+        const SizedBox(height: 16),
         GradientButton(label: 'Masuk', icon: Icons.login_rounded, onPressed: auth.isLoading ? null : _login, isLoading: auth.isLoading),
       ],
+    );
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final resetEmailCtrl = TextEditingController(text: _emailController.text);
+    final newPassCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceElevated,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('Lupa Password', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Masukkan email terdaftar dan password baru Anda.',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: newPassCtrl,
+                obscureText: true,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Password Baru (min 8 char)',
+                  prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final email = resetEmailCtrl.text.trim();
+                      final newPass = newPassCtrl.text;
+                      if (email.isEmpty || newPass.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Email dan password baru wajib diisi'), backgroundColor: AppColors.warning),
+                        );
+                        return;
+                      }
+                      setDialogState(() => isSubmitting = true);
+                      final api = ref.read(apiServiceProvider);
+                      final resp = await api.forgotPassword(email: email, newPassword: newPass);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        if (resp.isSuccess) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Password berhasil diperbarui! Silakan login.'), backgroundColor: AppColors.success),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(resp.error ?? 'Gagal me-reset password'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: isSubmitting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Reset Password'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -48,8 +48,9 @@ var upgrader = websocket.Upgrader{
 
 // Message represents a WebSocket message
 type Message struct {
-	Type    string          `json:"type"`
-	Payload json.RawMessage `json:"payload"`
+	Type      string          `json:"type"`
+	Payload   json.RawMessage `json:"payload"`
+	RequestID string          `json:"requestId,omitempty"` // For client-side idempotency
 }
 
 // Client represents a connected WebSocket client
@@ -125,6 +126,14 @@ func (c *Client) readPump() {
 		if err := json.Unmarshal(data, &msg); err != nil {
 			log.Printf("Message parse error: %v", err)
 			continue
+		}
+
+		// Idempotency: ignore duplicate requestId from the same client
+		if msg.RequestID != "" {
+			if !c.Hub.trackRequest(c.UserID, msg.RequestID) {
+				log.Printf("[WS] Duplicate requestId=%s from user=%s, dropping", msg.RequestID, c.UserID)
+				continue
+			}
 		}
 
 		c.Hub.broadcast <- &ClientMessage{Client: c, Message: &msg}

@@ -15,10 +15,13 @@ class WebSocketService {
   WebSocketChannel? _channel;
   final _messageController = StreamController<WsMessage>.broadcast();
   final _statusController = StreamController<WsConnectionStatus>.broadcast();
+  // Emits a single event when this session is kicked by a new login on another device
+  final _sessionReplacedController = StreamController<String>.broadcast();
   Timer? _pingTimer;
   Timer? _reconnectTimer;
   Timer? _connectionTimeout;
   bool _isConnected = false;
+  bool _sessionReplaced = false; // Guard: do not reconnect after being evicted
   String? _token;
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
@@ -27,6 +30,8 @@ class WebSocketService {
   bool get isConnected => _isConnected;
   Stream<WsMessage> get messages => _messageController.stream;
   Stream<WsConnectionStatus> get statusStream => _statusController.stream;
+  /// Emits a message string when this session is replaced by a new login on another device
+  Stream<String> get sessionReplacedStream => _sessionReplacedController.stream;
   WsConnectionStatus _status = WsConnectionStatus.disconnected;
   WsConnectionStatus get status => _status;
 
@@ -67,6 +72,15 @@ class WebSocketService {
           try {
             final message = WsMessage.fromJson(data as String);
             logger.wsReceive(message.type, message.payload);
+            // Detect session_replaced before forwarding to other listeners
+            if (message.type == 'session_replaced') {
+              _sessionReplaced = true;
+              final msg = message.payload['message'] as String? ?? 'Sesi digantikan oleh login baru.';
+              _sessionReplacedController.add(msg);
+              // Disconnect cleanly — do not reconnect
+              disconnect();
+              return;
+            }
             _messageController.add(message);
           } catch (e, stack) {
             logger.wsError('Failed to parse message: $data', stack: stack);
@@ -117,6 +131,8 @@ class WebSocketService {
   }
 
   void _scheduleReconnect() {
+    // Never reconnect after session was replaced by a new device login
+    if (_sessionReplaced) return;
     if (_token == null || _reconnectAttempts >= _maxReconnectAttempts) {
       if (_reconnectAttempts >= _maxReconnectAttempts) {
         logger.error(LogCategory.ws, 'Max reconnect attempts reached', 
@@ -158,6 +174,7 @@ class WebSocketService {
     _connectionTimeout?.cancel();
     _messageController.close();
     _statusController.close();
+    _sessionReplacedController.close();
     _channel?.sink.close();
   }
 }

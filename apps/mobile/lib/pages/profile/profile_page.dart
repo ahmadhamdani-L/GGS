@@ -59,6 +59,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ]),
             const SizedBox(height: 24),
 
+            // ⚠️ Guest Upgrade Banner — shown only for guest accounts
+            if (profile != null && profile.isGuest)
+              _buildGuestUpgradeBanner(context),
+
             // Profile card with avatar and XP bar
             _buildProfileCard(profile),
             const SizedBox(height: 20),
@@ -77,6 +81,160 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             // Recent matches
             _buildRecentMatches(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestUpgradeBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showConvertGuestDialog(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF92400E), Color(0xFFD97706)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: const Color(0xFFD97706).withValues(alpha: 0.25), blurRadius: 16)],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Akun Tamu — Progress Bisa Hilang!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Daftarkan email sekarang untuk menyimpan semua koin, XP & item secara permanen.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('Simpan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showConvertGuestDialog(BuildContext context) {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceElevated,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.verified_user_rounded, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('Simpan Progress', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Hubungkan akun tamu ke email agar semua koin, XP, level, dan item kamu tersimpan permanen.',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passCtrl,
+                obscureText: true,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Password (min 8 char)',
+                  prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+              child: const Text('Nanti', style: TextStyle(color: AppColors.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      final password = passCtrl.text;
+                      if (email.isEmpty || password.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Email dan password wajib diisi'), backgroundColor: AppColors.warning),
+                        );
+                        return;
+                      }
+                      setDialogState(() => isSubmitting = true);
+                      final success = await ref.read(authProvider.notifier).convertGuest(
+                        email: email,
+                        password: password,
+                      );
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🎉 Akun berhasil disimpan! Selamat bermain!'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        } else {
+                          final error = ref.read(authProvider).error;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(error ?? 'Gagal menyimpan akun'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: isSubmitting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Simpan Akun'),
+            ),
           ],
         ),
       ),
@@ -203,11 +361,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Widget _buildAchievementsSection() {
+    final gamesPlayed = (_stats?['gamesPlayed'] as num?)?.toInt() ?? 0;
+    final gamesWon = (_stats?['gamesWon'] as num?)?.toInt() ?? 0;
+    final wolfWins = (_stats?['wolfWins'] as num?)?.toInt() ?? 0;
+    final level = (ref.watch(authProvider).profile?.level) ?? 1;
+
     final achievements = [
-      {'emoji': '🎮', 'name': 'First Game', 'desc': 'Mainkan game pertama', 'unlocked': true},
-      {'emoji': '🏆', 'name': 'First Win', 'desc': 'Menangkan game pertama', 'unlocked': false},
-      {'emoji': '🐺', 'name': 'Wolf King', 'desc': 'Menang 10x sebagai Werewolf', 'unlocked': false},
-      {'emoji': '🔮', 'name': 'True Seer', 'desc': 'Temukan semua serigala', 'unlocked': false},
+      {'emoji': '🎮', 'name': 'First Game', 'desc': 'Mainkan game pertama', 'unlocked': gamesPlayed >= 1},
+      {'emoji': '🏆', 'name': 'First Win', 'desc': 'Menangkan game pertama', 'unlocked': gamesWon >= 1},
+      {'emoji': '🐺', 'name': 'Wolf King', 'desc': 'Menang 5x sebagai Werewolf', 'unlocked': wolfWins >= 5},
+      {'emoji': '⭐', 'name': 'Rising Star', 'desc': 'Mencapai Level 5', 'unlocked': level >= 5},
     ];
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

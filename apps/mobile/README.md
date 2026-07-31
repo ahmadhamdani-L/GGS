@@ -1,17 +1,28 @@
-# ggs_werewolf
+# GGS Werewolf — Mobile Application (Flutter Client)
 
-A new Flutter project.
+Aplikasi mobile untuk **GGS (Ganteng Ganteng Serigala) Werewolf — Red vs Blue Edition** dibangun menggunakan Flutter.
 
-## Getting Started
+Untuk petunjuk lengkap mengenai:
+- Menjalankan Backend (Go Server)
+- Mengonfigurasi API dan WebSocket Endpoint
+- Menjalankan aplikasi di iOS Simulator & Android Emulator
+- Menjalankan aplikasi di HP Fisik (Android & iOS)
+- Melakukan testing dan build/packaging aplikasi
 
-This project is a starting point for a Flutter application.
+Silakan rujuk ke **[Root README.md](../../README.md)** proyek ini.
 
-A few resources to get you started if this is your first Flutter project:
+## Quick Start (Klien Mobile)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Pastikan dependencies terinstal:
+   ```bash
+   flutter pub get
+   ```
+2. Jalankan aplikasi pada simulator/device default (menggunakan `localhost`):
+   ```bash
+   flutter run
+   ```
+3. Jalankan aplikasi menggunakan IP lokal komputer Anda (untuk HP fisik / Android emulator):
+   ```bash
+   flutter run --dart-define-from-file=.env
+   ```
+   *(Pastikan isi `.env` sudah disesuaikan dengan IP komputer host Anda).*

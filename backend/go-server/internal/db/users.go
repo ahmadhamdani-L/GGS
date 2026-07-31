@@ -235,3 +235,67 @@ func UpdateChibiConfig(userID string, config map[string]interface{}) error {
 	
 	return err
 }
+
+// ConvertGuest converts a guest user to a registered email account
+func ConvertGuest(userID, email, password string) (*User, *Profile, error) {
+	// Check if email already registered
+	var count int
+	err := DB.QueryRow(`SELECT COUNT(*) FROM users WHERE email = $1`, email).Scan(&count)
+	if err != nil {
+		return nil, nil, err
+	}
+	if count > 0 {
+		return nil, nil, errors.New("email already registered")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	user := &User{}
+	err = DB.QueryRow(`
+		UPDATE users SET
+			email = $2,
+			password_hash = $3,
+			is_guest = false
+		WHERE id = $1 AND is_guest = true
+		RETURNING id, email, is_guest, created_at
+	`, userID, email, string(hash)).Scan(&user.ID, &user.Email, &user.IsGuest, &user.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil, errors.New("user is not a guest account or not found")
+		}
+		return nil, nil, err
+	}
+
+	profile, err := GetProfile(userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, profile, nil
+}
+
+// ResetPassword updates user password hash for a given email
+func ResetPassword(email, newPassword string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	res, err := DB.Exec(`UPDATE users SET password_hash = $2 WHERE email = $1`, email, string(hash))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("email not found")
+	}
+
+	return nil
+}

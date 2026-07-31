@@ -46,6 +46,50 @@ class LobbyPage extends ConsumerStatefulWidget {
 class _LobbyPageState extends ConsumerState<LobbyPage> {
   bool _navigatedToGame = false;
 
+  /// Show confirmation dialog before leaving the lobby.
+  /// Sends [leave_room] to server only after user confirms.
+  Future<void> _handleBackPressed() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1B4B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Keluar dari Lobby?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Kamu akan keluar dari room ini. Teman kamu mungkin harus menunggu pemain lain.',
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Tetap', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+            child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final auth = ref.read(authProvider);
+      final room = ref.read(roomProvider).room;
+      // Tell the server this player is leaving — critical for room cleanup
+      if (auth.userId != null && room != null) {
+        ref.read(roomProvider.notifier).leaveRoom(auth.userId!, room.id);
+      } else {
+        // If we don't have room info, just clear local state
+        ref.read(roomProvider.notifier).clear();
+      }
+      if (mounted) context.go('/home');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final roomState = ref.watch(roomProvider);
@@ -139,9 +183,13 @@ class _LobbyHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          // Back
+          // Back — pops confirmation dialog then sends leave_room to server
           GestureDetector(
-            onTap: () => context.go('/home'),
+            onTap: () {
+              // Get the state widget to call _handleBackPressed
+              final lobbyState = context.findAncestorStateOfType<_LobbyPageState>();
+              lobbyState?._handleBackPressed();
+            },
             child: Container(
               width: 38, height: 38,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white.withValues(alpha: 0.08)),
@@ -630,40 +678,93 @@ class _LobbyBottomBar extends ConsumerWidget {
 
   const _LobbyBottomBar({required this.isHost, required this.roomState, required this.auth});
 
+  static const int _minimumPlayersToStart = 2;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final canStart = isHost && roomState.players.length >= _minimumPlayersToStart;
+    // Check if current user has already marked as ready
+    final myUserId = auth.userId;
+    final myPlayer = myUserId != null
+        ? roomState.players.where((p) => p.userId == myUserId).firstOrNull
+        : null;
+    final alreadyReady = myPlayer?.isReady ?? false;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.9),
         border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Ready button (all players)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => HapticFeedback.mediumImpact(),
-              child: GradientButton(
-                label: isHost ? 'Mulai Game' : 'Siap',
-                icon: isHost ? Icons.play_arrow_rounded : Icons.check_circle_rounded,
-                gradient: isHost ? AppColors.primaryGradient : const LinearGradient(colors: [AppColors.success, Color(0xFF34D399)]),
-                height: 48,
-                onPressed: isHost
-                    ? (roomState.players.isNotEmpty
-                        ? () {
-                            HapticFeedback.heavyImpact();
-                            final roomId = roomState.room?.id;
-                            final hostId = auth.userId;
-                            if (roomId != null && hostId != null) {
-                              ref.read(roomProvider.notifier).startGame(roomId, hostId);
-                              // Navigation is now handled automatically when game_state_update arrives
-                            }
-                          }
-                        : null)
-                    : () => HapticFeedback.mediumImpact(),
+          // Minimum players warning for host
+          if (isHost && roomState.players.length < _minimumPlayersToStart)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.warning.withValues(alpha: 0.8), size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Butuh minimal $_minimumPlayersToStart pemain untuk mulai',
+                    style: TextStyle(color: AppColors.warning.withValues(alpha: 0.8), fontSize: 11),
+                  ),
+                ],
               ),
             ),
+          // Main action button
+          GradientButton(
+            label: isHost
+                ? 'Mulai Game'
+                : (alreadyReady ? 'Sudah Siap ✓' : 'Siap'),
+            icon: isHost
+                ? Icons.play_arrow_rounded
+                : (alreadyReady ? Icons.check_circle : Icons.check_circle_outline_rounded),
+            gradient: isHost
+                ? (canStart ? AppColors.primaryGradient : const LinearGradient(colors: [Color(0xFF475569), Color(0xFF334155)]))
+                : (alreadyReady
+                    ? const LinearGradient(colors: [Color(0xFF059669), Color(0xFF34D399)])
+                    : const LinearGradient(colors: [AppColors.success, Color(0xFF34D399)])),
+            height: 48,
+            onPressed: isHost
+                ? (canStart
+                    ? () {
+                        HapticFeedback.heavyImpact();
+                        final roomId = roomState.room?.id;
+                        final hostId = auth.userId;
+                        if (roomId != null && hostId != null) {
+                          ref.read(roomProvider.notifier).startGame(roomId, hostId);
+                        }
+                      }
+                    : () {
+                        // Provide feedback even when disabled
+                        HapticFeedback.lightImpact();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Butuh minimal $_minimumPlayersToStart pemain untuk mulai game'),
+                            backgroundColor: AppColors.warning,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      })
+                : (alreadyReady
+                    ? null // Already ready, disable button
+                    : () {
+                        HapticFeedback.mediumImpact();
+                        // C-04 FIX: Send player_ready event to server
+                        final userId = auth.userId;
+                        final roomId = roomState.room?.id;
+                        if (userId != null && roomId != null) {
+                          ref.read(roomProvider.notifier).sendPlayerReady(
+                            userId: userId,
+                            roomId: roomId,
+                          );
+                        }
+                      }),
           ),
         ],
       ),

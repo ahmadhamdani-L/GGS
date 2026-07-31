@@ -1,6 +1,10 @@
 /// WebSocket message types for communication between Flutter and Go backend
 
 import 'dart:convert';
+import 'package:uuid/uuid.dart';
+
+const _uuid = Uuid();
+String _newId() => _uuid.v4();
 
 /// Message types sent from client to server
 enum ClientMessageType {
@@ -114,6 +118,7 @@ class WsMessage {
     return WsMessage(
       type: 'start_game',
       payload: {'roomId': roomId, 'hostId': hostId},
+      requestId: _newId(), // Prevent double-start from network retry
     );
   }
 
@@ -124,6 +129,7 @@ class WsMessage {
     return WsMessage(
       type: 'submit_night_action',
       payload: {'playerId': playerId, 'targetId': targetId},
+      requestId: _newId(), // Idempotent game action
     );
   }
 
@@ -139,6 +145,7 @@ class WsMessage {
         'useHeal': useHeal,
         'poisonTarget': poisonTarget,
       },
+      requestId: _newId(), // Idempotent game action
     );
   }
 
@@ -149,6 +156,7 @@ class WsMessage {
     return WsMessage(
       type: 'cast_vote',
       payload: {'voterId': voterId, 'targetId': targetId},
+      requestId: _newId(), // Idempotent: prevent double-vote on retry
     );
   }
 

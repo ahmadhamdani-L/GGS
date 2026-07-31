@@ -18,15 +18,18 @@ const (
 	// Worker pool size - scales with CPU cores
 	minWorkers = 4
 	maxWorkers = 32
-	
+
 	// Channel buffer sizes
 	registerBufferSize   = 256
 	unregisterBufferSize = 256
 	broadcastBufferSize  = 2048
-	
+
 	// Profile cache settings
 	profileCacheTTL     = 5 * time.Minute
 	profileCacheCleanup = 10 * time.Minute
+
+	// Idempotency: how long to remember a processed requestId
+	requestIDTTL = 60 * time.Second
 )
 
 // Hub maintains the set of active clients and rooms
@@ -49,9 +52,12 @@ type Hub struct {
 	// Profile cache to reduce DB queries
 	profileCache sync.Map // userID → *CachedProfile
 
+	// Idempotency: tracks seen requestIds per user with expiry
+	requestsCache sync.Map // userID → map[requestID]time.Time
+
 	// Worker pool control
 	workerCount int
-	
+
 	mu sync.RWMutex
 }
 
@@ -125,8 +131,48 @@ func NewHub() *Hub {
 	return h
 }
 
+// trackRequest checks if a requestId has already been processed for this user.
+// Returns true if the request is new (should be processed), false if it's a duplicate.
+func (h *Hub) trackRequest(userID, requestID string) bool {
+	now := time.Now()
+
+	// Load or create the per-user map
+	val, _ := h.requestsCache.LoadOrStore(userID, &sync.Map{})
+	userMap := val.(*sync.Map)
+
+	// Check if this requestID was already seen
+	if _, loaded := userMap.LoadOrStore(requestID, now); loaded {
+		// Already present — duplicate
+		return false
+	}
+	// First time seeing this requestID
+	return true
+}
+
+// cleanupRequestCache removes expired requestId entries to prevent memory leaks
+func (h *Hub) cleanupRequestCache() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		cutoff := time.Now().Add(-requestIDTTL)
+		h.requestsCache.Range(func(userKey, userVal any) bool {
+			userMap := userVal.(*sync.Map)
+			userMap.Range(func(reqKey, reqVal any) bool {
+				if t, ok := reqVal.(time.Time); ok && t.Before(cutoff) {
+					userMap.Delete(reqKey)
+				}
+				return true
+			})
+			return true
+		})
+	}
+}
+
 // Run starts the hub's main loop and worker pool
 func (h *Hub) Run() {
+	// Start idempotency cleanup goroutine
+	go h.cleanupRequestCache()
+
 	// Start worker pool for message handling
 	for i := 0; i < h.workerCount; i++ {
 		go h.messageWorker(i)
@@ -158,9 +204,36 @@ func (h *Hub) messageWorker(id int) {
 	logger.Debug(logger.CatSystem, "Worker stopped", map[string]interface{}{"workerId": id})
 }
 
-// handleRegister adds a client to the hub
+// handleRegister adds a client to the hub and enforces single-session per user
 func (h *Hub) handleRegister(client *Client) {
 	h.mu.Lock()
+
+	// Check if this user already has an active connection (Double Login Protection)
+	if client.UserID != "" {
+		var oldClients []*Client
+		for c := range h.clients {
+			if c != client && c.UserID == client.UserID {
+				oldClients = append(oldClients, c)
+			}
+		}
+		for _, old := range oldClients {
+			logger.Warn(logger.CatWebSocket, "Evicting duplicate session for user", map[string]interface{}{
+				"userId": client.UserID,
+				"oldIP":  old.Conn.RemoteAddr().String(),
+				"newIP":  client.Conn.RemoteAddr().String(),
+			})
+			// Notify old client
+			msgBytes, _ := json.Marshal(map[string]string{
+				"message": "Akun Anda telah login di perangkat/sesi lain.",
+				"reason":  "session_replaced",
+			})
+			safeSend(old, &Message{Type: "session_replaced", Payload: msgBytes})
+			// Delete and close
+			delete(h.clients, old)
+			close(old.Send)
+		}
+	}
+
 	h.clients[client] = true
 	clientCount := len(h.clients)
 	h.mu.Unlock()
@@ -1490,9 +1563,11 @@ func (h *Hub) broadcastRoomUpdate(roomID string) {
 
 // handleGetPublicRooms returns a list of public rooms (PUB1-PUB10) with real player counts
 func (h *Hub) handleGetPublicRooms(client *Client) {
-	// Public room IDs are PUB1 through PUB10
-	publicRoomIDs := []string{"PUB1", "PUB2", "PUB3", "PUB4", "PUB5", "PUB6", "PUB7", "PUB8", "PUB9", "PUB10"}
-	
+	// C-05b FIX: Return ALL active rooms that are joinable (waiting/countdown).
+	// Previous implementation only looked for hardcoded PUB1-PUB10 IDs which
+	// never matched dynamically-created rooms, resulting in an always-empty list.
+	const maxPublicRooms = 20
+
 	type PublicRoomInfo struct {
 		RoomID      string `json:"roomId"`
 		Code        string `json:"code"`
@@ -1501,35 +1576,45 @@ func (h *Hub) handleGetPublicRooms(client *Client) {
 		Status      string `json:"status"`
 		HostName    string `json:"hostName,omitempty"`
 	}
-	
-	rooms := make([]PublicRoomInfo, 0, len(publicRoomIDs))
-	
+
+	rooms := make([]PublicRoomInfo, 0, maxPublicRooms)
+
 	h.mu.RLock()
-	for _, pubID := range publicRoomIDs {
-		info := PublicRoomInfo{
-			RoomID:      pubID,
-			Code:        pubID,
-			PlayerCount: 0,
-			MaxPlayers:  16,
-			Status:      "empty",
+	for _, room := range h.rooms {
+		// Only show rooms that can still be joined
+		if room.Status != RoomWaiting && room.Status != RoomCountdown {
+			continue
 		}
-		
-		// Check if this public room exists and has players
-		if room, exists := h.rooms[pubID]; exists {
-			room.mu.RLock()
-			info.PlayerCount = len(room.Players)
-			info.Status = string(room.Status)
-			// Get host name if available
-			if hostPlayer, hasHost := room.Players[room.HostID]; hasHost {
-				info.HostName = hostPlayer.DisplayName
-			}
+		room.mu.RLock()
+		playerCount := len(room.Players)
+		// Determine maxPlayers from game config if game exists, else default to 18
+		maxPlayers := 18
+		if room.Game != nil {
+			maxPlayers = room.Game.Config.MaxPlayers
+		}
+		// Skip full rooms
+		if playerCount >= maxPlayers {
 			room.mu.RUnlock()
+			continue
 		}
-		
+		info := PublicRoomInfo{
+			RoomID:      room.ID,
+			Code:        room.Code,
+			PlayerCount: playerCount,
+			MaxPlayers:  maxPlayers,
+			Status:      string(room.Status),
+		}
+		if hostPlayer, hasHost := room.Players[room.HostID]; hasHost {
+			info.HostName = hostPlayer.DisplayName
+		}
+		room.mu.RUnlock()
 		rooms = append(rooms, info)
+		if len(rooms) >= maxPublicRooms {
+			break
+		}
 	}
 	h.mu.RUnlock()
-	
+
 	resp := map[string]interface{}{
 		"rooms": rooms,
 	}
