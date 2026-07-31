@@ -1,0 +1,1229 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Inisialisasi monorepo dengan pnpm workspace dan Turborepo": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786260944
+      },
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786279350
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786841452
+      }
+    ],
+    "1.2 Setup aplikasi web React + Vite + TypeScript": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261078
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786850548
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787020748
+      }
+    ],
+    "1.3 Setup testing framework": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261132
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787029678
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787142548
+      }
+    ],
+    "2.1 Definisikan tipe-tipe inti permainan": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261194
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787152104
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787414207
+      }
+    ],
+    "3.1 Implementasi sistem peran dan distribusi": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261226
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787424925
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787834665
+      }
+    ],
+    "3.4 Implementasi sistem voting": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261257
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787862589
+      },
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788265559
+      }
+    ],
+    "3.6 Implementasi kondisi kemenangan": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261307
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788453701
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788804572
+      }
+    ],
+    "3.8 Implementasi fase malam dan resolusi": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261334
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788454541
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788805906
+      }
+    ],
+    "3.10 Implementasi state machine utama (engine)": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261364
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788818085
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789240472
+      }
+    ],
+    "3.12 Implementasi sistem timer": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261396
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788455567
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788806184
+      }
+    ],
+    "3.13 Implementasi sistem narasi": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261424
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788455807
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788807028
+      }
+    ],
+    "3.14 Implementasi sistem chat dan filter": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261455
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788456608
+      },
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784788808503
+      }
+    ],
+    "4. Checkpoint - Game Engine": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261480
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789371316
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789381060
+      }
+    ],
+    "5.1 Implementasi bot brain dan personality": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261537
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789391019
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790300619
+      }
+    ],
+    "5.2 Implementasi strategi per peran": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261563
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789392148
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790300909
+      }
+    ],
+    "5.3 Implementasi reasoning dan memory": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261590
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789392414
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790301603
+      }
+    ],
+    "5.4 Implementasi chat message generator": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261621
+      },
+      {
+        "executionId": "a29fa475-1396-453b-a769-3a15775d2944",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789393074
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790302358
+      }
+    ],
+    "6. Checkpoint - AI Engine": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261648
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790347779
+      }
+    ],
+    "7.1 Setup routing dan layout dasar": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261679
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790348558
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790638084
+      }
+    ],
+    "7.2 Implementasi Zustand stores": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261707
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790349347
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790638301
+      }
+    ],
+    "7.3 Implementasi hook useGameEngine": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261732
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790350091
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790639155
+      }
+    ],
+    "7.4 Implementasi service localStorage (state persistence)": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261764
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790351000
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790639879
+      }
+    ],
+    "8.1 Implementasi HomePage": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261793
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790650995
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791283694
+      }
+    ],
+    "8.2 Implementasi LobbyPage - Konfigurasi Room": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261830
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790652067
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791284271
+      }
+    ],
+    "9.1 Implementasi GamePage dan GameBoard": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261863
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790652952
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791285139
+      }
+    ],
+    "9.2 Implementasi TimerDisplay dan warning": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261894
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790653506
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791285707
+      }
+    ],
+    "9.3 Implementasi VotingOverlay": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261923
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790654499
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791286485
+      }
+    ],
+    "9.4 Implementasi NightActionOverlay": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261949
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791295766
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220028
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792244046
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792586392
+      }
+    ],
+    "9.5 Implementasi NarratorOverlay": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786261978
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791296683
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220134
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792244684
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792587301
+      }
+    ],
+    "9.6 Implementasi ChatPanel": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262007
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791297413
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220205
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792245434
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792587609
+      }
+    ],
+    "9.7 Implementasi RoleReveal": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262032
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791298248
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220308
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792246182
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792588287
+      }
+    ],
+    "9.8 Implementasi ResultsPage": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262060
+      },
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791298833
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220368
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792247124
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792589086
+      }
+    ],
+    "10. Checkpoint - Frontend Game Flow": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262089
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220419
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792600528
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792609634
+      }
+    ],
+    "11.1 Setup package animation-assets dan LottiePlayer wrapper": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262116
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220594
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792620835
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793082729
+      }
+    ],
+    "11.2 Implementasi animasi transisi fase": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262145
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220640
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792621469
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793083265
+      }
+    ],
+    "11.3 Implementasi animasi eliminasi dan reveal": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262174
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220690
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792622648
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793084036
+      }
+    ],
+    "11.4 Implementasi adaptive quality (performa)": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262198
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220759
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792623282
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793084684
+      }
+    ],
+    "12.1 Setup Howler.js audio manager": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262229
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220853
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792624203
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793085545
+      }
+    ],
+    "12.2 Implementasi musik latar dan efek suara": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262257
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220916
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793097201
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793732315
+      }
+    ],
+    "12.3 Implementasi kontrol audio dan preferensi": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262288
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792220988
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793098003
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793733054
+      }
+    ],
+    "13.1 Implementasi logika pass-and-play": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262314
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221034
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793098964
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793733665
+      }
+    ],
+    "13.2 Implementasi UI pass-and-play specific": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262345
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221087
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793099852
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793734685
+      }
+    ],
+    "14.1 Implementasi orkestrasi single player": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262373
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221150
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793100502
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793735291
+      }
+    ],
+    "14.2 Implementasi UI feedback bot": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262406
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221225
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793745933
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794095167
+      }
+    ],
+    "15. Checkpoint - Mode Permainan Lengkap": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262474
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221265
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794129083
+      }
+    ],
+    "16.1 Implementasi tutorial interaktif": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262504
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221305
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793746723
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794096199
+      }
+    ],
+    "16.2 Implementasi bantuan dalam permainan": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262529
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221358
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793747638
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794096787
+      }
+    ],
+    "17.1 Implementasi auto-save dan recovery UI": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262558
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221413
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793748961
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794097660
+      }
+    ],
+    "18.1 Implementasi code splitting dan bundle optimization": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262592
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221461
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793749622
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794098402
+      }
+    ],
+    "18.2 Implementasi optimisasi aset": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262630
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221516
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794129881
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794642999
+      }
+    ],
+    "18.3 Implementasi memory management": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262662
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221563
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794130578
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794643773
+      }
+    ],
+    "18.4 Implementasi WebGL fallback": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262688
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221612
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794131930
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794642287
+      }
+    ],
+    "19. Checkpoint - Fitur Lengkap": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262714
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221662
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794658662
+      }
+    ],
+    "20.1 Implementasi responsive design": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262744
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221710
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794132215
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794644549
+      }
+    ],
+    "20.2 Implementasi dark theme dan styling final": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262773
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221772
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794133013
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794646945
+      }
+    ],
+    "20.3 Implementasi kompatibilitas browser": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262807
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221811
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794657895
+      }
+    ],
+    "22. Checkpoint Final - MVP Selesai": [
+      {
+        "executionId": "78cc80c9-df35-4181-92cd-abf7106b3b13",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784786262832
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792221859
+      },
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794659327
+      }
+    ],
+    "1. Scaffolding Proyek Monorepo": [
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787142591
+      }
+    ],
+    "2. Package Shared Types": [
+      {
+        "executionId": "7b74e8c5-7e67-4e4c-a4cd-43da4ee44c57",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784787414265
+      }
+    ],
+    "3. Game Engine - Fondasi": [
+      {
+        "executionId": "cd27af4e-373b-4398-83d7-e895e7e1048a",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784789240540
+      }
+    ],
+    "5. AI Engine": [
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790302390
+      }
+    ],
+    "7. Frontend Shell - Routing, Layout, dan Stores": [
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784790639967
+      }
+    ],
+    "8. Frontend - Halaman Home dan Lobby": [
+      {
+        "executionId": "e6ddb064-f9c4-42dd-93eb-303a6223ee43",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784791284315
+      }
+    ],
+    "9. Frontend - Komponen Game Utama": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784792589149
+      }
+    ],
+    "11. Integrasi Animasi": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793084718
+      }
+    ],
+    "12. Integrasi Audio": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793733103
+      }
+    ],
+    "13. Mode Multiplayer Lokal (Pass-and-Play)": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784793734726
+      }
+    ],
+    "14. Mode Pemain Tunggal vs AI": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794095219
+      }
+    ],
+    "16. Sistem Tutorial": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794096843
+      }
+    ],
+    "17. State Persistence dan Recovery": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794097695
+      }
+    ],
+    "18. Optimisasi Performa": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794643816
+      }
+    ],
+    "20. Polish dan Responsivitas": [
+      {
+        "executionId": "b13ff156-6914-4403-b6a5-a8d04ffdb4ae",
+        "chatSessionId": "sess_b552708c-e98c-45d6-bfd3-f9c67cda41a8",
+        "timestamp": 1784794657930
+      }
+    ]
+  }
+}

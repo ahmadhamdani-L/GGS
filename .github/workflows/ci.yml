@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Build
+        run: cd backend/go-server && go build ./...
+      - name: Test
+        run: cd backend/go-server && go test ./... -v
+
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      - name: Get dependencies
+        run: cd apps/mobile && flutter pub get
+      - name: Analyze
+        run: cd apps/mobile && flutter analyze --no-fatal-infos
+      - name: Build APK
+        run: cd apps/mobile && flutter build apk --release
