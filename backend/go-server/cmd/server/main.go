@@ -245,6 +245,10 @@ func main() {
 	// Daily Missions (protected)
 	mux.HandleFunc("/api/missions", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleMissions)))
 
+	// Daily Reward (protected)
+	mux.HandleFunc("/api/daily-reward", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleDailyReward)))
+	mux.HandleFunc("/api/daily-reward/claim", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleDailyRewardClaim)))
+
 	// Avatar upload
 	mux.HandleFunc("/api/avatar/upload", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleAvatarUpload)))
 	mux.HandleFunc("/api/avatar", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleAvatarDelete)))

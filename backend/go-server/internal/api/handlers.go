@@ -1367,6 +1367,44 @@ func (s *Server) HandleFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, 200, map[string]interface{}{"flags": flags})
 }
 
+// ─── Daily Reward ────────────────────────────────────────
+
+func (s *Server) HandleDailyReward(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(userIDKey).(string)
+
+	switch r.Method {
+	case "GET":
+		status, err := db.GetDailyRewardStatus(userID)
+		if err != nil {
+			errorResponse(w, 500, "failed to get reward status")
+			return
+		}
+		jsonResponse(w, 200, status)
+
+	default:
+		errorResponse(w, 405, "method not allowed")
+	}
+}
+
+func (s *Server) HandleDailyRewardClaim(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+	userID := r.Context().Value(userIDKey).(string)
+
+	result, err := db.ClaimDailyReward(userID)
+	if err != nil {
+		if err.Error() == "already claimed today" {
+			errorResponseWithCode(w, 400, "Sudah diklaim hari ini", "ALREADY_CLAIMED")
+			return
+		}
+		errorResponse(w, 500, "failed to claim reward")
+		return
+	}
+	jsonResponse(w, 200, result)
+}
+
 // ─── Daily Missions ──────────────────────────────────────
 
 func (s *Server) HandleMissions(w http.ResponseWriter, r *http.Request) {

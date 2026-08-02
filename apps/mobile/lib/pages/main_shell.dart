@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,9 +18,7 @@ import '../widgets/connection_indicator.dart';
 import '../widgets/notification_bell.dart';
 import 'wardrobe/wardrobe_page.dart';
 import 'friends/friends_page.dart';
-import 'achievements/achievements_page.dart';
-import 'leaderboard/leaderboard_page.dart';
-import 'settings/settings_page.dart';
+import 'shop/shop_page.dart';
 
 /// Main shell with bottom navigation — the hub of the app after login
 class MainShell extends ConsumerStatefulWidget {
@@ -95,11 +94,9 @@ class _MainShellState extends ConsumerState<MainShell> {
         index: _currentTab,
         children: const [
           _HomeTab(),
-          _InventoryTab(),
+          _WardrobeTab(),
           _SocialTab(),
-          _AchievementTab(),
-          _LeaderboardTab(),
-          _SettingsTab(),
+          _ShopTab(),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -116,16 +113,15 @@ class _MainShellState extends ConsumerState<MainShell> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.inventory_2_rounded, 'Inventory'),
+              _navItem(1, Icons.checkroom_rounded, 'Wardrobe'),
               _navItem(2, Icons.people_alt_rounded, 'Social'),
-              _navItem(3, Icons.emoji_events_rounded, 'Achievement'),
-              _navItem(4, Icons.leaderboard_rounded, 'Leaderboard'),
-              _navItem(5, Icons.settings_rounded, 'Pengaturan'),
+              _navItem(3, Icons.storefront_rounded, 'Shop'),
+              _moreNavItem(),
             ],
           ),
         ),
@@ -143,7 +139,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: isActive ? const Color(0xFFDAA520).withValues(alpha: 0.12) : Colors.transparent,
@@ -152,13 +148,136 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: isActive ? const Color(0xFFDAA520) : const Color(0xFF6B7280), size: 20),
-            const SizedBox(height: 2),
+            Icon(icon, color: isActive ? const Color(0xFFDAA520) : const Color(0xFF6B7280), size: 22),
+            const SizedBox(height: 3),
             Text(label, style: TextStyle(
               color: isActive ? const Color(0xFFDAA520) : const Color(0xFF6B7280),
               fontSize: 9,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _moreNavItem() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _showMoreSheet();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.more_horiz_rounded, color: Color(0xFF6B7280), size: 22),
+            const SizedBox(height: 3),
+            const Text('Lainnya', style: TextStyle(color: Color(0xFF6B7280), fontSize: 9, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMoreSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D0F14).withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle bar
+                    Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(color: const Color(0xFF3D4450), borderRadius: BorderRadius.circular(2)),
+                    ),
+                    const SizedBox(height: 20),
+                    // Menu items
+                    _moreMenuItem(Icons.inventory_2_rounded, 'Inventory', 'Koleksi item yang kamu punya', const Color(0xFFF38181), () {
+                      Navigator.pop(ctx);
+                      context.push('/inventory');
+                    }),
+                    _moreMenuItem(Icons.emoji_events_rounded, 'Achievement', 'Koleksi pencapaianmu', const Color(0xFFFFD700), () {
+                      Navigator.pop(ctx);
+                      context.push('/achievements');
+                    }),
+                    _moreMenuItem(Icons.leaderboard_rounded, 'Leaderboard', 'Peringkat pemain', const Color(0xFF4ECDC4), () {
+                      Navigator.pop(ctx);
+                      context.push('/leaderboard');
+                    }),
+                    _moreMenuItem(Icons.assignment_rounded, 'Quest & Misi', 'Misi harian & mingguan', const Color(0xFF95E1D3), () {
+                      Navigator.pop(ctx);
+                      context.push('/events');
+                    }),
+                    _moreMenuItem(Icons.history_rounded, 'Riwayat Match', 'History pertandingan', const Color(0xFF74B9FF), () {
+                      Navigator.pop(ctx);
+                      context.push('/stats');
+                    }),
+                    _moreMenuItem(Icons.settings_rounded, 'Pengaturan', 'Akun, audio, bahasa', const Color(0xFF9CA3AF), () {
+                      Navigator.pop(ctx);
+                      context.push('/settings');
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _moreMenuItem(IconData icon, String title, String subtitle, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: color.withValues(alpha: 0.06),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: color.withValues(alpha: 0.12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: 0.5), size: 20),
           ],
         ),
       ),
@@ -224,11 +343,7 @@ class _HomeTab extends ConsumerWidget {
                       const SizedBox(height: 12),
                       _EventBanner(),
                       const SizedBox(height: 14),
-                      _RoomButtons(),
-                      const SizedBox(height: 12),
-                      _MainPlayButton(),
-                      const SizedBox(height: 10),
-                      _BotPlayButton(),
+                      _PlayModeCards(),
                       const SizedBox(height: 14),
                       _GlobalChatBar(profile: profile),
                       const SizedBox(height: 16),
@@ -453,7 +568,6 @@ class _SideMenusAndCenter extends StatelessWidget {
           // Left side menu
           Column(children: [
             _SideMenuButton(icon: Icons.celebration_rounded, label: 'Event', onTap: () => context.push('/events')),
-            _SideMenuButton(icon: Icons.store_rounded, label: 'Shop', onTap: () => context.push('/shop')),
             _SideMenuButton(icon: Icons.assignment_rounded, label: 'Quest', onTap: () => context.push('/events')),
             _SideMenuButton(icon: Icons.military_tech_rounded, label: 'Ranking', onTap: () => context.push('/leaderboard')),
           ]),
@@ -590,93 +704,66 @@ class _EventBanner extends StatelessWidget {
 }
 
 
-// ─── Room Buttons (Buat Room + Join Room) ──────────────────────
-class _RoomButtons extends StatelessWidget {
+// ─── Play Mode Cards (3 cards: Online, Bot, Custom Room) ─────
+class _PlayModeCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          Expanded(
-            child: _RoomActionCard(
-              icon: Icons.add_home_rounded,
-              title: 'Buat Room',
-              subtitle: 'Buat room baru',
-              onTap: () => context.push('/room'),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _RoomActionCard(
-              icon: Icons.login_rounded,
-              title: 'Join Room',
-              subtitle: 'Masuk ke room',
-              badge: 'NEW',
-              onTap: () => context.push('/room'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoomActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String? badge;
-  final VoidCallback onTap;
-
-  const _RoomActionCard({required this.icon, required this.title, required this.subtitle, this.badge, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFF1A1D2E),
-          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.35)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8)],
-        ),
-        child: Stack(
+      child: SizedBox(
+        height: 200,
+        child: Row(
           children: [
-            Column(
-              children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFDAA520).withValues(alpha: 0.12),
-                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
-                  ),
-                  child: Icon(icon, color: const Color(0xFFDAA520), size: 18),
-                ),
-                const SizedBox(height: 8),
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 9)),
-              ],
-            ),
-            if (badge != null)
-              Positioned(
-                top: 0, right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: const Color(0xFFEF4444),
-                  ),
-                  child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w700)),
-                ),
+            // PLAY ONLINE
+            Expanded(
+              child: _PlayModeCard(
+                title: 'PLAY\nONLINE',
+                subtitle: 'Bermain dengan\npemain lain secara\nreal-time',
+                gradient: const [Color(0xFF1A2744), Color(0xFF0D1B3A)],
+                borderColor: const Color(0xFF4A7FBF),
+                icon: Icons.people_rounded,
+                iconColor: const Color(0xFF5B9BD5),
+                emoji: '🐺',
+                onTap: () {
+                  HapticFeedback.heavyImpact();
+                  context.push('/room');
+                },
               ),
+            ),
+            const SizedBox(width: 8),
+            // PLAY WITH BOT
+            Expanded(
+              child: _PlayModeCard(
+                title: 'PLAY\nWITH BOT',
+                subtitle: 'Main dengan bot AI\ntingkat kesulitan\nberagam',
+                gradient: const [Color(0xFF1A3324), Color(0xFF0D2618)],
+                borderColor: const Color(0xFF4A9E6B),
+                icon: Icons.smart_toy_rounded,
+                iconColor: const Color(0xFF6BCB8B),
+                emoji: '🤖',
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  context.push('/room');
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // CUSTOM ROOM
+            Expanded(
+              child: _PlayModeCard(
+                title: 'CUSTOM\nROOM',
+                subtitle: 'Buat room sendiri\ndan atur\nsesukamu',
+                gradient: const [Color(0xFF2D1F0E), Color(0xFF1A1308)],
+                borderColor: const Color(0xFFDAA520),
+                icon: Icons.edit_note_rounded,
+                iconColor: const Color(0xFFDAA520),
+                emoji: '👑',
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  context.push('/room');
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -684,86 +771,82 @@ class _RoomActionCard extends StatelessWidget {
   }
 }
 
+class _PlayModeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final List<Color> gradient;
+  final Color borderColor;
+  final IconData icon;
+  final Color iconColor;
+  final String emoji;
+  final VoidCallback onTap;
 
-// ─── Main Play Button (Golden Banner) ─────────────────────────
-class _MainPlayButton extends StatelessWidget {
+  const _PlayModeCard({
+    required this.title,
+    required this.subtitle,
+    required this.gradient,
+    required this.borderColor,
+    required this.icon,
+    required this.iconColor,
+    required this.emoji,
+    required this.onTap,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.heavyImpact();
-          context.push('/room');
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF8B6914), Color(0xFFDAA520), Color(0xFFF4D03F), Color(0xFFDAA520), Color(0xFF8B6914)],
-              stops: [0.0, 0.2, 0.5, 0.8, 1.0],
-            ),
-            border: Border.all(color: const Color(0xFFF4D03F), width: 1.5),
-            boxShadow: [
-              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 16, spreadRadius: 1),
-              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 30, spreadRadius: 4),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('⚔️', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 10),
-              const Text(
-                'Main Sekarang',
-                style: TextStyle(
-                  color: Color(0xFF1A0E00),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                  shadows: [Shadow(color: Color(0x40FFFFFF), blurRadius: 2)],
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text('⚔️', style: TextStyle(fontSize: 18)),
-            ],
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: gradient),
+          border: Border.all(color: borderColor.withValues(alpha: 0.5), width: 1.2),
+          boxShadow: [BoxShadow(color: borderColor.withValues(alpha: 0.15), blurRadius: 10)],
         ),
-      ),
-    );
-  }
-}
-
-
-// ─── Bot Play Button ──────────────────────────────────────────
-class _BotPlayButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          context.push('/room');
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white.withValues(alpha: 0.04),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.smart_toy_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
-              const SizedBox(width: 8),
-              Text('Main dengan Bot', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w600)),
-            ],
-          ),
+        child: Stack(
+          children: [
+            // Background emoji (large, faded)
+            Positioned(
+              top: 20, left: 0, right: 0,
+              child: Center(
+                child: Text(emoji, style: TextStyle(fontSize: 50, color: Colors.white.withValues(alpha: 0.08))),
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon
+                  Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: iconColor.withValues(alpha: 0.15),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 16),
+                  ),
+                  const Spacer(),
+                  // Title
+                  Text(title, style: TextStyle(
+                    color: borderColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                    letterSpacing: 0.5,
+                  )),
+                  const SizedBox(height: 6),
+                  // Subtitle
+                  Text(subtitle, style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 9,
+                    height: 1.3,
+                  )),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -822,10 +905,10 @@ class _GlobalChatBar extends StatelessWidget {
 
 
 // ═══════════════════════════════════════════════════════════
-// TAB 2: INVENTORY — Wardrobe / Items
+// TAB 2: WARDROBE — Edit Character / Chibi
 // ═══════════════════════════════════════════════════════════
-class _InventoryTab extends StatelessWidget {
-  const _InventoryTab();
+class _WardrobeTab extends StatelessWidget {
+  const _WardrobeTab();
 
   @override
   Widget build(BuildContext context) {
@@ -875,37 +958,13 @@ class _SocialTab extends ConsumerWidget {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TAB 4: ACHIEVEMENT
+// TAB 4: SHOP
 // ═══════════════════════════════════════════════════════════
-class _AchievementTab extends StatelessWidget {
-  const _AchievementTab();
+class _ShopTab extends StatelessWidget {
+  const _ShopTab();
 
   @override
   Widget build(BuildContext context) {
-    return const AchievementsPage();
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// TAB 5: LEADERBOARD
-// ═══════════════════════════════════════════════════════════
-class _LeaderboardTab extends StatelessWidget {
-  const _LeaderboardTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const LeaderboardPage();
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// TAB 6: SETTINGS (Pengaturan)
-// ═══════════════════════════════════════════════════════════
-class _SettingsTab extends StatelessWidget {
-  const _SettingsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SettingsPage();
+    return const ShopPage();
   }
 }

@@ -18,6 +18,7 @@ import '../../widgets/activity_feed_widget.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/connection_indicator.dart';
 import '../../widgets/daily_missions.dart';
+import '../../widgets/daily_reward.dart';
 import '../../widgets/notification_bell.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   bool _hasNavigatedToLobby = false;
   bool _hasNavigatedToGame = false;
   StreamSubscription<String>? _sessionReplacedSub;
+  StreamSubscription? _inviteSub;
 
   @override
   void initState() {
@@ -52,6 +54,17 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.read(socialProvider.notifier).refreshDiamonds();
     });
     _connectWs();
+    // Listen for game invites from friends
+    _inviteSub = ref.read(webSocketProvider).messages.listen((msg) {
+      if (!mounted) return;
+      if (msg.type == 'game_invite') {
+        final fromUserId = msg.payload['fromUserId'] as String? ?? '';
+        final roomCode = msg.payload['roomCode'] as String? ?? '';
+        if (roomCode.isNotEmpty) {
+          _showGameInviteDialog(fromUserId, roomCode);
+        }
+      }
+    });
     // Listen for session eviction from server (double login protection)
     _sessionReplacedSub = ref.read(webSocketProvider).sessionReplacedStream.listen((msg) {
       if (!mounted) return;
@@ -86,6 +99,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void dispose() {
     _sessionReplacedSub?.cancel();
+    _inviteSub?.cancel();
     super.dispose();
   }
 
@@ -97,6 +111,69 @@ class _HomePageState extends ConsumerState<HomePage> {
         await ws.connect(api.token!);
       } catch (_) {}
     }
+  }
+
+  void _showGameInviteDialog(String fromUserId, String roomCode) {
+    // Don't show if already navigated somewhere
+    if (_hasNavigatedToLobby || _hasNavigatedToGame) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1B4B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(children: [
+          const Text('🎮', style: TextStyle(fontSize: 24)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text('Undangan Game!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+          ),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+              ),
+              child: Column(children: [
+                const Text('Temanmu mengundangmu bermain!', style: TextStyle(color: Colors.white, fontSize: 13)),
+                const SizedBox(height: 8),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Text('Room: ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                  Text(roomCode, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 2)),
+                ]),
+              ]),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Nanti', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              // Join the room
+              final userId = ref.read(authProvider).userId;
+              if (userId != null) {
+                ref.read(roomProvider.notifier).joinRoom(userId, roomCode);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDAA520),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Gabung!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -534,6 +611,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           Expanded(child: _buildSmallButton('👥 Teman', () => context.push('/friends'))),
         ]),
         const SizedBox(height: 14),
+        // Daily login reward
+        const DailyRewardCard(),
+        const SizedBox(height: 12),
         // Daily missions
         const DailyMissionsCard(),
       ],

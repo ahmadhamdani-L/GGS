@@ -212,6 +212,16 @@ class WsMessage {
     );
   }
 
+  factory WsMessage.inviteToRoom({
+    required String targetUserId,
+    required String roomCode,
+  }) {
+    return WsMessage(
+      type: 'invite_to_room',
+      payload: {'targetUserId': targetUserId, 'roomCode': roomCode},
+    );
+  }
+
   factory WsMessage.ping() {
     return const WsMessage(type: 'ping');
   }

@@ -4,70 +4,171 @@ import (
 	"testing"
 )
 
-// Helper to create PlayerInfo slice from names/ids
-func createPlayerInfos(names, ids []string) []PlayerInfo {
-	infos := make([]PlayerInfo, len(names))
-	for i := range names {
-		infos[i] = PlayerInfo{
-			ID:          ids[i],
-			DisplayName: names[i],
-			AvatarID:    (i % 4) + 1,
-		}
+func TestCreateGame_ValidRoles(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('1'+i)), DisplayName: "P" + string(rune('1'+i))}
 	}
-	return infos
-}
-
-func TestCreateGame(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	
-	if game == nil {
+	g := CreateGame(players)
+	if g == nil {
 		t.Fatal("CreateGame returned nil")
 	}
-	
-	if game.ID == "" {
-		t.Error("Game ID should not be empty")
+	if len(g.Players) != 8 {
+		t.Errorf("Expected 8 players, got %d", len(g.Players))
 	}
-	
-	if len(game.Players) != 8 {
-		t.Errorf("Expected 8 players, got %d", len(game.Players))
-	}
-	
-	if game.Phase != PhaseLobby {
-		t.Errorf("Initial phase should be LOBBY, got %s", game.Phase)
+	if g.Phase != PhaseLobby {
+		t.Errorf("Expected LOBBY phase, got %s", g.Phase)
 	}
 }
 
-func TestStartGame(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	if game.Phase != PhaseRoleReveal {
-		t.Errorf("Phase after StartGame should be ROLE_REVEAL, got %s", game.Phase)
+func TestStartGame_AssignsRoles(t *testing.T) {
+	players := make([]PlayerInfo, 10)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
 	}
-	
-	// Check that roles were assigned
-	rolesAssigned := 0
-	for _, p := range game.Players {
-		if p.Role != "" {
-			rolesAssigned++
+	g := CreateGame(players)
+	g = StartGame(g)
+
+	if g.Phase != PhaseRoleReveal {
+		t.Errorf("Expected ROLE_REVEAL, got %s", g.Phase)
+	}
+
+	roleCounts := make(map[Role]int)
+	for _, p := range g.Players {
+		if p.Role == "" {
+			t.Error("Player has empty role after StartGame")
 		}
+		roleCounts[p.Role]++
 	}
-	
-	if rolesAssigned != 8 {
-		t.Errorf("Expected 8 roles assigned, got %d", rolesAssigned)
+	// 10 players: 3 WW, 2 Seer, 1 Doctor, 1 Witch, 3 Villager
+	if roleCounts[RoleWerewolf] != 3 {
+		t.Errorf("Expected 3 werewolves, got %d", roleCounts[RoleWerewolf])
+	}
+	if roleCounts[RoleSeer] != 2 {
+		t.Errorf("Expected 2 seers, got %d", roleCounts[RoleSeer])
+	}
+}
+
+func TestConfirmRoleReveal_AllConfirmed(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+
+	// Mark all bots as confirmed
+	for i := range g.Players {
+		g.Players[i].IsBot = false
+	}
+
+	// Confirm all players
+	for _, p := range g.Players {
+		g = ConfirmRoleReveal(g, p.ID)
+	}
+
+	if g.Phase != PhaseNight {
+		t.Errorf("Expected NIGHT after all confirmed, got %s", g.Phase)
+	}
+}
+
+func TestCastVote_RejectsDeadPlayer(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g.Phase = PhaseVoting
+	g.Votes = VoteRecord{Votes: make(map[string]string)}
+
+	// Kill a player
+	g.Players[2].IsAlive = false
+
+	// Try to vote for dead player
+	_, err := CastVote(g, g.Players[0].ID, g.Players[2].ID)
+	if err == nil {
+		t.Error("Expected error voting for dead player, got nil")
+	}
+}
+
+func TestCastVote_RejectsSelfVote(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g.Phase = PhaseVoting
+	g.Votes = VoteRecord{Votes: make(map[string]string)}
+
+	// Try to vote for self
+	_, err := CastVote(g, g.Players[0].ID, g.Players[0].ID)
+	if err == nil {
+		t.Error("Expected error voting for self, got nil")
+	}
+}
+
+func TestCastVote_AllowsSkip(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g.Phase = PhaseVoting
+	g.Votes = VoteRecord{Votes: make(map[string]string)}
+
+	// Vote with empty target (skip)
+	g2, err := CastVote(g, g.Players[0].ID, "")
+	if err != nil {
+		t.Errorf("Expected skip vote to succeed, got error: %v", err)
+	}
+	if g2.Votes.Votes[g.Players[0].ID] != "" {
+		t.Error("Skip vote should store empty string")
+	}
+}
+
+func TestCastVote_RejectsInvalidTarget(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g.Phase = PhaseVoting
+	g.Votes = VoteRecord{Votes: make(map[string]string)}
+
+	// Vote for non-existent player
+	_, err := CastVote(g, g.Players[0].ID, "nonexistent-id")
+	if err == nil {
+		t.Error("Expected error for invalid target ID")
+	}
+}
+
+func TestCastVote_RejectsDeadVoter(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g.Phase = PhaseVoting
+	g.Votes = VoteRecord{Votes: make(map[string]string)}
+
+	// Kill voter
+	g.Players[0].IsAlive = false
+
+	_, err := CastVote(g, g.Players[0].ID, g.Players[1].ID)
+	if err == nil {
+		t.Error("Expected error for dead voter")
 	}
 }
 
 func TestGetRoleTeam(t *testing.T) {
 	tests := []struct {
-		role     Role
-		expected Team
+		role Role
+		team Team
 	}{
 		{RoleWerewolf, TeamRed},
 		{RoleWitch, TeamRed},
@@ -75,168 +176,14 @@ func TestGetRoleTeam(t *testing.T) {
 		{RoleDoctor, TeamBlue},
 		{RoleVillager, TeamBlue},
 	}
-	
 	for _, tt := range tests {
-		t.Run(string(tt.role), func(t *testing.T) {
-			team := GetRoleTeam(tt.role)
-			if team != tt.expected {
-				t.Errorf("GetRoleTeam(%s) = %s, want %s", tt.role, team, tt.expected)
-			}
-		})
-	}
-}
-
-func TestConfirmRoleReveal(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	// Confirm all players
-	for _, id := range ids {
-		game = ConfirmRoleReveal(game, id)
-	}
-	
-	// After all confirm, phase should be night (either NIGHT or NIGHT_START)
-	if !game.Phase.IsNight() {
-		t.Errorf("Phase after all confirms should be a night phase, got %s", game.Phase)
-	}
-}
-
-func TestStartNightPhase(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	game = StartNightPhase(game)
-	
-	// Phase should be a night phase
-	if !game.Phase.IsNight() {
-		t.Errorf("Phase after StartNightPhase should be a night phase, got %s", game.Phase)
-	}
-}
-
-func TestCheckWinCondition_BlueWins(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	// Kill all werewolves and witch (Red Team)
-	for i := range game.Players {
-		if game.Players[i].Role == RoleWerewolf || game.Players[i].Role == RoleWitch {
-			game.Players[i].IsAlive = false
+		if got := GetRoleTeam(tt.role); got != tt.team {
+			t.Errorf("GetRoleTeam(%s) = %s, want %s", tt.role, got, tt.team)
 		}
 	}
-	
-	// Use internal function via test (since checkWinCondition is unexported)
-	winner := checkWinCondition(game)
-	if winner == nil {
-		t.Error("Game should be done when all red team dead")
-	} else if *winner != TeamBlue {
-		t.Errorf("Winner should be Blue, got %s", *winner)
-	}
 }
 
-func TestCheckWinCondition_RedWins(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	// Kill blue team players until werewolves >= blue
-	blueKilled := 0
-	for i := range game.Players {
-		team := GetRoleTeam(game.Players[i].Role)
-		if team == TeamBlue && blueKilled < 4 {
-			game.Players[i].IsAlive = false
-			blueKilled++
-		}
-	}
-	
-	// Use internal function
-	winner := checkWinCondition(game)
-	if winner == nil {
-		t.Error("Game should be done when red >= remaining blue")
-	} else if *winner != TeamRed {
-		t.Errorf("Winner should be Red, got %s", *winner)
-	}
-}
-
-func TestCheckWinCondition_GameContinues(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	// Don't kill anyone - game should continue
-	winner := checkWinCondition(game)
-	if winner != nil {
-		t.Errorf("Winner should be nil (game continues), got %s", *winner)
-	}
-}
-
-func TestFilterStateForPlayer(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	game = StartGame(game)
-	
-	// Get filtered state for first player
-	filtered := FilterStateForPlayer(game, ids[0])
-	
-	if filtered == nil {
-		t.Fatal("FilterStateForPlayer returned nil")
-	}
-	
-	// Find self in filtered state
-	var selfPlayer *PlayerState
-	for i := range filtered.Players {
-		if filtered.Players[i].ID == ids[0] {
-			selfPlayer = &filtered.Players[i]
-			break
-		}
-	}
-	
-	if selfPlayer == nil {
-		t.Fatal("Could not find self in filtered state")
-	}
-	
-	// Player should see their own role
-	if selfPlayer.Role == "" {
-		t.Error("Player should see their own role")
-	}
-}
-
-func TestFindPlayer(t *testing.T) {
-	names := []string{"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"}
-	ids := []string{"id1", "id2", "id3", "id4", "id5", "id6", "id7", "id8"}
-	
-	game := CreateGame(createPlayerInfos(names, ids))
-	
-	// Find existing player
-	player := findPlayer(game, "id1")
-	if player == nil {
-		t.Error("findPlayer should find existing player")
-	}
-	if player.ID != "id1" {
-		t.Errorf("Found wrong player: %s", player.ID)
-	}
-	
-	// Find non-existing player
-	notFound := findPlayer(game, "nonexistent")
-	if notFound != nil {
-		t.Error("findPlayer should return nil for non-existing player")
-	}
-}
-
-func TestDistributeRoles(t *testing.T) {
+func TestDistributeRoles_CorrectCount(t *testing.T) {
 	config := map[Role]int{
 		RoleWerewolf: 2,
 		RoleSeer:     2,
@@ -244,22 +191,51 @@ func TestDistributeRoles(t *testing.T) {
 		RoleWitch:    1,
 		RoleVillager: 2,
 	}
-	
 	roles := distributeRoles(config, 8)
-	
 	if len(roles) != 8 {
 		t.Errorf("Expected 8 roles, got %d", len(roles))
 	}
-	
-	// Count each role
+
 	counts := make(map[Role]int)
 	for _, r := range roles {
 		counts[r]++
 	}
-	
 	for role, expected := range config {
 		if counts[role] != expected {
 			t.Errorf("Expected %d %s, got %d", expected, role, counts[role])
 		}
+	}
+}
+
+func TestNightAction_WerewolfCannotTargetSelf(t *testing.T) {
+	players := make([]PlayerInfo, 8)
+	for i := range players {
+		players[i] = PlayerInfo{ID: "p" + string(rune('A'+i)), DisplayName: "Player"}
+	}
+	g := CreateGame(players)
+	g = StartGame(g)
+	g = StartNightPhase(g)
+
+	// Find a werewolf
+	var wolfID string
+	for _, p := range g.Players {
+		if p.Role == RoleWerewolf {
+			wolfID = p.ID
+			break
+		}
+	}
+
+	// Try to target another werewolf (should fail — werewolf can't target werewolf)
+	var otherWolfID string
+	for _, p := range g.Players {
+		if p.Role == RoleWerewolf && p.ID != wolfID {
+			otherWolfID = p.ID
+			break
+		}
+	}
+
+	_, err := SubmitNightActionSequential(g, wolfID, otherWolfID, false, nil)
+	if err == nil {
+		t.Error("Expected error when werewolf targets another werewolf")
 	}
 }

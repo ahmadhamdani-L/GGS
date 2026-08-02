@@ -54,11 +54,13 @@ var Global Store
 func Init() {
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL != "" {
-		// TODO: When Redis client is added as dependency, initialize here:
-		// Global = NewRedisStore(redisURL)
-		// For now, log and fall back to memory
-		log.Printf("⚠ REDIS_URL set (%s) but Redis client not yet integrated — using memory store", redisURL)
-		Global = NewMemoryStore()
+		store, err := NewRedisStore(redisURL)
+		if err != nil {
+			log.Printf("⚠ Redis connection failed: %v — falling back to memory store", err)
+			Global = NewMemoryStore()
+		} else {
+			Global = store
+		}
 	} else {
 		Global = NewMemoryStore()
 		log.Println("ℹ Cache: in-memory (single instance mode). Set REDIS_URL for multi-instance scaling.")

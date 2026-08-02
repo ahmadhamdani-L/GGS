@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: GGS Werewolf API
+  description: Backend API for GGS Werewolf Online game
+  version: 1.0.0
+  contact:
+    name: GGS Team
+
+servers:
+  - url: http://localhost:8080
+    description: Development
+  - url: https://api.ggs-werewolf.com
+    description: Production
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Server healthy
+
+  /api/auth/register:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                displayName: { type: string }
+      responses:
+        '201': { description: User created }
+        '400': { description: Validation error }
+        '409': { description: Email already exists }
+
+  /api/auth/login:
+    post:
+      summary: Login with email/password
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+                  expiresIn: { type: integer }
+                  userId: { type: string }
+        '401': { description: Invalid credentials }
+
+  /api/auth/guest:
+    post:
+      summary: Create guest account
+      tags: [Auth]
+      responses:
+        '201': { description: Guest created with tokens }
+
+  /api/auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: New token pair }
+        '401': { description: Invalid/expired refresh token }
+
+  /api/auth/logout:
+    post:
+      summary: Logout (revoke all refresh tokens)
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Logged out }
+
+  /api/profile:
+    get:
+      summary: Get user profile
+      tags: [Profile]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profile data }
+    put:
+      summary: Update profile
+      tags: [Profile]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName: { type: string }
+                avatarId: { type: integer }
+                chibiConfig: { type: object }
+      responses:
+        '200': { description: Updated }
+
+  /api/stats:
+    get:
+      summary: Get player statistics
+      tags: [Stats]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Stats data }
+
+  /api/leaderboard:
+    get:
+      summary: Get leaderboard
+      tags: [Stats]
+      parameters:
+        - name: sort
+          in: query
+          schema: { type: string, enum: [rating, wins, xp] }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200': { description: Leaderboard data }
+
+  /api/shop:
+    get:
+      summary: Get shop items
+      tags: [Shop]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Shop items with ownership status }
+
+  /api/inventory:
+    get:
+      summary: Get user inventory
+      tags: [Shop]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Owned items with quantities }
+
+  /api/gifts/catalog:
+    get:
+      summary: Get gift/curse catalog
+      tags: [Social]
+      responses:
+        '200': { description: All available gifts and curses }
+
+  /api/gifts/send:
+    post:
+      summary: Send gift/curse to another player
+      tags: [Social]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [receiverId, giftId]
+              properties:
+                receiverId: { type: string }
+                giftId: { type: string }
+                message: { type: string, maxLength: 50 }
+                idempotencyKey: { type: string }
+      responses:
+        '200': { description: Gift sent }
+        '400': { description: Insufficient diamonds }
+
+  /api/diamonds:
+    get:
+      summary: Get diamond balance
+      tags: [Payment]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Diamond balance }
+
+  /api/missions:
+    get:
+      summary: Get daily missions
+      tags: [Engagement]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Mission list with progress }
+
+  /api/daily-reward:
+    get:
+      summary: Get daily reward status
+      tags: [Engagement]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Reward status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentDay: { type: integer }
+                  claimedToday: { type: boolean }
+
+  /api/daily-reward/claim:
+    post:
+      summary: Claim daily login reward
+      tags: [Engagement]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Reward claimed }
+        '400': { description: Already claimed today }
+
+  /ws:
+    get:
+      summary: WebSocket connection
+      tags: [Realtime]
+      description: |
+        Connect with ?token=<JWT>
+        Message types: create_room, join_room, start_game, cast_vote, etc.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema: { type: string }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

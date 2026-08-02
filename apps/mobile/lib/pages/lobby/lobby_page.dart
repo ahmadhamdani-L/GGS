@@ -700,6 +700,18 @@ class _SeatCard extends ConsumerWidget {
       onTap: () {
         if (hasPlayer) {
           _showPlayerActionDialog(context, ref, player!);
+        } else {
+          // Empty seat — show invite friends sheet
+          HapticFeedback.lightImpact();
+          final roomCode = ref.read(roomProvider).room?.code ?? '';
+          if (roomCode.isNotEmpty) {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (_) => _InviteFriendsSheet(roomCode: roomCode),
+            );
+          }
         }
       },
       onLongPress: () {
@@ -709,9 +721,11 @@ class _SeatCard extends ConsumerWidget {
         }
       },
       child: Stack(
-        clipBehavior: Clip.none,
+        clipBehavior: Clip.hardEdge,
         children: [
           Container(
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               color: hasPlayer
@@ -721,9 +735,8 @@ class _SeatCard extends ConsumerWidget {
                 color: hasPlayer
                     ? (isMe ? const Color(0xFFDAA520) : const Color(0xFF3D4450))
                     : const Color(0xFF262D38),
-                width: isMe ? 2 : 1.5,
+                width: 1.5,
               ),
-              boxShadow: isMe ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)] : null,
             ),
             child: Column(
               children: [
@@ -732,20 +745,22 @@ class _SeatCard extends ConsumerWidget {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
-                      child: RepaintBoundary(
-                        child: isMe
-                            ? ChibiAvatar(
-                                config: ref.watch(chibiProvider),
-                                size: 58,
-                                animate: true,
-                                showShadow: false,
-                              )
-                            : ChibiAvatar(
-                                config: generateChibiFromId(player!.userId),
-                                size: 58,
-                                animate: false,
-                                showShadow: false,
-                              ),
+                      child: Center(
+                        child: RepaintBoundary(
+                          child: isMe
+                              ? ChibiAvatar(
+                                  config: ref.watch(chibiProvider),
+                                  size: 58,
+                                  animate: true,
+                                  showShadow: false,
+                                )
+                              : ChibiAvatar(
+                                  config: generateChibiFromId(player!.userId),
+                                  size: 58,
+                                  animate: false,
+                                  showShadow: false,
+                                ),
+                        ),
                       ),
                     ),
                   ),
@@ -797,20 +812,17 @@ class _SeatCard extends ConsumerWidget {
               ),
             ),
           ),
-          // "YOU" badge (top-center)
+          // "YOU" badge (top-right inside card)
           if (isMe)
             Positioned(
-              top: -4, left: 0, right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: const Color(0xFFDAA520),
-                    boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 4)],
-                  ),
-                  child: const Text('YOU', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900)),
+              top: 2, right: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFFDAA520),
                 ),
+                child: const Text('YOU', style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w900)),
               ),
             ),
         ],
@@ -964,10 +976,8 @@ class _LobbyBottomBar extends ConsumerStatefulWidget {
 class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
-  int _chatFlex = 0; // 0 = collapsed, 1 = small, 2 = large
+  bool _chatExpanded = false;
   StreamSubscription? _chatSub;
-  // C-1 FIX: Host toggle — start with only real players (no bot fill)
-  bool _noBotFill = false;
 
   @override
   void initState() {
@@ -978,11 +988,12 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
         if (!mounted) return;
         if (msg.type == 'chat_message') {
           final senderId = msg.payload['senderId'] as String? ?? '';
+          final senderName = msg.payload['senderName'] as String? ?? senderId;
           final content = msg.payload['content'] as String? ?? '';
           final myId = widget.auth.userId ?? '';
           if (senderId != myId && content.isNotEmpty) {
             setState(() {
-              _messages.add({'sender': senderId, 'content': content});
+              _messages.add({'sender': senderName, 'content': content});
             });
           }
         }
@@ -1008,7 +1019,7 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
 
     setState(() {
       _messages.add({
-        'sender': widget.auth.profile?.displayName ?? 'You',
+        'sender': widget.auth.profile?.displayName ?? 'Kamu',
         'content': text,
       });
       _chatCtrl.clear();
@@ -1017,222 +1028,385 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
 
   @override
   Widget build(BuildContext context) {
-    // Chat heights: collapsed = just header, small = 100, large = 200
-    final chatHeight = _chatFlex == 0 ? 0.0 : (_chatFlex == 1 ? 100.0 : 200.0);
-
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.85),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+        color: const Color(0xFF0D1117).withValues(alpha: 0.95),
+        border: Border(top: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.15))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Chat header with expand/collapse (like in-game)
+          // Chat messages (expandable)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            height: _chatExpanded ? 130 : 0,
+            child: _chatExpanded
+                ? Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                    ),
+                    child: _messages.isEmpty
+                        ? const Center(
+                            child: Text('Belum ada pesan', style: TextStyle(color: Color(0xFF6B7280), fontSize: 11, fontStyle: FontStyle.italic)),
+                          )
+                        : ListView.builder(
+                            reverse: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _messages.length,
+                            itemBuilder: (_, i) {
+                              final msg = _messages[_messages.length - 1 - i];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: RichText(
+                                  text: TextSpan(children: [
+                                    TextSpan(
+                                      text: '${msg['sender']}: ',
+                                      style: const TextStyle(color: Color(0xFFDAA520), fontWeight: FontWeight.w600, fontSize: 11),
+                                    ),
+                                    TextSpan(
+                                      text: msg['content'] ?? '',
+                                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                    ),
+                                  ]),
+                                ),
+                              );
+                            },
+                          ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+
+          // Input row + controls
           Row(
             children: [
-              const Text('💬', style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 6),
-              Text('Chat Room', style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.white.withValues(alpha: 0.08),
+              // Chat expand/collapse
+              GestureDetector(
+                onTap: () => setState(() => _chatExpanded = !_chatExpanded),
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _chatExpanded
+                        ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.06),
+                  ),
+                  child: Icon(
+                    _chatExpanded ? Icons.chat_bubble_rounded : Icons.chat_bubble_outline_rounded,
+                    color: _chatExpanded ? const Color(0xFFDAA520) : const Color(0xFF6B7280),
+                    size: 16,
+                  ),
                 ),
-                child: Text('${_messages.length} pesan', style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
               ),
-              const Spacer(),
-              // Collapse / Expand controls (like in-game)
-              if (_chatFlex > 0)
-                GestureDetector(
-                  onTap: () => setState(() => _chatFlex = 0),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('▾ Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              // Chat input
+              Expanded(
+                child: Container(
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(17),
+                    color: Colors.white.withValues(alpha: 0.06),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: TextField(
+                    controller: _chatCtrl,
+                    maxLength: 200,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(
+                      hintText: 'Ketik pesan...',
+                      hintStyle: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                      border: InputBorder.none,
+                      isDense: true,
+                      counterText: '',
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                    onTap: () {
+                      if (!_chatExpanded) setState(() => _chatExpanded = true);
+                    },
                   ),
                 ),
-              if (_chatFlex < 2)
-                GestureDetector(
-                  onTap: () => setState(() => _chatFlex = _chatFlex == 0 ? 1 : 2),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                    child: Text(_chatFlex == 0 ? '▴ Buka' : '▴ Perbesar', style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(width: 6),
+              // Send button
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
                   ),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 15),
                 ),
+              ),
+              const SizedBox(width: 8),
+              // Music toggle
+              GestureDetector(
+                onTap: () {
+                  final audio = ref.read(audioServiceProvider);
+                  audio.toggleBgm(!audio.bgmEnabled);
+                  setState(() {});
+                },
+                child: Consumer(builder: (ctx, ref, _) {
+                  final audio = ref.read(audioServiceProvider);
+                  return Container(
+                    width: 34, height: 34,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: audio.bgmEnabled
+                          ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.06),
+                    ),
+                    child: Icon(
+                      audio.bgmEnabled ? Icons.music_note_rounded : Icons.music_off_rounded,
+                      color: audio.bgmEnabled ? const Color(0xFFDAA520) : const Color(0xFF6B7280),
+                      size: 16,
+                    ),
+                  );
+                }),
+              ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          // Chat messages area (animated height)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            height: chatHeight,
-            child: _chatFlex == 0
-                ? const SizedBox.shrink()
-                : Column(
-                    children: [
-                      const SizedBox(height: 6),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                          ),
-                          child: _messages.isEmpty
-                              ? const Center(child: Text('Belum ada pesan. Obrolkan sesuatu!', style: TextStyle(color: AppColors.textMuted, fontSize: 11)))
-                              : ListView.builder(
-                                  reverse: true,
-                                  itemCount: _messages.length,
-                                  itemBuilder: (_, i) {
-                                    final msg = _messages[_messages.length - 1 - i];
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 4),
-                                      child: RichText(
-                                        text: TextSpan(children: [
-                                          TextSpan(text: '${msg['sender']}: ', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 11)),
-                                          TextSpan(text: msg['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                                        ]),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // Input row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              height: 32,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: Colors.white.withValues(alpha: 0.06),
-                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                              ),
-                              child: TextField(
-                                controller: _chatCtrl,
-                                maxLength: 200,
-                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 11),
-                                decoration: const InputDecoration(
-                                  hintText: 'Ketik pesan...',
-                                  hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 11),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  counterText: '',
-                                  contentPadding: EdgeInsets.symmetric(vertical: 7),
-                                ),
-                                onSubmitted: (_) => _sendMessage(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: _sendMessage,
-                            child: Container(
-                              width: 32, height: 32,
-                              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withValues(alpha: 0.2)),
-                              child: const Icon(Icons.send_rounded, color: AppColors.primary, size: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+
+// ─── Invite Friends Bottom Sheet ─────────────────────────────
+class _InviteFriendsSheet extends ConsumerStatefulWidget {
+  final String roomCode;
+  const _InviteFriendsSheet({required this.roomCode});
+
+  @override
+  ConsumerState<_InviteFriendsSheet> createState() => _InviteFriendsSheetState();
+}
+
+class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
+  List<dynamic> _friends = [];
+  bool _loading = true;
+  final Set<String> _invited = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFriends();
+  }
+
+  Future<void> _loadFriends() async {
+    final api = ref.read(apiServiceProvider);
+    final resp = await api.getFriends();
+    if (mounted) {
+      setState(() {
+        _friends = resp.data?['friends'] as List<dynamic>? ?? [];
+        _loading = false;
+      });
+    }
+  }
+
+  void _sendInvite(String targetUserId, String displayName) {
+    final ws = ref.read(webSocketProvider);
+    ws.send(WsMessage.inviteToRoom(
+      targetUserId: targetUserId,
+      roomCode: widget.roomCode,
+    ));
+    setState(() => _invited.add(targetUserId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Undangan dikirim ke $displayName! 🎮'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.55,
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.95),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
-
-          // Bottom toggles row (Bot + Musik)
-          if (widget.isHost) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                // Bot toggle
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _noBotFill = !_noBotFill),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                      ),
-                      child: Row(children: [
-                        Icon(Icons.smart_toy_outlined, size: 14, color: AppColors.textMuted),
-                        const SizedBox(width: 4),
-                        Text('Bot (default)', style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        SizedBox(
-                          width: 36, height: 20,
-                          child: Switch(
-                            value: !_noBotFill,
-                            onChanged: (v) => setState(() => _noBotFill = !v),
-                            activeColor: AppColors.primary,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
+          child: Column(
+            children: [
+              // Handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(children: [
+                  const Icon(Icons.person_add_rounded, color: AppColors.primary, size: 22),
+                  const SizedBox(width: 10),
+                  const Text('Undang Teman', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  // Room code badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                    ),
+                    child: Text(widget.roomCode, style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 12),
+              // Content
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    : _friends.isEmpty
+                        ? _buildEmptyState()
+                        : _buildFriendsList(),
+              ),
+              // Copy link button at bottom
+              Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: 'Gabung game Werewolf aku! Kode room: ${widget.roomCode}'));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Kode room di-copy! Share ke teman di luar app 📋'),
+                          backgroundColor: AppColors.info,
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
                         ),
-                      ]),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text('Copy Kode Room', style: TextStyle(fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Music toggle
-                Expanded(
-                  child: Consumer(builder: (ctx, ref, _) {
-                    final audio = ref.read(audioServiceProvider);
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                      ),
-                      child: Row(children: [
-                        const Icon(Icons.music_note_rounded, size: 14, color: AppColors.textMuted),
-                        const SizedBox(width: 4),
-                        const Text('Musik', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        SizedBox(
-                          width: 36, height: 20,
-                          child: Switch(
-                            value: audio.bgmEnabled,
-                            onChanged: (v) {
-                              audio.toggleBgm(v);
-                              setState(() {});
-                            },
-                            activeColor: AppColors.primary,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () {
-                            audio.toggleSfx(!audio.sfxEnabled);
-                            setState(() {});
-                          },
-                          child: Icon(
-                            audio.sfxEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                            size: 16, color: AppColors.textMuted,
-                          ),
-                        ),
-                      ]),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.people_outline_rounded, color: AppColors.textMuted.withValues(alpha: 0.5), size: 48),
+          const SizedBox(height: 12),
+          const Text('Belum ada teman', style: TextStyle(color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          const Text('Tambahkan teman dari menu Friends', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Clipboard.setData(ClipboardData(text: 'Gabung game Werewolf aku! Kode room: ${widget.roomCode}'));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Kode room di-copy!'), backgroundColor: AppColors.primary, behavior: SnackBarBehavior.floating),
+              );
+            },
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: const Text('Copy kode room saja'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFriendsList() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _friends.length,
+      separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+      itemBuilder: (_, i) {
+        final friend = _friends[i] as Map<String, dynamic>;
+        final userId = friend['userId'] as String? ?? '';
+        final displayName = friend['displayName'] as String? ?? 'Player';
+        final isOnline = friend['isOnline'] as bool? ?? false;
+        final alreadyInvited = _invited.contains(userId);
+
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          leading: Stack(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                child: Text(
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+              ),
+              // Online indicator
+              Positioned(
+                right: 0, bottom: 0,
+                child: Container(
+                  width: 12, height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isOnline ? AppColors.success : const Color(0xFF6B7280),
+                    border: Border.all(color: AppColors.surface, width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          title: Text(displayName, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+          subtitle: Text(
+            isOnline ? 'Online' : 'Offline',
+            style: TextStyle(color: isOnline ? AppColors.success : AppColors.textMuted, fontSize: 11),
+          ),
+          trailing: alreadyInvited
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.success.withValues(alpha: 0.12),
+                  ),
+                  child: const Text('Terkirim ✓', style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w700)),
+                )
+              : ElevatedButton(
+                  onPressed: () => _sendInvite(userId, displayName),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    minimumSize: Size.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Undang', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
+        );
+      },
     );
   }
 }

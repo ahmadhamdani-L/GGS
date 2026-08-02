@@ -372,6 +372,14 @@ class ApiService {
   Future<ApiResponse<Map<String, dynamic>>> getDiamonds() =>
       _get('/api/diamonds');
 
+  /// GET /api/daily-reward — check today's reward status
+  Future<ApiResponse<Map<String, dynamic>>> getDailyReward() =>
+      _get('/api/daily-reward');
+
+  /// POST /api/daily-reward/claim — claim today's reward
+  Future<ApiResponse<Map<String, dynamic>>> claimDailyReward() =>
+      _post('/api/daily-reward/claim', {});
+
   // ─── Payment ──────────────────────────────────────────────
 
   /// GET /api/payment/packages

@@ -1,0 +1,74 @@
+{
+  "dashboard": {
+    "title": "GGS Werewolf — Server Monitoring",
+    "uid": "ggs-main",
+    "panels": [
+      {
+        "title": "Active WebSocket Connections",
+        "type": "gauge",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "ggs_ws_connections_total"}]
+      },
+      {
+        "title": "Active Game Rooms",
+        "type": "gauge",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+        "targets": [{"expr": "ggs_rooms_active"}]
+      },
+      {
+        "title": "API Request Rate (req/s)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 4},
+        "targets": [{"expr": "rate(ggs_http_requests_total[5m])"}]
+      },
+      {
+        "title": "API Response Time (p95)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 4},
+        "targets": [{"expr": "histogram_quantile(0.95, ggs_http_duration_seconds_bucket)"}]
+      },
+      {
+        "title": "Database Query Time (p95)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 4},
+        "targets": [{"expr": "histogram_quantile(0.95, ggs_db_query_duration_bucket)"}]
+      },
+      {
+        "title": "Games Started (per hour)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 8, "h": 4},
+        "targets": [{"expr": "increase(ggs_games_started_total[1h])"}]
+      },
+      {
+        "title": "Authentication Events",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 8, "w": 8, "h": 4},
+        "targets": [
+          {"expr": "increase(ggs_auth_login_total[5m])", "legendFormat": "Login"},
+          {"expr": "increase(ggs_auth_register_total[5m])", "legendFormat": "Register"},
+          {"expr": "increase(ggs_auth_failed_total[5m])", "legendFormat": "Failed"}
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 16, "y": 8, "w": 8, "h": 4},
+        "targets": [{"expr": "process_resident_memory_bytes / 1024 / 1024", "legendFormat": "RSS (MB)"}]
+      },
+      {
+        "title": "Rate Limit Rejections",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 12, "w": 6, "h": 3},
+        "targets": [{"expr": "increase(ggs_rate_limit_rejected_total[5m])"}]
+      },
+      {
+        "title": "Diamond Transactions (24h)",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 12, "w": 6, "h": 3},
+        "targets": [{"expr": "increase(ggs_diamond_spent_total[24h])"}]
+      }
+    ],
+    "time": {"from": "now-6h", "to": "now"},
+    "refresh": "30s"
+  }
+}
