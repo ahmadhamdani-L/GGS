@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS user_inventory (
 -- ─── DIAMOND BALANCE ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS diamond_balance (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  amount BIGINT NOT NULL DEFAULT 0 CHECK (amount >= 0),
+  amount BIGINT NOT NULL DEFAULT 100 CHECK (amount >= 0),
   total_spent BIGINT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

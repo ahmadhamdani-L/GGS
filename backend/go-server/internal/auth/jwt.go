@@ -16,8 +16,8 @@ var refreshSecret []byte
 
 // Token durations
 const (
-	AccessTokenDuration  = 15 * time.Minute  // Short-lived access token
-	RefreshTokenDuration = 7 * 24 * time.Hour // 7 days refresh token
+	AccessTokenDuration  = 24 * time.Hour      // 24 hours — mobile game, no frequent refresh needed
+	RefreshTokenDuration = 7 * 24 * time.Hour  // 7 days refresh token
 )
 
 func init() {

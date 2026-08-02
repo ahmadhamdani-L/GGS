@@ -15,6 +15,7 @@ class PlayerGrid18 extends StatelessWidget {
   final List<String> testamentPlayerIds;
   final void Function(String playerId)? onTapDead;
   final void Function(PlayerState player)? onLongPressPlayer;
+  final void Function(PlayerState player)? onTapPlayer;
 
   const PlayerGrid18({
     super.key,
@@ -27,6 +28,7 @@ class PlayerGrid18 extends StatelessWidget {
     this.testamentPlayerIds = const [],
     this.onTapDead,
     this.onLongPressPlayer,
+    this.onTapPlayer,
   });
 
   @override
@@ -44,7 +46,7 @@ class PlayerGrid18 extends StatelessWidget {
           crossAxisCount: 4,
           mainAxisSpacing: 5,
           crossAxisSpacing: 5,
-          childAspectRatio: 0.7,
+          childAspectRatio: 0.85,
         ),
         itemCount: 16,
         itemBuilder: (_, index) {
@@ -65,7 +67,9 @@ class PlayerGrid18 extends StatelessWidget {
           final hasTest = testamentPlayerIds.contains(player.id);
           final isMe = player.id == me?.id;
           return GestureDetector(
-            onTap: (isDead && hasTest && onTapDead != null) ? () => onTapDead!(player.id) : null,
+            onTap: (isDead && hasTest && onTapDead != null)
+                ? () => onTapDead!(player.id)
+                : (onTapPlayer != null ? () => onTapPlayer!(player) : null),
             onLongPress: (!isMe && onLongPressPlayer != null) ? () => onLongPressPlayer!(player) : null,
             child: cardBuilder != null
                 ? cardBuilder!(player, index)

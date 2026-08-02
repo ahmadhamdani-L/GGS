@@ -1,9 +1,6 @@
--- ============================================================
--- GGS Werewolf - Consolidated PostgreSQL Database Schema
--- Single-file version of all tables used by the Go backend
--- Generated from application code analysis (Aug 2026)
--- Run: psql -U postgres -d ggs_werewolf -f migrations/all_migrations_postgres.sql
--- ============================================================
+-- GGS Werewolf - PostgreSQL Schema (Go Backend)
+-- Consolidated from application code analysis (Aug 2026)
+-- Run: psql -U postgres -d ggs_werewolf -f migrations/001_init.sql
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -380,7 +377,7 @@ CREATE TABLE IF NOT EXISTS user_inventory (
 -- ─── DIAMOND BALANCE ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS diamond_balance (
   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  amount BIGINT NOT NULL DEFAULT 0 CHECK (amount >= 0),
+  amount BIGINT NOT NULL DEFAULT 100 CHECK (amount >= 0),
   total_spent BIGINT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

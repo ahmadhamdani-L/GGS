@@ -755,7 +755,7 @@ class _SeatCard extends ConsumerWidget {
                                   showShadow: false,
                                 )
                               : ChibiAvatar(
-                                  config: generateChibiFromId(player!.userId),
+                                  config: parseChibiConfig(player!.chibiConfig) ?? generateChibiFromId(player!.userId),
                                   size: 58,
                                   animate: false,
                                   showShadow: false,
@@ -870,7 +870,7 @@ class _StartGameBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canStart = isHost && roomState.players.length >= 2;
+    final canStart = isHost && roomState.players.isNotEmpty;
     final myUserId = auth.userId;
     final myPlayer = myUserId != null
         ? roomState.players.where((p) => p.userId == myUserId).firstOrNull

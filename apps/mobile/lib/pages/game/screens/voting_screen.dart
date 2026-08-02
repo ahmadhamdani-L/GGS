@@ -11,6 +11,7 @@ import '../../../providers/game_provider.dart';
 import '../../../providers/room_provider.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/game_seat_card.dart';
+import '../widgets/player_profile_dialog.dart';
 
 // ═══════════════════════════════════════════════════════════
 // VOTING — Player list with checkmarks + confirm button
@@ -95,6 +96,7 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
                   HapticFeedback.selectionClick();
                   setState(() => _selectedTargetId = p.id);
                 } : null,
+                onLongPress: () => showPlayerProfileDialog(context, p, isMe: p.id == widget.me?.id),
                 child: Stack(children: [
                   GameSeatCard(player: p, index: i, isMe: p.id == widget.me?.id, isDead: isDead, isTarget: isSelected),
                   if (votesOnThis > 0)

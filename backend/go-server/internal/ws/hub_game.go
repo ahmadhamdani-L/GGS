@@ -34,13 +34,17 @@ func (h *Hub) handleStartGame(client *Client, payload json.RawMessage) {
 		return
 	}
 
-	// Validate minimum player count (always need at least 8 for valid role distribution)
+	// Validate minimum player count
 	room.mu.RLock()
 	currentPlayers := len(room.Players)
 	room.mu.RUnlock()
-	if currentPlayers < 8 && req.NoBotFill {
-		sendError(client, "Butuh minimal 8 pemain untuk mulai tanpa bot")
+	if currentPlayers < 1 {
+		sendError(client, "Butuh minimal 1 pemain untuk mulai")
 		return
+	}
+	// NoBotFill with less than 8 players is not recommended — force bot fill
+	if req.NoBotFill && currentPlayers < 8 {
+		req.NoBotFill = false // Override: fill with bots for playable game
 	}
 
 	// Set room to countdown status

@@ -104,6 +104,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return false;
   }
 
+  /// Called when app resumes from background — checks token expiry and refreshes if needed.
+  /// This prevents logout when user goes AFK and Timer was suspended by OS.
+  Future<void> checkAndRefreshIfNeeded() async {
+    if (state.status != AuthStatus.authenticated) return;
+    
+    final expiryStr = await _secureStorage.read(key: _kTokenExpiry);
+    if (expiryStr == null) return;
+    
+    final expiry = DateTime.tryParse(expiryStr);
+    if (expiry == null) return;
+    
+    final now = DateTime.now();
+    final remaining = expiry.difference(now);
+    
+    if (remaining.isNegative || remaining.inMinutes < 5) {
+      // Token expired or about to expire — refresh now
+      await _refreshAccessToken();
+    } else {
+      // Token still valid — reschedule timer (it may have been killed in background)
+      _scheduleTokenRefresh(remaining.inSeconds);
+    }
+  }
+
   Future<void> _tryRestoreSession() async {
     // Try to get access token from secure storage
     final accessToken = await _secureStorage.read(key: _kAccessToken);

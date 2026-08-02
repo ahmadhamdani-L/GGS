@@ -121,9 +121,9 @@ func GetDiamondBalance(userID string) (*DiamondBalance, error) {
 		SELECT user_id, amount, total_spent FROM diamond_balance WHERE user_id = $1
 	`, userID).Scan(&b.UserID, &b.Amount, &b.TotalSpent)
 	if errors.Is(err, sql.ErrNoRows) {
-		// Auto-create on first read
-		DB.Exec(`INSERT INTO diamond_balance (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, userID)
-		return &DiamondBalance{UserID: userID, Amount: 0}, nil
+		// Auto-create on first read with 100 default diamonds
+		DB.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, userID)
+		return &DiamondBalance{UserID: userID, Amount: 100}, nil
 	}
 	return b, err
 }

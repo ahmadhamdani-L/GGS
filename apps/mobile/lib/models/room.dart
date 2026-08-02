@@ -64,6 +64,7 @@ class RoomPlayer {
   final String? displayName;
   final int?    avatarId;
   final String? avatarUrl;  // custom uploaded photo URL
+  final Map<String, dynamic>? chibiConfig;
 
   const RoomPlayer({
     required this.id,
@@ -75,6 +76,7 @@ class RoomPlayer {
     this.displayName,
     this.avatarId,
     this.avatarUrl,
+    this.chibiConfig,
   });
 
   factory RoomPlayer.fromJson(Map<String, dynamic> json) {
@@ -90,6 +92,7 @@ class RoomPlayer {
       displayName: json['display_name'] as String? ?? json['displayName'] as String?,
       avatarId:    json['avatar_id'] as int? ?? json['avatarId'] as int?,
       avatarUrl:   json['avatar_url'] as String? ?? json['avatarUrl'] as String?,
+      chibiConfig: json['chibiConfig'] as Map<String, dynamic>?,
     );
   }
 

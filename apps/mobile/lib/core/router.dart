@@ -58,8 +58,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
         return '/home';
       }
-      // Gate: if logged in but profile not set up, redirect to setup
-      if (isLoggedIn && !isOnProfileSetup) {
+      // Gate: if logged in but profile not set up, redirect to setup (only from /home)
+      if (isLoggedIn && !isOnProfileSetup && state.matchedLocation == '/home') {
         final profile = auth.profile;
         if (profile != null && profile.displayName == 'Player') {
           return '/profile/setup';

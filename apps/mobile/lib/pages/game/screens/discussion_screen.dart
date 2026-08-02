@@ -12,6 +12,7 @@ import '../../../widgets/chibi_avatar.dart';
 import '../../../widgets/game_avatar.dart';
 import '../../../widgets/quick_chat_bar.dart';
 import '../widgets/game_grid.dart';
+import '../widgets/player_profile_dialog.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DISCUSSION — Circular avatars + Chat (Discord style)
@@ -30,7 +31,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
-  int _chatFlex = 3; // Default size: 3 (Enlarged). Modes: 1 (Collapsed), 3 (Normal), 6 (Expanded)
+  int _chatFlex = 2; // Default size: 2 (Compact). Modes: 1 (Collapsed), 2 (Normal), 3 (Medium), 6 (Expanded)
 
   @override
   void initState() {
@@ -101,6 +102,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
           players: widget.game.players,
           me: widget.me,
           testamentPlayerIds: widget.game.testaments.map((t) => t.playerId).toList(),
+          onTapPlayer: (player) => showPlayerProfileDialog(context, player, isMe: player.id == widget.me?.id),
         ),
       ),
       // Expandable & Collapsible Chat Area

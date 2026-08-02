@@ -120,6 +120,24 @@ class _ReconnectOverlayState extends ConsumerState<ReconnectOverlay> {
               ]),
             ),
             const SizedBox(height: 24),
+            // Force reconnect button
+            ElevatedButton.icon(
+              onPressed: () async {
+                _countdownTimer?.cancel();
+                setState(() {
+                  _attempts = 0;
+                  _countdown = 3;
+                });
+                await ref.read(webSocketProvider).forceReconnect();
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Coba Sambungkan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+            ),
+            const SizedBox(height: 12),
             // Back to home button
             OutlinedButton.icon(
               onPressed: () {

@@ -53,7 +53,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       // Load diamond balance
       ref.read(socialProvider.notifier).refreshDiamonds();
     });
-    _connectWs();
+    // Force reconnect WS to ensure clean state after leaving game/lobby
+    _ensureWsConnected();
     // Listen for game invites from friends
     _inviteSub = ref.read(webSocketProvider).messages.listen((msg) {
       if (!mounted) return;
@@ -103,10 +104,21 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  Future<void> _connectWs() async {
+  Future<void> _ensureWsConnected() async {
     final ws = ref.read(webSocketProvider);
     final api = ref.read(apiServiceProvider);
-    if (api.token != null && !ws.isConnected) {
+    if (api.token == null) return;
+    
+    if (ws.isConnected) {
+      // Already connected — just reset state, no need to reconnect
+      return;
+    }
+    
+    // Not connected — force reconnect (resets attempt counter)
+    try {
+      await ws.forceReconnect();
+    } catch (_) {
+      // Fallback: try fresh connect
       try {
         await ws.connect(api.token!);
       } catch (_) {}
@@ -550,7 +562,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             Column(children: [
               _sideButton('🎁', 'Gift', () => context.push('/friends')),
               _sideButton('💎', 'Top Up', () => context.push('/topup')),
-              _sideButton('🎰', 'Lucky Spin', () {}),
+              _sideButton('🎰', 'Lucky Spin', () => context.push('/lucky-spin')),
             ]),
           ],
         ),

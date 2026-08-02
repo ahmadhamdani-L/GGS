@@ -10,6 +10,7 @@ import '../../../providers/room_provider.dart';
 import '../../../widgets/report_dialog.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/game_seat_card.dart';
+import '../widgets/player_profile_dialog.dart';
 
 // ═══════════════════════════════════════════════════════════
 // TESTAMENT
@@ -74,7 +75,7 @@ class _TestamentScreenState extends ConsumerState<TestamentScreen> {
                   _viewingTestamentOf = _viewingTestamentOf == p.id ? null : p.id;
                 });
               } : null,
-              onLongPress: isPlayerMe ? null : () => _showReportDialog(context, ref, p),
+              onLongPress: () => showPlayerProfileDialog(context, p, isMe: isPlayerMe),
               child: Stack(children: [
                 GameSeatCard(player: p, index: i, isMe: isPlayerMe, isDead: isDead),
                 if (isDead && hasTestament)

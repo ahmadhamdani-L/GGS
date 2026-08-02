@@ -96,6 +96,7 @@ func CreateUser(email, password, displayName string) (*User, *Profile, error) {
 	// Non-critical rows — still inside tx for atomicity
 	tx.Exec(`INSERT INTO player_stats (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, user.ID)
 	tx.Exec(`INSERT INTO leaderboard (user_id, display_name) VALUES ($1, $2) ON CONFLICT DO NOTHING`, user.ID, displayName)
+	tx.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, user.ID)
 
 	if err := tx.Commit(); err != nil {
 		return nil, nil, fmt.Errorf("commit tx: %w", err)
@@ -143,6 +144,7 @@ func CreateGuest(displayName string) (*User, *Profile, error) {
 
 	tx.Exec(`INSERT INTO player_stats (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, user.ID)
 	tx.Exec(`INSERT INTO leaderboard (user_id, display_name, coins) VALUES ($1, $2, 50) ON CONFLICT DO NOTHING`, user.ID, displayName)
+	tx.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, user.ID)
 
 	if err := tx.Commit(); err != nil {
 		return nil, nil, fmt.Errorf("commit tx: %w", err)

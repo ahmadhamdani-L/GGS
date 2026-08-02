@@ -35,8 +35,36 @@ func generateGameID() string {
 }
 
 func getDefaultRoleConfig(playerCount int) map[Role]int {
+	if playerCount < 4 {
+		// Very small game (1-3 players): only wolf + villagers
+		wolves := 1
+		villagers := playerCount - wolves
+		if villagers < 0 {
+			villagers = 0
+		}
+		return map[Role]int{
+			RoleWerewolf: wolves,
+			RoleVillager: villagers,
+		}
+	}
 	if playerCount < 8 {
-		playerCount = 8
+		// Small game: 1 wolf, 1 witch, 1 seer, 1 doctor, rest villagers
+		wolves := 1
+		if playerCount >= 6 {
+			wolves = 2
+		}
+		specialRoles := wolves + 3 // wolves + witch + seer + doctor
+		villagers := playerCount - specialRoles
+		if villagers < 0 {
+			villagers = 0
+		}
+		return map[Role]int{
+			RoleWerewolf: wolves,
+			RoleWitch:    1,
+			RoleSeer:     1,
+			RoleDoctor:   1,
+			RoleVillager: villagers,
+		}
 	}
 	if playerCount > 18 {
 		playerCount = 18
@@ -56,6 +84,15 @@ func distributeRoles(config map[Role]int, playerCount int) []Role {
 		for i := 0; i < count; i++ {
 			roles = append(roles, role)
 		}
+	}
+
+	// Pad with villagers if role config gives fewer roles than players
+	for len(roles) < playerCount {
+		roles = append(roles, RoleVillager)
+	}
+	// Trim if somehow more roles than players
+	if len(roles) > playerCount {
+		roles = roles[:playerCount]
 	}
 
 	// Fisher-Yates shuffle

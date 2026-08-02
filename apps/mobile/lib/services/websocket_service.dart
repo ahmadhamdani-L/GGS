@@ -23,7 +23,7 @@ class WebSocketService {
   bool _sessionReplaced = false; // Guard: do not reconnect after being evicted
   String? _token;
   int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 5;
+  static const int _maxReconnectAttempts = 10;
   static const Duration _connectTimeout = Duration(seconds: 10);
 
   bool get isConnected => _isConnected;
@@ -42,6 +42,8 @@ class WebSocketService {
 
   Future<void> connect(String token) async {
     _token = token;
+    _reconnectAttempts = 0; // Reset attempts on explicit connect
+    _sessionReplaced = false; // Allow reconnection on fresh connect
     _setStatus(WsConnectionStatus.connecting);
     
     final wsUrl = '${AppConfig.wsUrl}?token=$token';
@@ -127,6 +129,22 @@ class WebSocketService {
     _setStatus(WsConnectionStatus.disconnected);
     await _channel?.sink.close();
     _channel = null;
+  }
+
+  /// Force reconnect — resets attempt counter and reconnects immediately.
+  /// Use when network changes or after returning from a game.
+  Future<void> forceReconnect() async {
+    if (_token == null) return;
+    logger.info(LogCategory.ws, 'Force reconnect requested');
+    _reconnectTimer?.cancel();
+    _pingTimer?.cancel();
+    _connectionTimeout?.cancel();
+    _isConnected = false;
+    await _channel?.sink.close();
+    _channel = null;
+    _reconnectAttempts = 0;
+    _sessionReplaced = false;
+    await connect(_token!);
   }
 
   void _scheduleReconnect() {
