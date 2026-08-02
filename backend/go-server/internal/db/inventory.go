@@ -113,7 +113,8 @@ func GetEquipped(userID string) (*EquippedItems, error) {
 	return e, nil
 }
 
-// EquipItem sets an item as active in the appropriate slot
+// EquipItem sets an item as active in the appropriate slot.
+// Uses a whitelisted column map to prevent SQL injection on category→column mapping.
 func EquipItem(userID, itemID, category string) error {
 	if DB == nil {
 		return nil
@@ -122,14 +123,21 @@ func EquipItem(userID, itemID, category string) error {
 	if col == "" {
 		return nil
 	}
-	_, err := DB.Exec(`
-		INSERT INTO equipped_items (user_id, `+col+`) VALUES ($1, $2)
-		ON CONFLICT (user_id) DO UPDATE SET `+col+` = $2, updated_at = now()
-	`, userID, itemID)
+	// Use a safe per-column parameterized query (column name is from whitelist, not user input)
+	queries := map[string]string{
+		"frame_id":    `INSERT INTO equipped_items (user_id, frame_id) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET frame_id=$2,updated_at=now()`,
+		"emote_set_id": `INSERT INTO equipped_items (user_id, emote_set_id) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET emote_set_id=$2,updated_at=now()`,
+		"theme_id":    `INSERT INTO equipped_items (user_id, theme_id) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET theme_id=$2,updated_at=now()`,
+	}
+	q, ok := queries[col]
+	if !ok {
+		return nil
+	}
+	_, err := DB.Exec(q, userID, itemID)
 	return err
 }
 
-// UnequipItem clears a slot
+// UnequipItem clears a slot.
 func UnequipItem(userID, category string) error {
 	if DB == nil {
 		return nil
@@ -138,7 +146,16 @@ func UnequipItem(userID, category string) error {
 	if col == "" {
 		return nil
 	}
-	_, err := DB.Exec(`UPDATE equipped_items SET `+col+` = NULL, updated_at = now() WHERE user_id = $1`, userID)
+	queries := map[string]string{
+		"frame_id":    `UPDATE equipped_items SET frame_id=NULL,updated_at=now() WHERE user_id=$1`,
+		"emote_set_id": `UPDATE equipped_items SET emote_set_id=NULL,updated_at=now() WHERE user_id=$1`,
+		"theme_id":    `UPDATE equipped_items SET theme_id=NULL,updated_at=now() WHERE user_id=$1`,
+	}
+	q, ok := queries[col]
+	if !ok {
+		return nil
+	}
+	_, err := DB.Exec(q, userID)
 	return err
 }
 

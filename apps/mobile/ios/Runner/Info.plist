@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- iOS permissions required by image_picker -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Diperlukan untuk memilih foto avatar dari galeri kamu.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Diperlukan untuk mengambil foto avatar langsung dari kamera.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Diperlukan untuk merekam video (tidak digunakan saat ini).</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

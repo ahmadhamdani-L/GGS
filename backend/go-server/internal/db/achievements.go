@@ -121,3 +121,35 @@ func CheckAndUnlockAchievements(userID string, stats *PlayerStats) []string {
 
 	return newlyUnlocked
 }
+
+// UnlockAchievement marks an achievement as unlocked for a user if not already done.
+// Called from gift/social event handlers. Non-blocking (errors are silently swallowed).
+func UnlockAchievement(userID, achievementID string) {
+	if DB == nil {
+		return
+	}
+	// Check if already unlocked
+	var exists bool
+	DB.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM player_achievements
+			WHERE user_id=$1 AND achievement_id=$2 AND unlocked=true
+		)
+	`, userID, achievementID).Scan(&exists)
+	if exists {
+		return
+	}
+	// Upsert unlock
+	DB.Exec(`
+		INSERT INTO player_achievements (user_id, achievement_id, unlocked, unlocked_at)
+		VALUES ($1, $2, true, now())
+		ON CONFLICT (user_id, achievement_id) DO UPDATE
+			SET unlocked=true, unlocked_at=now()
+		WHERE player_achievements.unlocked=false
+	`, userID, achievementID)
+
+	// Notify user via DB notification
+	CreateNotification(userID, "achievement_unlocked", "🏆 Achievement Unlocked!",
+		"Kamu membuka achievement: "+achievementID,
+		map[string]interface{}{"achievementId": achievementID})
+}

@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,7 +38,9 @@ func InitMemoryStore() {
 
 func newID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("%016x", time.Now().UnixNano())
+	}
 	return hex.EncodeToString(b)
 }
 
@@ -241,5 +245,57 @@ func (m *MemStore) ResetPassword(email, newPassword string) error {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	user.PasswordHash = string(hash)
 	return nil
+}
+
+func (m *MemStore) SearchUsers(query string) []Profile {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return []Profile{}
+	}
+
+	results := make([]Profile, 0)
+	for _, p := range m.profiles {
+		name := strings.ToLower(p.DisplayName)
+		id := strings.ToLower(p.UserID)
+		if strings.Contains(name, q) || strings.Contains(id, q) {
+			pCopy := *p
+			if pCopy.Charm == 0 {
+				pCopy.Charm = 300
+			}
+			if pCopy.Popularity == 0 {
+				pCopy.Popularity = 150
+			}
+			pCopy.RankTier = CalculateRankTier(pCopy.XP)
+			results = append(results, pCopy)
+		}
+	}
+	return results
+}
+
+func (m *MemStore) UpdateCharmPopularity(userID string, charmDelta, popDelta int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	p, ok := m.profiles[userID]
+	if !ok {
+		return
+	}
+	if p.Charm == 0 {
+		p.Charm = 300
+	}
+	if p.Popularity == 0 {
+		p.Popularity = 150
+	}
+	p.Charm += charmDelta
+	p.Popularity += popDelta
+	if p.Charm < 0 {
+		p.Charm = 0
+	}
+	if p.Popularity < 0 {
+		p.Popularity = 0
+	}
 }
 

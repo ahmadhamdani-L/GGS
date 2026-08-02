@@ -107,19 +107,33 @@ class MissionsNotifier extends StateNotifier<MissionsState> {
   ApiService get _api => ref.read(apiServiceProvider);
 
   Future<void> loadMissions() async {
-    final auth = ref.read(authProvider);
-    if (!auth.isAuthenticated) return;
-
+    // Prevent re-loading if already loaded or currently loading
+    if (state.isLoading || state.missions.isNotEmpty) return;
+    
     state = state.copyWith(isLoading: true, error: null);
 
-    final response = await _api.getMissions();
-    if (response.isSuccess && response.data != null) {
-      final missionsList = response.data!['missions'] as List<dynamic>? ?? [];
-      final missions = missionsList.map((m) => Mission.fromJson(m as Map<String, dynamic>)).toList();
-      state = state.copyWith(missions: missions, isLoading: false);
-    } else {
-      state = state.copyWith(isLoading: false, error: response.error);
+    final defaultMissions = [
+      const Mission(id: 'm1', title: 'Mainkan 1 Game', description: 'Selesaikan 1 pertandingan Werewolf', type: 'play_games', target: 1, progress: 0, xpReward: 50, coinReward: 20, isCompleted: false, isClaimed: false),
+      const Mission(id: 'm2', title: 'Menangkan 1 Match', description: 'Bawa timmu meraih kemenangan', type: 'win_game', target: 1, progress: 0, xpReward: 100, coinReward: 50, isCompleted: false, isClaimed: false),
+      const Mission(id: 'm3', title: 'Voting Tepat', description: 'Gunakan suara untuk voting terduga', type: 'vote_correct', target: 2, progress: 0, xpReward: 40, coinReward: 15, isCompleted: false, isClaimed: false),
+    ];
+
+    try {
+      final response = await _api.getMissions();
+      if (response.isSuccess && response.data != null) {
+        final missionsList = response.data!['missions'] as List<dynamic>? ?? [];
+        if (missionsList.isNotEmpty) {
+          final missions = missionsList.map((m) => Mission.fromJson(m as Map<String, dynamic>)).toList();
+          state = state.copyWith(missions: missions, isLoading: false);
+          return;
+        }
+      }
+    } catch (_) {
+      // API failed — fall through to defaults
     }
+
+    // Fallback if empty or offline
+    state = state.copyWith(missions: defaultMissions, isLoading: false);
   }
 
   Future<bool> claimMission(String missionId) async {

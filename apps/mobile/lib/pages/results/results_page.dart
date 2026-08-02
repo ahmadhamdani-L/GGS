@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../../models/game_state.dart';
 import '../../models/player.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../widgets/chibi_avatar.dart';
@@ -31,8 +31,6 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
   int get _xpEarned => ref.read(gameProvider)?.rewards?.xpEarned ?? 50;
   int get _coinsEarned => ref.read(gameProvider)?.rewards?.coinsEarned ?? 20;
   int get _mmrChange => ref.read(gameProvider)?.rewards?.mmrChange ?? 0;
-  bool get _won => ref.read(gameProvider)?.rewards?.won ?? false;
-  bool _showLevelUp = false;
 
   @override
   void initState() {
@@ -86,9 +84,10 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
 
     return Scaffold(
       body: Stack(fit: StackFit.expand, children: [
-        Image.asset('assets/beranda.png', fit: BoxFit.cover, width: size.width, height: size.height,
+        // Results page pakai beranda.png bukan siang/malam karena ini di luar game
+        Image.asset('assets/siang.png', fit: BoxFit.cover, width: size.width, height: size.height,
           errorBuilder: (_, __, ___) => Container(color: AppColors.background)),
-        Container(color: Colors.black.withValues(alpha: 0.8)),
+        Container(color: Colors.black.withValues(alpha: 0.85)),
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -201,11 +200,15 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
           style: TextStyle(color: isUp ? AppColors.success : AppColors.error, fontSize: 16, fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: AppColors.primary.withValues(alpha: 0.12)),
-          child: const Text('🥈 Silver', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
-        ),
+        Builder(builder: (context) {
+          final level = ref.watch(authProvider).profile?.level ?? 1;
+          final String tier = level >= 20 ? '👑 Grandmaster' : level >= 15 ? '💎 Diamond' : level >= 10 ? '🥇 Gold' : level >= 5 ? '🥈 Silver' : '🥉 Bronze';
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: AppColors.primary.withValues(alpha: 0.12)),
+            child: Text(tier, style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+          );
+        }),
       ]),
     );
   }

@@ -2,14 +2,13 @@ package bot
 
 import (
 	"math/rand"
-	"time"
 
 	"github.com/ggs/werewolf-server/internal/game"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+// L-01 FIX: Removed deprecated rand.Seed(time.Now().UnixNano()) init().
+// Since Go 1.20, the global rand is automatically seeded with a random value.
+// Explicit seeding with time.Now().UnixNano() is a no-op and logs a deprecation warning.
 
 // BotNames are default display names for bots
 var BotNames = []string{

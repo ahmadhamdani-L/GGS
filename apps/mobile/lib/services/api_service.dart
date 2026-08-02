@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../core/config.dart';
 
@@ -24,9 +25,11 @@ class ApiService {
     _token = token;
   }
 
+// Add X-App-Version header to every request so the server can enforce min version.
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         if (_token != null) 'Authorization': 'Bearer $_token',
+        'X-App-Version': '1.0.0', // matches pubspec version: 1.0.0+1
       };
 
   // --- Auth ---
@@ -61,14 +64,20 @@ class ApiService {
     });
   }
 
+// api_service.dart — forgotPassword now matches the two-step API:
+// Step 1: POST {email} → receive token (in dev mode returned in response)
+// Step 2: POST {email, token, newPassword} → reset password
+// The existing single-call forgotPassword is kept for backward compat
+// but updated to pass both fields for the new two-step flow.
   Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
     required String email,
-    required String newPassword,
+    String? token,
+    String? newPassword,
   }) async {
-    return _post('/api/auth/forgot-password', {
-      'email': email,
-      'newPassword': newPassword,
-    });
+    final body = <String, dynamic>{'email': email};
+    if (token != null) body['token'] = token;
+    if (newPassword != null) body['newPassword'] = newPassword;
+    return _post('/api/auth/forgot-password', body);
   }
 
   Future<ApiResponse<Map<String, dynamic>>> convertGuest({
@@ -106,12 +115,21 @@ class ApiService {
     String? displayName,
     int? avatarId,
     Map<String, dynamic>? chibiConfig,
+    String? avatarUrl,  // Task #6: custom uploaded photo URL
   }) async {
     final body = <String, dynamic>{};
     if (displayName != null) body['displayName'] = displayName;
     if (avatarId != null) body['avatarId'] = avatarId;
     if (chibiConfig != null) body['chibiConfig'] = chibiConfig;
+    if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
     return _put('/api/profile', body);
+  }
+
+  /// Build full URL for an avatar path returned by the server.
+  /// avatarPath is like "/avatars/abc123.jpg"
+  String buildAvatarUrl(String avatarPath) {
+    if (avatarPath.startsWith('http')) return avatarPath;
+    return '${AppConfig.apiUrl}$avatarPath';
   }
 
   // --- Stats & Leaderboard ---
@@ -142,6 +160,10 @@ class ApiService {
     return _post('/api/report', {'reportedId': reportedId, 'reason': reason, 'details': details});
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> searchUsers(String query) async {
+    return _get('/api/users/search?q=${Uri.encodeComponent(query)}');
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> getRecentPlayers() async {
     return _get('/api/recent-players');
   }
@@ -157,6 +179,11 @@ class ApiService {
   /// Get all shop items with ownership status
   Future<ApiResponse<Map<String, dynamic>>> getShopItems() async {
     return _get('/api/shop');
+  }
+
+  /// Get user's inventory (owned items with quantities)
+  Future<ApiResponse<Map<String, dynamic>>> getInventory() async {
+    return _get('/api/inventory');
   }
 
   /// Purchase an item from the shop
@@ -254,4 +281,173 @@ class ApiService {
       return ApiResponse(error: response.body, statusCode: response.statusCode);
     }
   }
+
+  /// POST /api/fcm/token — register push notification token
+  Future<ApiResponse<Map<String, dynamic>>> registerFCMToken({
+    required String token,
+    String platform = 'android',
+  }) => _post('/api/fcm/token', {'token': token, 'platform': platform});
+
+  // ─── Avatar Upload ────────────────────────────────────────
+
+  /// POST /api/avatar/upload — multipart/form-data, field: "avatar"
+  /// Returns { avatarUrl: "/avatars/xxx.jpg" }
+  Future<ApiResponse<Map<String, dynamic>>> uploadAvatar(String filePath) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/api/avatar/upload');
+      final request = http.MultipartRequest('POST', uri);
+
+      // Auth header
+      if (_token != null) {
+        request.headers['Authorization'] = 'Bearer $_token';
+      }
+      request.headers['X-App-Version'] = '1.0.0';
+
+      request.files.add(await http.MultipartFile.fromPath('avatar', filePath));
+
+      final streamed = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamed);
+      return _parseResponse(response);
+    } on TimeoutException {
+      return ApiResponse(error: 'Upload timeout — coba lagi', statusCode: 408);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 0);
+    }
+  }
+
+  /// DELETE /api/avatar — removes user's uploaded avatar, reverts to preset
+  Future<ApiResponse<Map<String, dynamic>>> deleteAvatar() => _delete('/api/avatar');
+
+  // Helper for DELETE requests
+  Future<ApiResponse<Map<String, dynamic>>> _delete(String path) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}$path');
+      final response = await http.delete(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
+      return _parseResponse(response);
+    } on TimeoutException {
+      return ApiResponse(error: 'Request timeout', statusCode: 408);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 0);
+    }
+  }
+
+  /// GET /api/gifts/catalog?type=gift|curse|all
+  Future<ApiResponse<Map<String, dynamic>>> getGiftCatalog({String type = ''}) =>
+      _get('/api/gifts/catalog${type.isNotEmpty ? '?type=$type' : ''}');
+
+  /// POST /api/gifts/send
+  Future<ApiResponse<Map<String, dynamic>>> sendGift({
+    required String receiverId,
+    required String giftId,
+    required String idempotencyKey,
+    String message = '',
+  }) => _post('/api/gifts/send', {
+        'receiverId': receiverId,
+        'giftId': giftId,
+        'message': message,
+        'idempotencyKey': idempotencyKey,
+      });
+
+  /// GET /api/gifts/history?role=sent|received|all&limit=20
+  Future<ApiResponse<Map<String, dynamic>>> getGiftHistory({String role = 'all', int limit = 20}) =>
+      _get('/api/gifts/history?role=$role&limit=$limit');
+
+  /// GET /api/social/stats?userId=...
+  Future<ApiResponse<Map<String, dynamic>>> getSocialStats({String? userId}) =>
+      _get('/api/social/stats${userId != null ? '?userId=$userId' : ''}');
+
+  /// GET /api/social/feed?scope=global|mine&limit=30
+  Future<ApiResponse<Map<String, dynamic>>> getActivityFeed({String scope = 'global', int limit = 30}) =>
+      _get('/api/social/feed?scope=$scope&limit=$limit');
+
+  /// GET /api/social/leaderboard?type=charm&period=weekly
+  Future<ApiResponse<Map<String, dynamic>>> getSocialLeaderboard({
+    String boardType = 'charm',
+    String period    = 'alltime',
+    int limit        = 50,
+  }) => _get('/api/social/leaderboard?type=$boardType&period=$period&limit=$limit');
+
+  /// GET /api/diamonds
+  Future<ApiResponse<Map<String, dynamic>>> getDiamonds() =>
+      _get('/api/diamonds');
+
+  // ─── Payment ──────────────────────────────────────────────
+
+  /// GET /api/payment/packages
+  Future<ApiResponse<Map<String, dynamic>>> getPaymentPackages() =>
+      _get('/api/payment/packages');
+
+  /// POST /api/payment/create-order
+  Future<ApiResponse<Map<String, dynamic>>> createPaymentOrder(String packageId) =>
+      _post('/api/payment/create-order', {'packageId': packageId});
+
+  // ─── Achievements ──────────────────────────────────────────
+
+  /// GET /api/achievements
+  Future<ApiResponse<Map<String, dynamic>>> getAchievements() =>
+      _get('/api/achievements');
+
+  // ─── Player Profile (view others) ─────────────────────────
+
+  /// GET /api/profile?userId=... — view another player's profile
+  Future<ApiResponse<Map<String, dynamic>>> getPlayerProfile(String userId) =>
+      _get('/api/profile?userId=$userId');
+
+  // ─── Social actions (shortcuts) ────────────────────────────
+
+  /// POST /api/friends — add friend
+  Future<ApiResponse<Map<String, dynamic>>> addFriend(String targetId) =>
+      _post('/api/friends', {'action': 'add', 'targetId': targetId});
+
+  /// POST /api/blocked
+  Future<ApiResponse<Map<String, dynamic>>> blockPlayer(String targetId) =>
+      _post('/api/blocked', {'action': 'block', 'targetId': targetId});
+
+  /// DELETE /api/account — permanently delete user account
+  Future<ApiResponse<Map<String, dynamic>>> deleteAccount({String? password}) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/api/account');
+      final request = http.Request('DELETE', uri);
+      request.headers.addAll(_headers);
+      request.body = jsonEncode({'password': password ?? '', 'confirm': true});
+      final streamed = await request.send().timeout(const Duration(seconds: 15));
+      final response = await http.Response.fromStream(streamed);
+      return _parseResponse(response);
+    } on TimeoutException {
+      return ApiResponse(error: 'Request timeout', statusCode: 408);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 0);
+    }
+  }
+
+  // ─── Events ────────────────────────────────────────────────
+
+  /// GET /api/events — get active events with user progress
+  Future<ApiResponse<Map<String, dynamic>>> getEvents() => _get('/api/events');
+
+  /// POST /api/events/claim — claim event reward
+  Future<ApiResponse<Map<String, dynamic>>> claimEventReward(String eventId) =>
+      _post('/api/events/claim', {'eventId': eventId});
+
+  // ─── Lucky Spin ────────────────────────────────────────────
+
+  /// GET /api/lucky-spin — get spin status + prizes
+  Future<ApiResponse<Map<String, dynamic>>> getSpinStatus() => _get('/api/lucky-spin');
+
+  /// POST /api/lucky-spin — perform a spin
+  Future<ApiResponse<Map<String, dynamic>>> doSpin() => _post('/api/lucky-spin', {});
+
+  /// GET /api/lucky-spin/history — get spin history
+  Future<ApiResponse<Map<String, dynamic>>> getSpinHistory() => _get('/api/lucky-spin/history');
+
+  // ─── Gift Inbox ────────────────────────────────────────────
+
+  /// GET /api/gifts/inbox — get unclaimed gifts
+  Future<ApiResponse<Map<String, dynamic>>> getGiftInbox() => _get('/api/gifts/inbox');
+
+  /// POST /api/gifts/claim — claim a specific gift or all
+  Future<ApiResponse<Map<String, dynamic>>> claimGift({String? giftId, bool all = false}) =>
+      _post('/api/gifts/claim', {'giftId': giftId ?? '', 'all': all});
 }
+

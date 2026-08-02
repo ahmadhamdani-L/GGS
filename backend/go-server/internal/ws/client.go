@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ggs/werewolf-server/internal/auth"
+	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/gorilla/websocket"
 )
 
@@ -55,11 +56,15 @@ type Message struct {
 
 // Client represents a connected WebSocket client
 type Client struct {
-	Hub    *Hub
-	Conn   *websocket.Conn
-	Send   chan *Message
-	UserID string
-	RoomID string
+	Hub         *Hub
+	Conn        *websocket.Conn
+	Send        chan *Message
+	UserID      string
+	RoomID      string
+	DisplayName string
+	lastGlobalChat time.Time
+	// P3-46: Anti-cheat — track last action time to prevent spam
+	lastAction time.Time
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket
@@ -70,21 +75,23 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract and validate user ID from JWT token
+	// C-01 FIX: Token is mandatory — reject anonymous connections entirely.
+	// A missing or invalid token closes the connection immediately.
 	tokenStr := r.URL.Query().Get("token")
-	var userID string
-	if tokenStr != "" {
-		validatedID, err := auth.ValidateToken(tokenStr)
-		if err != nil {
-			log.Printf("WebSocket auth failed: %v", err)
-			conn.WriteMessage(websocket.CloseMessage,
-				websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "invalid token"))
-			conn.Close()
-			return
-		}
-		userID = validatedID
-	} else {
-		userID = "anonymous-" + generateID()[:8]
+	if tokenStr == "" {
+		log.Printf("WebSocket auth rejected: missing token from %s", conn.RemoteAddr())
+		conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "authentication required"))
+		conn.Close()
+		return
+	}
+	userID, err := auth.ValidateToken(tokenStr)
+	if err != nil {
+		log.Printf("WebSocket auth failed: %v", err)
+		conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "invalid token"))
+		conn.Close()
+		return
 	}
 
 	client := &Client{
@@ -92,6 +99,14 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		Conn:   conn,
 		Send:   make(chan *Message, 256),
 		UserID: userID,
+	}
+
+	// Fetch display name for chat
+	if db.DB != nil {
+		db.DB.QueryRow(`SELECT display_name FROM profiles WHERE user_id = $1`, userID).Scan(&client.DisplayName)
+	}
+	if client.DisplayName == "" {
+		client.DisplayName = "Player"
 	}
 
 	hub.register <- client

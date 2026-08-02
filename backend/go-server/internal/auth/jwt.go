@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,23 +19,6 @@ const (
 	AccessTokenDuration  = 15 * time.Minute  // Short-lived access token
 	RefreshTokenDuration = 7 * 24 * time.Hour // 7 days refresh token
 )
-
-// RefreshTokenStore stores valid refresh tokens with metadata
-type RefreshTokenStore struct {
-	mu     sync.RWMutex
-	tokens map[string]*RefreshTokenData
-}
-
-type RefreshTokenData struct {
-	UserID    string
-	ExpiresAt time.Time
-	IssuedAt  time.Time
-	Revoked   bool
-}
-
-var refreshStore = &RefreshTokenStore{
-	tokens: make(map[string]*RefreshTokenData),
-}
 
 func init() {
 	// Load JWT secret from environment variable
@@ -61,9 +43,6 @@ func init() {
 		refreshSecretEnv = secret + "_refresh"
 	}
 	refreshSecret = []byte(refreshSecretEnv)
-
-	// Start cleanup goroutine for expired refresh tokens
-	go refreshStore.cleanup()
 }
 
 type Claims struct {
@@ -80,7 +59,17 @@ type TokenPair struct {
 }
 
 // GenerateTokenPair creates both access and refresh tokens
+// P2-31: Limits to MaxSessionsPerUser active refresh tokens
+const MaxSessionsPerUser = 5
+
 func GenerateTokenPair(userID string) (*TokenPair, error) {
+	// Check if user has too many active sessions — revoke oldest if so
+	activeCount := countActiveUserSessions(userID)
+	if activeCount >= MaxSessionsPerUser {
+		// Revoke all and start fresh (simpler than finding oldest)
+		revokeAllUserRefreshTokens(userID)
+	}
+
 	accessToken, err := generateAccessToken(userID)
 	if err != nil {
 		return nil, err
@@ -140,15 +129,8 @@ func generateRefreshToken(userID string) (string, error) {
 		return "", err
 	}
 
-	// Store refresh token metadata
-	refreshStore.mu.Lock()
-	refreshStore.tokens[tokenIDStr] = &RefreshTokenData{
-		UserID:    userID,
-		ExpiresAt: time.Now().Add(RefreshTokenDuration),
-		IssuedAt:  time.Now(),
-		Revoked:   false,
-	}
-	refreshStore.mu.Unlock()
+	// Store refresh token in PostgreSQL (or memory fallback)
+	storeRefreshToken(tokenIDStr, userID, time.Now().Add(RefreshTokenDuration), time.Now())
 
 	return signedToken, nil
 }
@@ -208,24 +190,13 @@ func ValidateRefreshToken(tokenString string) (string, error) {
 		return "", errors.New("not a refresh token")
 	}
 
-	// Check if token is revoked
-	refreshStore.mu.RLock()
-	data, exists := refreshStore.tokens[claims.ID]
-	refreshStore.mu.RUnlock()
-
-	if !exists {
-		return "", errors.New("refresh token not found")
+	// Check if token is valid in persistent store
+	userID, valid := lookupRefreshToken(claims.ID)
+	if !valid {
+		return "", errors.New("refresh token revoked or expired")
 	}
 
-	if data.Revoked {
-		return "", errors.New("refresh token has been revoked")
-	}
-
-	if time.Now().After(data.ExpiresAt) {
-		return "", errors.New("refresh token expired")
-	}
-
-	return claims.UserID, nil
+	return userID, nil
 }
 
 // RefreshAccessToken creates a new access token from a valid refresh token
@@ -255,50 +226,15 @@ func RefreshAccessToken(refreshTokenString string) (*TokenPair, error) {
 
 // RevokeRefreshToken invalidates a refresh token
 func RevokeRefreshToken(tokenID string) {
-	refreshStore.mu.Lock()
-	if data, exists := refreshStore.tokens[tokenID]; exists {
-		data.Revoked = true
-	}
-	refreshStore.mu.Unlock()
+	revokeRefreshTokenByID(tokenID)
 }
 
 // RevokeAllUserTokens invalidates all refresh tokens for a user (logout from all devices)
 func RevokeAllUserTokens(userID string) {
-	refreshStore.mu.Lock()
-	for _, data := range refreshStore.tokens {
-		if data.UserID == userID {
-			data.Revoked = true
-		}
-	}
-	refreshStore.mu.Unlock()
-}
-
-// cleanup removes expired refresh tokens periodically
-func (s *RefreshTokenStore) cleanup() {
-	ticker := time.NewTicker(time.Hour)
-	for range ticker.C {
-		s.mu.Lock()
-		now := time.Now()
-		for id, data := range s.tokens {
-			if now.After(data.ExpiresAt) || data.Revoked {
-				delete(s.tokens, id)
-			}
-		}
-		s.mu.Unlock()
-	}
+	revokeAllUserRefreshTokens(userID)
 }
 
 // GetActiveSessionCount returns the number of active sessions for a user
 func GetActiveSessionCount(userID string) int {
-	refreshStore.mu.RLock()
-	defer refreshStore.mu.RUnlock()
-	
-	count := 0
-	now := time.Now()
-	for _, data := range refreshStore.tokens {
-		if data.UserID == userID && !data.Revoked && now.Before(data.ExpiresAt) {
-			count++
-		}
-	}
-	return count
+	return countActiveUserSessions(userID)
 }

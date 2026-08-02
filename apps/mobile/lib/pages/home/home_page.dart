@@ -12,7 +12,9 @@ import '../../providers/chibi_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/outfit_provider.dart';
 import '../../providers/room_provider.dart';
+import '../../providers/social_provider.dart';
 import '../../services/audio_service.dart';
+import '../../widgets/activity_feed_widget.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/connection_indicator.dart';
 import '../../widgets/daily_missions.dart';
@@ -45,6 +47,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       
       // Sync chibi config from profile (if available)
       _syncChibiFromProfile();
+      
+      // Load diamond balance
+      ref.read(socialProvider.notifier).refreshDiamonds();
     });
     _connectWs();
     // Listen for session eviction from server (double login protection)
@@ -186,6 +191,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 // Connection indicator at top
                 const ConnectionIndicator(),
+                // Activity feed strip — shows recent global gift/curse activity
+                const ActivityFeedStrip(),
                 // Main content
                 Expanded(
                   child: Padding(
@@ -196,22 +203,80 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: Column(
                           children: [
                             const SizedBox(height: 12),
-                            // Top bar with settings
+                            // Top bar with profile + currency + settings
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
+                                // 📖 How to Play
+                                GestureDetector(
+                                  onTap: () => _showHowToPlayDialog(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                                    ),
+                                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                      Icon(Icons.help_outline_rounded, color: Color(0xFFDAA520), size: 14),
+                                      SizedBox(width: 3),
+                                      Text('?', style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w700)),
+                                    ]),
+                                  ),
+                                ),
+                                const Spacer(),
+                                // Diamond badge
+                                GestureDetector(
+                                  onTap: () => context.push('/topup'),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                                    ),
+                                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                      const Text('💎', style: TextStyle(fontSize: 12)),
+                                      const SizedBox(width: 4),
+                                      Text('${ref.watch(diamondBalanceProvider)?.amount ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                                      const SizedBox(width: 4),
+                                      Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                                        child: const Icon(Icons.add, color: Color(0xFFDAA520), size: 10)),
+                                    ]),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                // Coin badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    const Text('🪙', style: TextStyle(fontSize: 12)),
+                                    const SizedBox(width: 4),
+                                    Text('${profile?.coins ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                                    const SizedBox(width: 4),
+                                    Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                                      child: const Icon(Icons.add, color: Color(0xFFDAA520), size: 10)),
+                                  ]),
+                                ),
+                                const SizedBox(width: 6),
+                                // Notification bell
                                 const NotificationBell(),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
+                                // Settings
                                 GestureDetector(
                                   onTap: () => context.push('/settings'),
                                   child: Container(
-                                    width: 38, height: 38,
+                                    width: 32, height: 32,
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.white.withValues(alpha: 0.06),
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                     ),
-                                    child: const Icon(Icons.settings_rounded, color: AppColors.textMuted, size: 18),
+                                    child: const Icon(Icons.settings_rounded, color: Color(0xFFDAA520), size: 16),
                                   ),
                                 ),
                               ],
@@ -246,28 +311,144 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  void _showHowToPlayDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => DefaultTabController(
+        length: 3,
+        child: AlertDialog(
+          backgroundColor: AppColors.surfaceElevated,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.menu_book_rounded, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('Panduan Bermain', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 340,
+            child: Column(
+              children: [
+                const TabBar(
+                  indicatorColor: AppColors.primary,
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textMuted,
+                  tabs: [
+                    Tab(text: 'Peraturan'),
+                    Tab(text: 'Role'),
+                    Tab(text: 'Tips'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Tab 1: Rules & Flow
+                      SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('🔴 Tim Merah vs 🔵 Tim Biru', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
+                            const SizedBox(height: 4),
+                            const Text('Pemain dibagi menjadi dua tim secara rahasia. Tim Merah berusaha membasmi Tim Biru, sedangkan Tim Biru mencari dan mengeksekusi Tim Merah.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+                            const SizedBox(height: 10),
+                            const Text('⏳ Urutan Fase Game:', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
+                            const SizedBox(height: 4),
+                            const Text('1. Role Reveal (Intip Peran)\n2. Malam Hari (Skill Rahasia)\n3. Pagi Hari (Pengumuman Korban)\n4. Diskusi Siang (Quick Chat & Debat)\n5. Voting & Eksekusi', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+                          ],
+                        ),
+                      ),
+                      // Tab 2: Roles
+                      SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            _roleGuideRow('🐺 Werewolf (Merah)', 'Memilih 1 warga untuk dibunuh setiap malam secara bersama.'),
+                            _roleGuideRow('🧙‍♀️ Witch (Merah)', 'Memiliki 1 ramuan penyembuh & 1 racun pematikan.'),
+                            _roleGuideRow('🔮 Seer (Biru)', 'Dapat memeriksa identitas tim pemain (Merah/Biru) setiap malam.'),
+                            _roleGuideRow('🛡️ Doctor (Biru)', 'Dapat melindungi 1 pemain dari serangan Werewolf setiap malam.'),
+                            _roleGuideRow('👨‍🌾 Villager (Biru)', 'Membantu analisa & voting warga saat diskusi siang.'),
+                          ],
+                        ),
+                      ),
+                      // Tab 3: Tips
+                      SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('💡 Tips Kemenangan AAA:', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
+                            const SizedBox(height: 6),
+                            const Text('• Gunakan chip Quick Chat (🐺 Curiga!, 🛡️ Dokter!) untuk merespon cepat saat diskusi.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+                            const SizedBox(height: 6),
+                            const Text('• Perhatikan Surat Wasiat (📜 Testament) pemain yang mati untuk mendapat petunjuk penting.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+                            const SizedBox(height: 6),
+                            const Text('• Tekan tombol "Perbesar" pada Chat Room jika ingin membaca ulang riwayat diskusi.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.4)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Paham!'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _roleGuideRow(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 11)),
+                Text(desc, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, height: 1.3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTitle() {
     return Column(
       children: [
+        // GGS Logo large
         const Text(
-          '🐺 GGS WEREWOLF',
+          'GGS',
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
+            color: Color(0xFFDAA520),
+            fontSize: 38,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 6,
+            shadows: [Shadow(color: Color(0xFFDAA520), blurRadius: 20)],
           ),
         ),
-        const SizedBox(height: 4),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+            color: const Color(0xFFDAA520).withValues(alpha: 0.08),
           ),
           child: const Text(
-            'Red vs Blue Edition',
-            style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
+            'WEREWOLF ONLINE',
+            style: TextStyle(color: Color(0xFFDAA520), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 2),
           ),
         ),
       ],
@@ -277,37 +458,80 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildMenuButtons() {
     return Column(
       children: [
-        // Play (Room page)
-        GradientButton(
-          label: 'Main',
-          icon: Icons.sports_esports_rounded,
-          gradient: AppColors.primaryGradient,
-          onPressed: () => context.push('/room'),
+        // Side buttons row (Event/Shop/Quest left — Gift/TopUp right)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Left side buttons
+            Column(children: [
+              _sideButton('🎪', 'Event', () {}),
+              _sideButton('🛒', 'Shop', () => context.push('/shop')),
+              _sideButton('📋', 'Quest', () {}),
+              _sideButton('🏆', 'Ranking', () => context.push('/leaderboard')),
+            ]),
+            // Right side buttons
+            Column(children: [
+              _sideButton('🎁', 'Gift', () => context.push('/friends')),
+              _sideButton('💎', 'Top Up', () => context.push('/topup')),
+              _sideButton('🎰', 'Lucky Spin', () {}),
+            ]),
+          ],
         ),
-        const SizedBox(height: 12),
-        // Wardrobe (Bag)
-        GradientButton(
-          label: 'Wardrobe',
-          icon: Icons.checkroom_rounded,
-          gradient: AppColors.blueGradient,
-          onPressed: () => context.push('/wardrobe'),
+        const SizedBox(height: 16),
+        // Buat Room + Join Room buttons
+        Row(children: [
+          Expanded(child: _actionButton('🏠', 'Buat Room', 'Buat room baru', () => context.push('/room'))),
+          const SizedBox(width: 10),
+          Expanded(child: _actionButton('🚪', 'Join Room', 'Masuk ke room', () => context.push('/room'))),
+        ]),
+        const SizedBox(height: 14),
+        // MAIN SEKARANG golden banner
+        GestureDetector(
+          onTap: () => context.push('/room'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+              border: Border.all(color: const Color(0xFFDAA520), width: 1.5),
+              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 10)],
+            ),
+            child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text('⚔️', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Text('Main Sekarang', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              SizedBox(width: 8),
+              Text('⚔️', style: TextStyle(fontSize: 16)),
+            ]),
+          ),
         ),
-        const SizedBox(height: 12),
-        // Friends
-        _buildFriendsButton(),
-        const SizedBox(height: 12),
-        // Stats, Leaderboard, Shop row
+        const SizedBox(height: 10),
+        // Main dengan Bot
+        GestureDetector(
+          onTap: () => context.push('/room'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white.withValues(alpha: 0.04),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: const Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.smart_toy_outlined, color: AppColors.textMuted, size: 16),
+              SizedBox(width: 6),
+              Text('Main dengan Bot', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 14),
+        // Stats row
         Row(children: [
           Expanded(child: _buildSmallButton('📊 Stats', () => context.push('/stats'))),
           const SizedBox(width: 8),
-          Expanded(child: _buildSmallButton('🏆 Ranking', () => context.push('/leaderboard'))),
+          Expanded(child: _buildSmallButton('🎒 Inventory', () => context.push('/inventory'))),
           const SizedBox(width: 8),
-          Expanded(child: _buildSmallButton('🛒 Toko', () => context.push('/shop'))),
-        ]),
-        const SizedBox(height: 8),
-        // Tutorial button
-        Row(children: [
-          Expanded(child: _buildSmallButton('📖 Tutorial', () => context.push('/tutorial'))),
+          Expanded(child: _buildSmallButton('👥 Teman', () => context.push('/friends'))),
         ]),
         const SizedBox(height: 14),
         // Daily missions
@@ -316,33 +540,43 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildFriendsButton() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          width: double.infinity,
-          height: 52,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: MaterialButton(
-            onPressed: () => context.push('/friends'),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_outline_rounded, color: AppColors.secondary.withValues(alpha: 0.8), size: 20),
-                const SizedBox(width: 10),
-                Text('Teman', style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
+  Widget _sideButton(String emoji, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 52,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.black.withValues(alpha: 0.4),
+          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
         ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 8, fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _actionButton(String emoji, String title, String subtitle, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFF1A1F2E),
+          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+        ),
+        child: Column(children: [
+          Text(emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 4),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+          Text(subtitle, style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 9)),
+        ]),
       ),
     );
   }
@@ -369,14 +603,49 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildFooter() {
+    // #5 FIX: Logout sekarang punya confirmation dialog agar tidak logout tidak sengaja.
     return TextButton.icon(
-      onPressed: () {
-        ref.read(authProvider.notifier).logout();
-        context.go('/auth');
-      },
+      onPressed: () => _showLogoutConfirmation(context),
       icon: const Icon(Icons.logout_rounded, size: 16, color: AppColors.textMuted),
       label: const Text('Keluar', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
     );
+  }
+
+  Future<void> _showLogoutConfirmation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(children: [
+          Icon(Icons.logout_rounded, color: AppColors.error),
+          SizedBox(width: 8),
+          Text('Keluar?', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        ]),
+        content: const Text(
+          'Yakin ingin keluar dari akun ini?',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      ref.read(authProvider.notifier).logout();
+      context.go('/auth');
+    }
   }
 }
 
@@ -388,6 +657,8 @@ class _PlayerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chibiConfig = ref.watch(chibiProvider);
+    final diamondBalance = ref.watch(diamondBalanceProvider);
+    final diamonds = diamondBalance?.amount ?? 0;
     
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -402,25 +673,46 @@ class _PlayerCard extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              // Chibi Avatar
-              Container(
-                width: 56,
-                height: 75,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.6), width: 2),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 12)],
-                  color: Colors.black.withValues(alpha: 0.2),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: ChibiAvatar(
-                    config: chibiConfig,
-                    size: 50,
-                    animate: true,
-                    showShadow: false,
+              // Chibi Avatar with edit overlay
+              Stack(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 75,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.6), width: 2),
+                      boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 12)],
+                      color: Colors.black.withValues(alpha: 0.2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: ChibiAvatar(
+                        config: chibiConfig,
+                        size: 50,
+                        animate: true,
+                        showShadow: false,
+                      ),
+                    ),
                   ),
-                ),
+                  // Edit profile button (pencil icon)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () => context.push('/profile/setup'),
+                      child: Container(
+                        width: 22, height: 22,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary,
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: const Icon(Icons.edit_rounded, color: Colors.white, size: 11),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 14),
               // Info
@@ -436,9 +728,37 @@ class _PlayerCard extends ConsumerWidget {
                     Row(
                       children: [
                         _badge('Lv.${profile?.level ?? 1}', AppColors.primary),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         _badge('${profile?.coins ?? 0} 🪙', AppColors.warning),
                       ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Diamond balance + top-up
+                    GestureDetector(
+                      onTap: () => context.push('/topup'),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _badge('$diamonds 💎', const Color(0xFF00BCD4)),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              color: const Color(0xFF00BCD4).withValues(alpha: 0.2),
+                              border: Border.all(color: const Color(0xFF00BCD4).withValues(alpha: 0.4)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_rounded, color: Color(0xFF00BCD4), size: 10),
+                                SizedBox(width: 2),
+                                Text('Top Up', style: TextStyle(color: Color(0xFF00BCD4), fontSize: 9, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

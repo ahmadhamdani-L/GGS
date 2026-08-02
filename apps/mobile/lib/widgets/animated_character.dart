@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-import '../core/constants.dart';
 
 /// Animated 2D layered character with idle breathing animation
 /// Supports customizable body parts and clothing layers

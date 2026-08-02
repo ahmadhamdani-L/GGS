@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -8,12 +9,15 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../models/room.dart';
+import '../../models/ws_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chibi_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/connection_indicator.dart';
+import '../../widgets/game_avatar.dart';
+import '../../services/audio_service.dart';
 
 /// Seat card colors — each seat gets a unique color tint (like Wowgame)
 const _seatColors = [
@@ -45,6 +49,27 @@ class LobbyPage extends ConsumerStatefulWidget {
 
 class _LobbyPageState extends ConsumerState<LobbyPage> {
   bool _navigatedToGame = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // #12 FIX: Move game-navigation side-effect OUT of build() into a ref.listen.
+    // Calling WidgetsBinding.addPostFrameCallback + mutating _navigatedToGame inside
+    // build() violates Flutter's build contract and can trigger "setState during build".
+    // ref.listen fires outside the build cycle, making this safe.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Register listener after first frame so ref is fully initialised
+      ref.listenManual(gameProvider, (prev, next) {
+        if (next != null && !_navigatedToGame) {
+          final roomId = ref.read(roomProvider).room?.id;
+          if (roomId != null && mounted) {
+            _navigatedToGame = true;
+            context.go('/game/$roomId');
+          }
+        }
+      });
+    });
+  }
 
   /// Show confirmation dialog before leaving the lobby.
   /// Sends [leave_room] to server only after user confirms.
@@ -94,29 +119,20 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
   Widget build(BuildContext context) {
     final roomState = ref.watch(roomProvider);
     final auth = ref.watch(authProvider);
-    final game = ref.watch(gameProvider);
     final isHost = roomState.hostId == auth.userId || roomState.room?.hostId == auth.userId;
     final maxPlayers = roomState.room?.maxPlayers ?? 18;
-    final roomId = roomState.room?.id;
-
-    // Navigate to game when game state arrives (for ALL players)
-    if (game != null && !_navigatedToGame && roomId != null) {
-      _navigatedToGame = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/game/$roomId');
-      });
-    }
 
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background
-          Image.asset('assets/beranda.png', fit: BoxFit.cover,
+          // #6 FIX: Lobby pakai malam.png bukan beranda.png.
+          // beranda.png = Home page. malam.png = suasana malam/misteri yang cocok untuk lobby.
+          Image.asset('assets/malam.png', fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               decoration: const BoxDecoration(gradient: LinearGradient(
                 begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                colors: [Color(0xFF1a1a2e), Color(0xFF16213e)],
+                colors: [Color(0xFF0D1117), Color(0xFF1a1a2e)],
               )),
             ),
           ),
@@ -129,18 +145,19 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
                 const ConnectionIndicator(),
                 // Header
                 _LobbyHeader(roomCode: widget.roomCode, playerCount: roomState.players.length, maxPlayers: maxPlayers, isHost: isHost),
-                const SizedBox(height: 8),
-                // Seat grid (5-4-4-5 layout)
+                // Seat grid (4×4 = 16 slots)
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: _LobbyGrid18(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: _LobbyGrid4x4(
                       maxPlayers: maxPlayers,
                       players: roomState.players,
                     ),
                   ),
                 ),
-                // Bottom bar
+                // MULAI GAME banner button
+                _StartGameBanner(isHost: isHost, roomState: roomState, auth: auth),
+                // Bottom bar (chat + toggles)
                 _LobbyBottomBar(isHost: isHost, roomState: roomState, auth: auth),
               ],
             ),
@@ -180,105 +197,90 @@ class _LobbyHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Column(
         children: [
-          // Back — pops confirmation dialog then sends leave_room to server
-          GestureDetector(
-            onTap: () {
-              // Get the state widget to call _handleBackPressed
-              final lobbyState = context.findAncestorStateOfType<_LobbyPageState>();
-              lobbyState?._handleBackPressed();
-            },
-            child: Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white.withValues(alpha: 0.08)),
-              child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 18),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Room code (tap to copy)
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Clipboard.setData(ClipboardData(text: roomCode));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      const Text('Kode disalin! Share ke teman 🎮'),
-                    ]),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
+          // Main header row
+          Row(
+            children: [
+              // Back button
+              GestureDetector(
+                onTap: () {
+                  final lobbyState = context.findAncestorStateOfType<_LobbyPageState>();
+                  lobbyState?._handleBackPressed();
+                },
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.4),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    colors: [AppColors.primary.withValues(alpha: 0.15), AppColors.primary.withValues(alpha: 0.08)],
-                  ),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                  child: const Icon(Icons.arrow_back_rounded, color: Color(0xFFDAA520), size: 20),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
+              ),
+              const SizedBox(width: 10),
+              // Room code (gold ornate frame)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Clipboard.setData(ClipboardData(text: roomCode));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Kode disalin! Share ke teman 🎮'), duration: Duration(seconds: 2), backgroundColor: AppColors.success, behavior: SnackBarBehavior.floating),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                      color: AppColors.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black.withValues(alpha: 0.5),
+                      border: Border.all(color: const Color(0xFFDAA520), width: 1.5),
                     ),
-                    child: const Icon(Icons.share_rounded, color: AppColors.primary, size: 14),
+                    child: Column(children: [
+                      const Text('ROOM CODE', style: TextStyle(color: Color(0xFFDAA520), fontSize: 8, fontWeight: FontWeight.w600, letterSpacing: 2)),
+                      const SizedBox(height: 2),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Text(roomCode, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 3)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.copy_rounded, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 16),
+                      ]),
+                    ]),
                   ),
-                  const SizedBox(width: 10),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    const Text('KODE ROOM', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1)),
-                    Text(roomCode, style: const TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 4)),
-                  ]),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.copy_rounded, color: AppColors.primary, size: 16),
-                ]),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Settings button (host only)
-          if (isHost)
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (_) => const _RoomSettingsSheet(),
-                );
-              },
-              child: Container(
-                width: 38, height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
-                child: const Icon(Icons.settings_rounded, color: AppColors.primary, size: 18),
               ),
-            ),
-          if (isHost) const SizedBox(width: 10),
-          // Player count badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColors.success.withValues(alpha: 0.12)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.people_rounded, color: AppColors.success, size: 14),
-              const SizedBox(width: 4),
-              Text('$playerCount/$maxPlayers', style: const TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w700)),
-            ]),
+              const SizedBox(width: 10),
+              // Settings button (host only)
+              if (isHost)
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (_) => const _RoomSettingsSheet(),
+                    );
+                  },
+                  child: Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withValues(alpha: 0.4),
+                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                    ),
+                    child: const Icon(Icons.settings_rounded, color: Color(0xFFDAA520), size: 20),
+                  ),
+                ),
+            ],
           ),
+          const SizedBox(height: 6),
+          // Player count
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Icon(Icons.people_rounded, color: Color(0xFFDAA520), size: 14),
+            const SizedBox(width: 6),
+            Text('$playerCount / $maxPlayers PLAYER', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
+          ]),
         ],
       ),
     );
@@ -530,6 +532,163 @@ class _SeatCard extends ConsumerWidget {
 
   const _SeatCard({required this.index, this.player, required this.color});
 
+  void _showPlayerActionDialog(BuildContext context, WidgetRef ref, RoomPlayer p) {
+    final auth = ref.read(authProvider);
+    final roomState = ref.read(roomProvider);
+    final isMe = p.userId == auth.userId;
+    final isHost = roomState.hostId == auth.userId;
+
+    // #12 FIX: Use actual level/rank from player data if available.
+    // RoomPlayer carries avatarId but not level; we read from auth profile for self,
+    // and show a placeholder for others (real rank requires a profile API call,
+    // which we don't do here to avoid N+1 — show generic for lobby).
+    final displayLevel = isMe ? (auth.profile?.level ?? 1) : null;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceElevated,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: color.withValues(alpha: 0.2),
+                  child: Text('P${index + 1}',
+                      style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.displayName ?? 'Pemain ${index + 1}',
+                        style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      // #12 FIX: show real level for self; generic for others
+                      displayLevel != null
+                          ? Text('Level $displayLevel',
+                              style: const TextStyle(color: AppColors.primary, fontSize: 11))
+                          : Text('Pemain ${index + 1}',
+                              style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          Text('✨ Charm', style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                          SizedBox(height: 2),
+                          Text('300', style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text('❤️ Popularity', style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                          SizedBox(height: 2),
+                          Text('150', style: TextStyle(color: Colors.pinkAccent, fontSize: 16, fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                if (!isMe) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Open the full Gift Shop page for this player
+                            context.push('/social/gift/${p.userId}/${Uri.encodeComponent(p.displayName ?? 'Player')}');
+                          },
+                          icon: const Text('🎁', style: TextStyle(fontSize: 14)),
+                          label: const Text('Gift', style: TextStyle(fontSize: 11)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber.shade800, foregroundColor: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final api = ref.read(apiServiceProvider);
+                            // Open gift shop filtered to curses
+                            context.push('/social/gift/${p.userId}/${Uri.encodeComponent(p.displayName ?? 'Player')}');
+                          },
+                          icon: const Text('💀', style: TextStyle(fontSize: 14)),
+                          label: const Text('Kutuk', style: TextStyle(fontSize: 11)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.purple.shade900, foregroundColor: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ref.read(apiServiceProvider).postFriendAction(p.userId, 'add');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Permintaan pertemanan terkirim ke Database!'), backgroundColor: AppColors.success),
+                        );
+                      },
+                      icon: const Icon(Icons.person_add_rounded, size: 16),
+                      label: const Text('Tambah Teman'),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (isHost && !isMe) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        final roomId = roomState.room?.id;
+                        if (roomId != null) {
+                          ref.read(roomProvider.notifier).kickPlayer(roomId: roomId, targetUserId: p.userId);
+                        }
+                      },
+                      icon: const Icon(Icons.remove_circle_outline, size: 16),
+                      label: const Text('Kick Pemain'),
+                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: const BorderSide(color: AppColors.error)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup', style: TextStyle(color: AppColors.textMuted))),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasPlayer = player != null;
@@ -537,199 +696,182 @@ class _SeatCard extends ConsumerWidget {
     final isMe = hasPlayer && player!.userId == auth.userId;
     final isReady = player?.isReady ?? false;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: hasPlayer ? color.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.03),
-        border: Border.all(
-          color: hasPlayer ? color.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.06),
-          width: isMe ? 2.5 : 1.5,
-        ),
-        boxShadow: isMe ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12)] : null,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return GestureDetector(
+      onTap: () {
+        if (hasPlayer) {
+          _showPlayerActionDialog(context, ref, player!);
+        }
+      },
+      onLongPress: () {
+        if (hasPlayer) {
+          HapticFeedback.mediumImpact();
+          _showPlayerActionDialog(context, ref, player!);
+        }
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          // Seat number (top-left corner style)
-          if (!hasPlayer)
-            Text('${index + 1}', style: TextStyle(color: Colors.white.withValues(alpha: 0.15), fontSize: 20, fontWeight: FontWeight.w800)),
-          // Avatar
-          if (hasPlayer) ...[
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: isMe
-                    ? ChibiAvatar(
-                        config: ref.watch(chibiProvider),
-                        size: 45,
-                        animate: true,
-                        showShadow: false,
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(AppConstants.avatarPath(player!.avatarId ?? 1), fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(Icons.person, color: color, size: 28)),
-                      ),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: hasPlayer
+                  ? const Color(0xFF1A1F2E)
+                  : const Color(0xFF131820),
+              border: Border.all(
+                color: hasPlayer
+                    ? (isMe ? const Color(0xFFDAA520) : const Color(0xFF3D4450))
+                    : const Color(0xFF262D38),
+                width: isMe ? 2 : 1.5,
               ),
+              boxShadow: isMe ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)] : null,
             ),
-            // Player name
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                isMe ? 'You' : (player!.displayName ?? 'P${index + 1}'),
-                style: TextStyle(color: isMe ? AppColors.primary : AppColors.textPrimary, fontSize: 9, fontWeight: FontWeight.w700),
-                maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-              ),
-            ),
-            // Status label
-            Container(
-              margin: const EdgeInsets.only(top: 3, bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: isReady ? AppColors.success.withValues(alpha: 0.2) : color.withValues(alpha: 0.2),
-              ),
-              child: Text(
-                isReady ? 'Ready' : 'Waiting',
-                style: TextStyle(
-                  color: isReady ? AppColors.success : color,
-                  fontSize: 8, fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ] else ...[
-            // Empty seat
-            Icon(Icons.event_seat_rounded, color: Colors.white.withValues(alpha: 0.1), size: 22),
-            const SizedBox(height: 4),
-            Text('Waiting', style: TextStyle(color: Colors.white.withValues(alpha: 0.15), fontSize: 8, fontWeight: FontWeight.w600)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Lobby Grid 5-4-4-5 ─────────────────────────────────────
-class _LobbyGrid18 extends StatelessWidget {
-  final int maxPlayers;
-  final List<RoomPlayer> players;
-
-  const _LobbyGrid18({required this.maxPlayers, required this.players});
-
-  @override
-  Widget build(BuildContext context) {
-    // Build 18 slots (5-4-4-5)
-    const rowSizes = [5, 4, 4, 5];
-    int seatIndex = 0;
-
-    return Column(
-      children: [
-        for (int row = 0; row < rowSizes.length; row++) ...[
-          Expanded(
-            child: Row(
+            child: Column(
               children: [
-                for (int col = 0; col < rowSizes[row]; col++)
+                if (hasPlayer) ...[
+                  // Avatar area — chibi fills most of the card
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(3),
-                      child: Builder(builder: (_) {
-                        final idx = seatIndex++;
-                        final player = idx < players.length ? players[idx] : null;
-                        return _SeatCard(
-                          index: idx,
-                          player: player,
-                          color: _seatColors[idx % _seatColors.length],
-                        );
-                      }),
+                      padding: const EdgeInsets.fromLTRB(2, 4, 2, 0),
+                      child: RepaintBoundary(
+                        child: isMe
+                            ? ChibiAvatar(
+                                config: ref.watch(chibiProvider),
+                                size: 58,
+                                animate: true,
+                                showShadow: false,
+                              )
+                            : ChibiAvatar(
+                                config: generateChibiFromId(player!.userId),
+                                size: 58,
+                                animate: false,
+                                showShadow: false,
+                              ),
+                      ),
                     ),
                   ),
+                  // Player name
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Text(
+                      isMe ? 'You' : (player!.displayName ?? 'P${index + 1}'),
+                      style: TextStyle(color: isMe ? const Color(0xFFDAA520) : Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // Ready / Waiting status
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4, top: 2),
+                    child: Text(
+                      isReady ? 'Ready ✓' : 'Waiting',
+                      style: TextStyle(
+                        color: isReady ? AppColors.success : const Color(0xFF6B7280),
+                        fontSize: 9, fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  // Empty seat — subtle "+" invite style matching reference
+                  Expanded(
+                    child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.add_rounded, color: const Color(0xFF4A5060), size: 22),
+                      const SizedBox(height: 4),
+                      const Text('Invite', style: TextStyle(color: Color(0xFF4A5060), fontSize: 9, fontWeight: FontWeight.w600)),
+                    ])),
+                  ),
+                ],
               ],
             ),
           ),
-          // Center join area between row 2 and 3
-          if (row == 1)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.white.withValues(alpha: 0.03),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          // Seat number (gold circle top-left)
+          Positioned(
+            left: 4, top: 4,
+            child: Container(
+              width: 18, height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hasPlayer ? const Color(0xFF2A2F3A) : Colors.transparent,
+                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: hasPlayer ? 0.8 : 0.3), width: 1),
+              ),
+              child: Center(
+                child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withValues(alpha: hasPlayer ? 1.0 : 0.5), fontSize: 9, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ),
+          // "YOU" badge (top-center)
+          if (isMe)
+            Positioned(
+              top: -4, left: 0, right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: const Color(0xFFDAA520),
+                    boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 4)],
+                  ),
+                  child: const Text('YOU', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900)),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(Icons.groups_rounded, color: AppColors.primary.withValues(alpha: 0.6), size: 16),
-                  const SizedBox(width: 6),
-                  Text('${players.length}/$maxPlayers pemain', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.w600)),
-                ]),
               ),
             ),
         ],
-      ],
+      ),
     );
   }
 }
 
-// ─── Bottom Bar ─────────────────────────────────────────────
-class _LobbyBottomBar extends ConsumerWidget {
+// ─── Lobby Grid 4×4 (matches reference design) ─────────────────
+class _LobbyGrid4x4 extends ConsumerWidget {
+  final int maxPlayers;
+  final List<RoomPlayer> players;
+
+  const _LobbyGrid4x4({required this.maxPlayers, required this.players});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final totalSlots = maxPlayers.clamp(8, 16);
+
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      physics: const BouncingScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.7,
+      ),
+      itemCount: totalSlots,
+      itemBuilder: (_, idx) {
+        final player = idx < players.length ? players[idx] : null;
+        return _SeatCard(index: idx, player: player, color: _seatColors[idx % _seatColors.length]);
+      },
+    );
+  }
+}
+
+// ─── MULAI GAME Banner Button ────────────────────────────────
+class _StartGameBanner extends ConsumerWidget {
   final bool isHost;
   final RoomState roomState;
   final AuthState auth;
 
-  const _LobbyBottomBar({required this.isHost, required this.roomState, required this.auth});
-
-  static const int _minimumPlayersToStart = 2;
+  const _StartGameBanner({required this.isHost, required this.roomState, required this.auth});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canStart = isHost && roomState.players.length >= _minimumPlayersToStart;
-    // Check if current user has already marked as ready
+    final canStart = isHost && roomState.players.length >= 2;
     final myUserId = auth.userId;
     final myPlayer = myUserId != null
         ? roomState.players.where((p) => p.userId == myUserId).firstOrNull
         : null;
     final alreadyReady = myPlayer?.isReady ?? false;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.9),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Minimum players warning for host
-          if (isHost && roomState.players.length < _minimumPlayersToStart)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.info_outline, color: AppColors.warning.withValues(alpha: 0.8), size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Butuh minimal $_minimumPlayersToStart pemain untuk mulai',
-                    style: TextStyle(color: AppColors.warning.withValues(alpha: 0.8), fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          // Main action button
-          GradientButton(
-            label: isHost
-                ? 'Mulai Game'
-                : (alreadyReady ? 'Sudah Siap ✓' : 'Siap'),
-            icon: isHost
-                ? Icons.play_arrow_rounded
-                : (alreadyReady ? Icons.check_circle : Icons.check_circle_outline_rounded),
-            gradient: isHost
-                ? (canStart ? AppColors.primaryGradient : const LinearGradient(colors: [Color(0xFF475569), Color(0xFF334155)]))
-                : (alreadyReady
-                    ? const LinearGradient(colors: [Color(0xFF059669), Color(0xFF34D399)])
-                    : const LinearGradient(colors: [AppColors.success, Color(0xFF34D399)])),
-            height: 48,
-            onPressed: isHost
+          // Main golden banner button
+          GestureDetector(
+            onTap: isHost
                 ? (canStart
                     ? () {
                         HapticFeedback.heavyImpact();
@@ -739,33 +881,356 @@ class _LobbyBottomBar extends ConsumerWidget {
                           ref.read(roomProvider.notifier).startGame(roomId, hostId);
                         }
                       }
-                    : () {
-                        // Provide feedback even when disabled
-                        HapticFeedback.lightImpact();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Butuh minimal $_minimumPlayersToStart pemain untuk mulai game'),
-                            backgroundColor: AppColors.warning,
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      })
+                    : null)
                 : (alreadyReady
-                    ? null // Already ready, disable button
+                    ? null
                     : () {
                         HapticFeedback.mediumImpact();
-                        // C-04 FIX: Send player_ready event to server
                         final userId = auth.userId;
                         final roomId = roomState.room?.id;
                         if (userId != null && roomId != null) {
-                          ref.read(roomProvider.notifier).sendPlayerReady(
-                            userId: userId,
-                            roomId: roomId,
-                          );
+                          ref.read(roomProvider.notifier).sendPlayerReady(userId: userId, roomId: roomId);
                         }
                       }),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: (isHost ? canStart : !alreadyReady)
+                    ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
+                    : const LinearGradient(colors: [Color(0xFF3A3A3A), Color(0xFF555555), Color(0xFF3A3A3A)]),
+                border: Border.all(color: const Color(0xFFDAA520), width: 2),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('⚔️', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  Text(
+                    isHost ? 'MULAI GAME' : (alreadyReady ? 'SUDAH SIAP ✓' : 'SIAP'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2))],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text('⚔️', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+            ),
           ),
+          const SizedBox(height: 4),
+          // Subtitle text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('◆', style: TextStyle(color: Color(0xFFDAA520), fontSize: 8)),
+              const SizedBox(width: 6),
+              Text(
+                isHost
+                    ? 'Host dapat memulai game jika semua pemain sudah Ready'
+                    : 'Tekan SIAP untuk memberitahu host kamu siap bermain',
+                style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 6),
+              const Text('◆', style: TextStyle(color: Color(0xFFDAA520), fontSize: 8)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Bottom Bar with Lobby Chat ──────────────────────────────
+class _LobbyBottomBar extends ConsumerStatefulWidget {
+  final bool isHost;
+  final RoomState roomState;
+  final AuthState auth;
+
+  const _LobbyBottomBar({required this.isHost, required this.roomState, required this.auth});
+
+  @override
+  ConsumerState<_LobbyBottomBar> createState() => _LobbyBottomBarState();
+}
+
+class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
+  final _chatCtrl = TextEditingController();
+  final List<Map<String, String>> _messages = [];
+  int _chatFlex = 0; // 0 = collapsed, 1 = small, 2 = large
+  StreamSubscription? _chatSub;
+  // C-1 FIX: Host toggle — start with only real players (no bot fill)
+  bool _noBotFill = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _chatSub = ref.read(webSocketProvider).messages.listen((msg) {
+        if (!mounted) return;
+        if (msg.type == 'chat_message') {
+          final senderId = msg.payload['senderId'] as String? ?? '';
+          final content = msg.payload['content'] as String? ?? '';
+          final myId = widget.auth.userId ?? '';
+          if (senderId != myId && content.isNotEmpty) {
+            setState(() {
+              _messages.add({'sender': senderId, 'content': content});
+            });
+          }
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _chatSub?.cancel();
+    _chatCtrl.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final text = _chatCtrl.text.trim();
+    if (text.isEmpty || widget.auth.userId == null) return;
+
+    ref.read(webSocketProvider).send(WsMessage.sendChat(
+      senderId: widget.auth.userId!,
+      content: text,
+    ));
+
+    setState(() {
+      _messages.add({
+        'sender': widget.auth.profile?.displayName ?? 'You',
+        'content': text,
+      });
+      _chatCtrl.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Chat heights: collapsed = just header, small = 100, large = 200
+    final chatHeight = _chatFlex == 0 ? 0.0 : (_chatFlex == 1 ? 100.0 : 200.0);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.85),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Chat header with expand/collapse (like in-game)
+          Row(
+            children: [
+              const Text('💬', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 6),
+              Text('Chat Room', style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
+                child: Text('${_messages.length} pesan', style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
+              ),
+              const Spacer(),
+              // Collapse / Expand controls (like in-game)
+              if (_chatFlex > 0)
+                GestureDetector(
+                  onTap: () => setState(() => _chatFlex = 0),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                    child: const Text('▾ Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              if (_chatFlex < 2)
+                GestureDetector(
+                  onTap: () => setState(() => _chatFlex = _chatFlex == 0 ? 1 : 2),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                    child: Text(_chatFlex == 0 ? '▴ Buka' : '▴ Perbesar', style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+            ],
+          ),
+
+          // Chat messages area (animated height)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            height: chatHeight,
+            child: _chatFlex == 0
+                ? const SizedBox.shrink()
+                : Column(
+                    children: [
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                          ),
+                          child: _messages.isEmpty
+                              ? const Center(child: Text('Belum ada pesan. Obrolkan sesuatu!', style: TextStyle(color: AppColors.textMuted, fontSize: 11)))
+                              : ListView.builder(
+                                  reverse: true,
+                                  itemCount: _messages.length,
+                                  itemBuilder: (_, i) {
+                                    final msg = _messages[_messages.length - 1 - i];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: RichText(
+                                        text: TextSpan(children: [
+                                          TextSpan(text: '${msg['sender']}: ', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 11)),
+                                          TextSpan(text: msg['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                                        ]),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Input row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              height: 32,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white.withValues(alpha: 0.06),
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                              ),
+                              child: TextField(
+                                controller: _chatCtrl,
+                                maxLength: 200,
+                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 11),
+                                decoration: const InputDecoration(
+                                  hintText: 'Ketik pesan...',
+                                  hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  counterText: '',
+                                  contentPadding: EdgeInsets.symmetric(vertical: 7),
+                                ),
+                                onSubmitted: (_) => _sendMessage(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: _sendMessage,
+                            child: Container(
+                              width: 32, height: 32,
+                              decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withValues(alpha: 0.2)),
+                              child: const Icon(Icons.send_rounded, color: AppColors.primary, size: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+
+          // Bottom toggles row (Bot + Musik)
+          if (widget.isHost) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                // Bot toggle
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _noBotFill = !_noBotFill),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.smart_toy_outlined, size: 14, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Text('Bot (default)', style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        SizedBox(
+                          width: 36, height: 20,
+                          child: Switch(
+                            value: !_noBotFill,
+                            onChanged: (v) => setState(() => _noBotFill = !v),
+                            activeColor: AppColors.primary,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Music toggle
+                Expanded(
+                  child: Consumer(builder: (ctx, ref, _) {
+                    final audio = ref.read(audioServiceProvider);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.music_note_rounded, size: 14, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        const Text('Musik', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        SizedBox(
+                          width: 36, height: 20,
+                          child: Switch(
+                            value: audio.bgmEnabled,
+                            onChanged: (v) {
+                              audio.toggleBgm(v);
+                              setState(() {});
+                            },
+                            activeColor: AppColors.primary,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () {
+                            audio.toggleSfx(!audio.sfxEnabled);
+                            setState(() {});
+                          },
+                          child: Icon(
+                            audio.sfxEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                            size: 16, color: AppColors.textMuted,
+                          ),
+                        ),
+                      ]),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

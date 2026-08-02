@@ -87,10 +87,12 @@ func SubmitNightActionSequential(state *GameState, playerID, targetID string, wi
 		state.NightActions.SubmittedPlayers[playerID] = true
 	}
 
-	// Check if ALL role-players (human) have submitted → resolve immediately
+	// Check if ALL role-players (human, alive, connected) have submitted → resolve immediately.
+	// H-1 FIX: Skip disconnected players — they will be auto-handled by the timer/disconnect
+	// system. Waiting for a disconnected player blocks the entire game unnecessarily.
 	allHumansDone := true
 	for _, p := range state.Players {
-		if !p.IsBot && p.IsAlive && p.Role != RoleVillager {
+		if !p.IsBot && p.IsAlive && p.IsConnected && p.Role != RoleVillager {
 			if !state.NightActions.SubmittedPlayers[p.ID] {
 				allHumansDone = false
 				break

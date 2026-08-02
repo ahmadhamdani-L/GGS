@@ -70,7 +70,8 @@ type PlayerState struct {
 	Role               Role                   `json:"role"`
 	IsAlive            bool                   `json:"isAlive"`
 	IsConnected        bool                   `json:"isConnected"`
-	ProtectedThisNight bool                   `json:"protectedThisNight"`
+	ProtectedThisNight  bool                   `json:"protectedThisNight"`
+	HasConfirmedRole    bool                   `json:"hasConfirmedRole"` // #8 FIX: separate flag for role reveal confirmation
 	DoctorProtectsUsed int                    `json:"doctorProtectsUsed"`
 }
 
@@ -159,8 +160,11 @@ type GameState struct {
 	WitchPoisonUsed          bool               `json:"witchPoisonUsed"`
 	Testaments               []Testament        `json:"testaments"`
 	PendingTestamentPlayerID *string            `json:"pendingTestamentPlayerId"`
+	// M-2 FIX: Queue for multiple night deaths — each player gets testament in turn
+	PendingTestamentQueue    []string           `json:"pendingTestamentQueue,omitempty"`
 	Teammates                []TeammateInfo     `json:"teammates,omitempty"`
 	Rewards                  *PlayerRewards     `json:"rewards,omitempty"`
+	ResultsRecorded          bool               `json:"-"` // internal flag, not sent to client
 }
 
 // PlayerRewards contains the rewards earned by the current player

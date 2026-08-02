@@ -96,6 +96,9 @@ func MarkBots(state *game.GameState) {
 
 // ProcessBotActions handles all bot actions for the current phase.
 func ProcessBotActions(state *game.GameState, diff Difficulty) *game.GameState {
+	if state == nil {
+		return nil
+	}
 	switch state.Phase {
 	case game.PhaseNight:
 		return processBotNightSequential(state, diff)
@@ -164,26 +167,27 @@ func processBotNightSequential(state *game.GameState, diff Difficulty) *game.Gam
 		}
 	}
 
-	// Check if ALL non-villager humans have submitted → resolve
+	// Check if ALL non-villager connected humans have submitted → resolve.
+	// H-1 FIX: disconnected players are excluded from the wait check.
 	allHumansDone := true
 	for _, p := range state.Players {
-		if !p.IsBot && p.IsAlive && p.Role != game.RoleVillager {
+		if !p.IsBot && p.IsAlive && p.IsConnected && p.Role != game.RoleVillager {
 			if !state.NightActions.SubmittedPlayers[p.ID] {
 				allHumansDone = false
 				break
 			}
 		}
 	}
-	// Also check if there are NO human special roles (pure bot game)
-	hasHumanSpecial := false
+	// Also check if there are NO connected human special roles (all bots or all disconnected)
+	hasConnectedHumanSpecial := false
 	for _, p := range state.Players {
-		if !p.IsBot && p.IsAlive && p.Role != game.RoleVillager {
-			hasHumanSpecial = true
+		if !p.IsBot && p.IsAlive && p.IsConnected && p.Role != game.RoleVillager {
+			hasConnectedHumanSpecial = true
 			break
 		}
 	}
 
-	if allHumansDone || !hasHumanSpecial {
+	if allHumansDone || !hasConnectedHumanSpecial {
 		// Resolve wolf consensus
 		if len(state.NightActions.WolfVotes) > 0 {
 			targetCounts := make(map[string]int)
@@ -198,10 +202,14 @@ func processBotNightSequential(state *game.GameState, diff Difficulty) *game.Gam
 	return state
 }
 
+// processBotRoleConfirm marks all bots as having confirmed their roles.
+// C-3 FIX: Was using ProtectedThisNight (doctor's field) instead of HasConfirmedRole.
+// This caused bot role confirmation to never register, making ConfirmRoleReveal
+// wait forever (until timer) even when only bots were unconfirmed.
 func processBotRoleConfirm(state *game.GameState) *game.GameState {
 	for i := range state.Players {
 		if state.Players[i].IsBot {
-			state.Players[i].ProtectedThisNight = true
+			state.Players[i].HasConfirmedRole = true
 		}
 	}
 	return state

@@ -157,64 +157,127 @@ func GetLeaderboard(sortBy string, limit int) ([]LeaderboardEntry, error) {
 	return entries, nil
 }
 
-// RecordMatch inserts a match history entry and updates stats
+// RecordMatch inserts a match history entry and updates ALL related stats atomically
+// using a single DB transaction.
+// #5 FIX: Previously used 7 separate DB.Exec calls — if any failed mid-way,
+// the DB would be left in an inconsistent state (e.g. match_history inserted
+// but leaderboard not updated). Now wrapped in a transaction so it's all-or-nothing.
+// #2 FIX: All DB operations now have error checking and logging.
+// #4 FIX: win_rate in leaderboard now computed AFTER incrementing games_played,
+//         so the first game always shows the correct rate (not 0%).
 func RecordMatch(userID, matchID, role, team string, won, survived bool, rounds, duration, xp, coins, playerCount int) error {
 	// Whitelist valid roles to prevent SQL injection
 	allowedRoles := map[string]bool{
-		"werewolf": true,
-		"seer":     true,
-		"doctor":   true,
-		"witch":    true,
-		"villager": true,
+		"werewolf": true, "seer": true, "doctor": true, "witch": true, "villager": true,
 	}
 	if !allowedRoles[role] {
-		role = "villager" // default to safe value
+		role = "villager"
 	}
 
-	_, err := DB.Exec(`
-		INSERT INTO match_history (user_id, match_id, role, team, won, survived, total_rounds, duration_sec, xp_earned, coins_earned, player_count)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`, userID, matchID, role, team, won, survived, rounds, duration, xp, coins, playerCount)
-	if err != nil {
-		return err
-	}
-
-	// Update profile stats
-	if won {
-		DB.Exec(`UPDATE profiles SET games_played = games_played + 1, games_won = games_won + 1, xp = xp + $2, coins = coins + $3 WHERE user_id = $1`, userID, xp, coins)
-	} else {
-		DB.Exec(`UPDATE profiles SET games_played = games_played + 1, xp = xp + $2, coins = coins + $3 WHERE user_id = $1`, userID, xp, coins)
-	}
-
-	// Update role-specific stats using safe column mapping
 	roleColumns := map[string]string{
-		"werewolf": "games_as_werewolf",
-		"seer":     "games_as_seer",
-		"doctor":   "games_as_doctor",
-		"witch":    "games_as_witch",
+		"werewolf": "games_as_werewolf", "seer": "games_as_seer",
+		"doctor": "games_as_doctor", "witch": "games_as_witch",
 		"villager": "games_as_villager",
 	}
 	roleCol := roleColumns[role]
-	query := fmt.Sprintf(`UPDATE player_stats SET games_played = games_played + 1, %s = %s + 1 WHERE user_id = $1`, roleCol, roleCol)
-	DB.Exec(query, userID)
 
-	if won {
-		DB.Exec(`UPDATE player_stats SET games_won = games_won + 1, current_win_streak = current_win_streak + 1 WHERE user_id = $1`, userID)
-		DB.Exec(`UPDATE player_stats SET longest_win_streak = current_win_streak WHERE user_id = $1 AND current_win_streak > longest_win_streak`, userID)
-	} else {
-		DB.Exec(`UPDATE player_stats SET current_win_streak = 0 WHERE user_id = $1`, userID)
+	// Begin transaction — all updates are atomic
+	tx, err := DB.Begin()
+	if err != nil {
+		return fmt.Errorf("RecordMatch: begin tx: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	// 1. Insert match history (idempotent — skip if already recorded)
+	if _, err = tx.Exec(`
+		INSERT INTO match_history
+			(user_id, match_id, role, team, won, survived, total_rounds, duration_sec,
+			 xp_earned, coins_earned, player_count)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+		ON CONFLICT (user_id, match_id) DO NOTHING
+	`, userID, matchID, role, team, won, survived, rounds, duration, xp, coins, playerCount); err != nil {
+		return fmt.Errorf("RecordMatch: insert history: %w", err)
 	}
 
-	// Update leaderboard
-	DB.Exec(`
+	// 2. Update profile (XP + coins + played count)
+	if won {
+		if _, err = tx.Exec(`
+			UPDATE profiles SET
+				games_played = games_played + 1,
+				games_won    = games_won + 1,
+				xp           = xp + $2,
+				coins        = coins + $3
+			WHERE user_id = $1
+		`, userID, xp, coins); err != nil {
+			return fmt.Errorf("RecordMatch: update profile (win): %w", err)
+		}
+	} else {
+		if _, err = tx.Exec(`
+			UPDATE profiles SET
+				games_played = games_played + 1,
+				xp           = xp + $2,
+				coins        = coins + $3
+			WHERE user_id = $1
+		`, userID, xp, coins); err != nil {
+			return fmt.Errorf("RecordMatch: update profile (loss): %w", err)
+		}
+	}
+
+	// 3. Update role-specific stats column (safe: roleCol is from whitelist map)
+	roleQuery := fmt.Sprintf(`
+		UPDATE player_stats SET
+			games_played = games_played + 1,
+			%s = %s + 1
+		WHERE user_id = $1
+	`, roleCol, roleCol)
+	if _, err = tx.Exec(roleQuery, userID); err != nil {
+		return fmt.Errorf("RecordMatch: update player_stats role: %w", err)
+	}
+
+	// 4. Update win/loss streak
+	if won {
+		if _, err = tx.Exec(`
+			UPDATE player_stats SET
+				games_won            = games_won + 1,
+				current_win_streak   = current_win_streak + 1,
+				longest_win_streak   = GREATEST(longest_win_streak, current_win_streak + 1)
+			WHERE user_id = $1
+		`, userID); err != nil {
+			return fmt.Errorf("RecordMatch: update streak (win): %w", err)
+		}
+	} else {
+		if _, err = tx.Exec(`
+			UPDATE player_stats SET current_win_streak = 0 WHERE user_id = $1
+		`, userID); err != nil {
+			return fmt.Errorf("RecordMatch: update streak (loss): %w", err)
+		}
+	}
+
+	// 5. Update leaderboard.
+	// #4 FIX: win_rate is computed with (games_played + 1) in the denominator so
+	// the very first game shows 100% (won) or 0% (lost) instead of always 0%.
+	if _, err = tx.Exec(`
 		UPDATE leaderboard SET
 			games_played = games_played + 1,
-			games_won = CASE WHEN $2 THEN games_won + 1 ELSE games_won END,
-			xp = xp + $3,
-			win_rate = CASE WHEN games_played > 0 THEN (games_won::real / games_played::real) ELSE 0 END,
-			updated_at = now()
+			games_won    = CASE WHEN $2 THEN games_won + 1 ELSE games_won END,
+			xp           = xp + $3,
+			win_rate     = CASE
+				WHEN $2 THEN (games_won + 1)::real / (games_played + 1)::real
+				ELSE      games_won::real        / (games_played + 1)::real
+			END,
+			updated_at   = now()
 		WHERE user_id = $1
-	`, userID, won, xp)
+	`, userID, won, xp); err != nil {
+		return fmt.Errorf("RecordMatch: update leaderboard: %w", err)
+	}
 
+	// Commit
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("RecordMatch: commit: %w", err)
+	}
 	return nil
 }

@@ -22,7 +22,13 @@ CREATE TABLE IF NOT EXISTS profiles (
   xp BIGINT DEFAULT 0,
   games_played INTEGER DEFAULT 0,
   games_won INTEGER DEFAULT 0,
+  -- #10 FIX: charm + popularity columns required by SearchUsers and gift system
+  charm INTEGER DEFAULT 300,
+  popularity INTEGER DEFAULT 150,
+  -- #10 FIX: chibi_config required by GetProfile / UpdateChibiConfig
+  chibi_config JSONB,
   created_at TIMESTAMPTZ DEFAULT now(),
+  -- #10 FIX: updated_at required by UpdateProfile and UpdateChibiConfig
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 

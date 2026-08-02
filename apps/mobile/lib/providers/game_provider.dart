@@ -82,6 +82,10 @@ class GameNotifier extends StateNotifier<GameState?> {
         final message = msg.payload['message'] as String? ?? 'Unknown error';
         _errorController.add(message);
         break;
+      // H-4 FIX: Clear game state on server-side abort
+      case 'game_aborted':
+        state = null;
+        break;
     }
   }
 

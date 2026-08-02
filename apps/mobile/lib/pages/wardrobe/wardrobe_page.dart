@@ -24,7 +24,14 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 6, vsync: this); // 6 tabs now
+    _tabCtrl = TabController(length: 6, vsync: this);
+    // #13 FIX: Register change-tracking listener once in initState, not on every build().
+    // Previously used addPostFrameCallback inside build() which re-registers every rebuild,
+    // causing _checkForChanges to be called dozens of times per frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _initialConfig = ref.read(chibiProvider);
+    });
   }
 
   @override
@@ -33,20 +40,12 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
     super.dispose();
   }
 
-  void _checkForChanges(ChibiConfig current) {
-    if (_initialConfig == null) {
-      _initialConfig = current;
-    } else if (_initialConfig != current && !_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
-  }
-
   Future<bool> _onWillPop() async {
     if (!_hasUnsavedChanges) return true;
     
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Perubahan Belum Disimpan', 
@@ -55,23 +54,34 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           style: TextStyle(color: AppColors.textSecondary)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () {
+              Navigator.of(ctx).pop(true);
+            },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
+
+    if (result == true) {
+      setState(() => _hasUnsavedChanges = false);
+    }
     return result ?? false;
   }
 
-  void _saveAndExit() {
+  Future<void> _saveAndExit() async {
     HapticFeedback.mediumImpact();
     setState(() => _hasUnsavedChanges = false);
+    
+    // Save to SharedPreferences and sync to backend DB immediately
+    await ref.read(chibiProvider.notifier).saveImmediately();
+    
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
@@ -130,8 +140,13 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
     final config = ref.watch(chibiProvider);
     final notifier = ref.read(chibiProvider.notifier);
 
-    // Track changes for unsaved warning
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForChanges(config));
+    // #13 FIX: Track unsaved changes via ref.listen in build() (not addPostFrameCallback).
+    // ref.listen is the idiomatic Riverpod way — fires outside the build cycle, no duplicates.
+    ref.listen<ChibiConfig>(chibiProvider, (previous, next) {
+      if (_initialConfig != null && next != _initialConfig && !_hasUnsavedChanges) {
+        if (mounted) setState(() => _hasUnsavedChanges = true);
+      }
+    });
 
     return PopScope(
       canPop: !_hasUnsavedChanges,
@@ -188,44 +203,6 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          // Back button with tooltip
-          Semantics(
-            label: 'Kembali',
-            button: true,
-            child: Tooltip(
-              message: 'Kembali',
-              child: GestureDetector(
-                onTap: () async {
-                  if (_hasUnsavedChanges) {
-                    final shouldPop = await _onWillPop();
-                    if (shouldPop && mounted) {
-                      // ignore: use_build_context_synchronously
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/home');
-                      }
-                    }
-                  } else {
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/home');
-                    }
-                  }
-                },
-                child: Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white.withValues(alpha: 0.06),
-                  ),
-                  child: const Icon(Icons.arrow_back_rounded, color: AppColors.textSecondary, size: 20),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Row(
               children: [
@@ -262,7 +239,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                     borderRadius: BorderRadius.circular(10),
                     color: Colors.white.withValues(alpha: 0.06),
                   ),
-                  child: const Icon(Icons.casino_rounded, color: AppColors.primary, size: 20),
+                  child: const Icon(Icons.casino_rounded, color: Color(0xFFDAA520), size: 20),
                 ),
               ),
             ),
@@ -304,10 +281,10 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           height: 190,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5), width: 2),
             color: Colors.white.withValues(alpha: 0.05),
             boxShadow: [
-              BoxShadow(color: AppColors.primary.withValues(alpha: 0.15), blurRadius: 20),
+              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.15), blurRadius: 20),
             ],
           ),
           child: ClipRRect(
@@ -347,10 +324,10 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: _hasUnsavedChanges ? AppColors.primaryGradient : null,
-              color: _hasUnsavedChanges ? null : AppColors.primary.withValues(alpha: 0.6),
+              gradient: _hasUnsavedChanges ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]) : null,
+              color: _hasUnsavedChanges ? null : const Color(0xFFDAA520).withValues(alpha: 0.6),
               boxShadow: _hasUnsavedChanges ? [
-                BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
+                BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
               ] : null,
             ),
             child: Row(
@@ -397,11 +374,11 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                     isScrollable: true, // Scrollable for 6 tabs
                     indicator: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: AppColors.primary.withValues(alpha: 0.2),
+                      color: const Color(0xFFDAA520).withValues(alpha: 0.2),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
-                    labelColor: AppColors.primary,
+                    labelColor: const Color(0xFFDAA520),
                     unselectedLabelColor: AppColors.textMuted,
                     labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                     tabAlignment: TabAlignment.start,
@@ -526,9 +503,9 @@ class _HairStyleGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -547,7 +524,7 @@ class _HairStyleGrid extends StatelessWidget {
                 Text(
                   _hairLabel(style),
                   style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -739,9 +716,9 @@ class _EyeStyleGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+                color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -755,7 +732,7 @@ class _EyeStyleGrid extends StatelessWidget {
                   Text(
                     _eyeLabel(style),
                     style: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                      color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
@@ -853,9 +830,9 @@ class _ExpressionGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -867,7 +844,7 @@ class _ExpressionGrid extends StatelessWidget {
                 Text(
                   _exprLabel(expr),
                   style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -1056,9 +1033,9 @@ class _PantsStyleGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+                color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -1072,7 +1049,7 @@ class _PantsStyleGrid extends StatelessWidget {
                   Text(
                     _pantsLabel(style),
                     style: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                      color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                       fontSize: 10,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
@@ -1194,9 +1171,9 @@ class _ShirtStyleGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1214,7 +1191,7 @@ class _ShirtStyleGrid extends StatelessWidget {
                 Text(
                   _shirtLabel(style),
                   style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -1412,9 +1389,9 @@ class _AccessoryGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1432,7 +1409,7 @@ class _AccessoryGrid extends StatelessWidget {
                 Text(
                   _accLabel(acc),
                   style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected ? const Color(0xFFDAA520) : AppColors.textSecondary,
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -1613,11 +1590,11 @@ class _ColorGrid extends StatelessWidget {
               color: c,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.2),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.2),
                 width: isSelected ? 3 : 1,
               ),
               boxShadow: isSelected
-                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 8)]
+                  ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 8)]
                   : null,
             ),
             child: isSelected
@@ -1648,9 +1625,9 @@ class _ToggleOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: value ? AppColors.primary.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+          color: value ? const Color(0xFFDAA520).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
           border: Border.all(
-            color: value ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+            color: value ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
             width: value ? 2 : 1,
           ),
         ),
@@ -1660,7 +1637,7 @@ class _ToggleOption extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: value ? AppColors.primary : AppColors.textSecondary,
+                  color: value ? const Color(0xFFDAA520) : AppColors.textSecondary,
                   fontSize: 13,
                   fontWeight: value ? FontWeight.w600 : FontWeight.w500,
                 ),
@@ -1671,7 +1648,7 @@ class _ToggleOption extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: value ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                color: value ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 150),

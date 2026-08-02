@@ -290,10 +290,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> updateProfile({String? displayName, int? avatarId}) async {
+  Future<void> updateProfile({
+    String? displayName,
+    int? avatarId,
+    String? avatarUrl,  // custom uploaded photo URL
+  }) async {
     final resp = await _api.updateProfile(
       displayName: displayName,
       avatarId: avatarId,
+      avatarUrl: avatarUrl,
     );
 
     if (resp.isSuccess && resp.data != null) {

@@ -143,3 +143,24 @@ func GetCurrentSeason() (*Season, error) {
 	}
 	return &s, nil
 }
+
+// CalculateRankTier returns the rank tier string for a given XP value.
+// Used by profile and leaderboard to display player rank without MMR data.
+func CalculateRankTier(xp int64) string {
+	switch {
+	case xp >= 10000:
+		return "grandmaster"
+	case xp >= 5000:
+		return "master"
+	case xp >= 2500:
+		return "diamond"
+	case xp >= 1000:
+		return "platinum"
+	case xp >= 400:
+		return "gold"
+	case xp >= 150:
+		return "silver"
+	default:
+		return "bronze"
+	}
+}

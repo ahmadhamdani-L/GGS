@@ -1,35 +1,25 @@
-# Build stage
+# Multi-stage build for Go backend
 FROM golang:1.21-alpine AS builder
 
-WORKDIR /app
-
-# Install dependencies
-RUN apk add --no-cache git
-
-# Copy go mod files
+WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/server ./cmd/server
 
-# Build binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
+# ─── Production image ─────────────────────────────────────
+FROM alpine:3.19
 
-# Runtime stage
-FROM alpine:latest
-
+RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates
-
-# Copy binary from builder
 COPY --from=builder /app/server .
-COPY --from=builder /app/migrations ./migrations
+COPY migrations ./migrations
 
-# Expose port
+# Create upload directory
+RUN mkdir -p /app/uploads/avatars
+
 EXPOSE 8080
 
-# Run
 CMD ["./server"]

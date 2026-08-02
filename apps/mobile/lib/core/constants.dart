@@ -17,51 +17,41 @@ class AppConstants {
   static const int defaultNightActionTimer = 30;
   static const int defaultTestamentTimer = 30;
 
-  // Avatar options
-  static const int avatarCount = 4;
-  static const List<String> avatarFiles = [
-    'boy',
-    'boyS',
-    'girl',
-    'girlS',
-  ];
+  // Avatar options — 12 avatars total (avatar-1.png … avatar-12.png)
+  // #1 FIX: was 4, all 12 avatars are valid and declared in pubspec.yaml
+  static const int avatarCount = 12;
 
-  /// Get avatar asset path by index (1-based for storage)
+  /// Get avatar asset path by ID (1-based).
+  /// Backend stores avatarId as integer 1–12.
+  /// Asset files are named: assets/avatars/avatar-1.png … avatar-12.png
   static String avatarPath(int avatarId) {
-    final index = (avatarId - 1).clamp(0, avatarFiles.length - 1);
-    return 'assets/avatars/${avatarFiles[index]}.jpg';
+    final id = avatarId.clamp(1, avatarCount);
+    return 'assets/avatars/avatar-$id.png';
   }
 
-  /// Get avatar asset path from backend avatar name (e.g., "boy", "boyS", "avatar-1")
+  /// Get avatar asset path from backend avatar name (e.g., "avatar-3", legacy "boy").
   static String avatarPathFromName(String? avatarName) {
     if (avatarName == null || avatarName.isEmpty) {
-      return 'assets/avatars/${avatarFiles[0]}.jpg';
+      return avatarPath(1);
     }
-    // If it's already a full path, return as is
-    if (avatarName.startsWith('assets/')) {
-      return avatarName;
-    }
-    // If it matches our avatar files, use directly
-    if (avatarFiles.contains(avatarName)) {
-      return 'assets/avatars/$avatarName.jpg';
-    }
-    // Handle legacy "avatar-N" format from backend
+    // Already a full path
+    if (avatarName.startsWith('assets/')) return avatarName;
+    // Standard format: "avatar-N"
     if (avatarName.startsWith('avatar-')) {
-      final idStr = avatarName.substring(7);
-      final id = int.tryParse(idStr) ?? 1;
+      final id = int.tryParse(avatarName.substring(7)) ?? 1;
       return avatarPath(id);
     }
-    // Fallback to first avatar
-    return 'assets/avatars/${avatarFiles[0]}.jpg';
+    // Legacy names from old code — map to first four avatars
+    const legacyMap = {'boy': 1, 'boyS': 2, 'girl': 3, 'girlS': 4};
+    if (legacyMap.containsKey(avatarName)) {
+      return avatarPath(legacyMap[avatarName]!);
+    }
+    return avatarPath(1);
   }
 
-  /// Get avatar path for PlayerState (prefers avatarId if available)
+  /// Get avatar path for a player (prefers avatarId when valid).
   static String getPlayerAvatar(String? avatarName, int avatarId) {
-    // If avatarId is valid (1-4), use it directly
-    if (avatarId >= 1 && avatarId <= avatarCount) {
-      return avatarPath(avatarId);
-    }
-    // Otherwise try to parse from avatar name
+    if (avatarId >= 1 && avatarId <= avatarCount) return avatarPath(avatarId);
     return avatarPathFromName(avatarName);
   }
 

@@ -120,20 +120,20 @@ Untuk mengetes di HP fisik, laptop/komputer Anda dan HP **wajib terhubung di Wi-
 1. **Cari IP Lokal Laptop Anda:**
    - **macOS:** Jalankan perintah `ipconfig getifaddr en0` atau cek di *System Settings > Wi-Fi > Details*.
    - **Windows:** Jalankan perintah `ipconfig` di command prompt, cari IPv4 Address.
-   - *Misal IP laptop Anda adalah:* `192.168.1.15`
+   - *Misal IP laptop Anda adalah:* `192.168.1.5`
 
 2. **Jalankan Aplikasi dengan IP Tersebut:**
    ```bash
    flutter run \
-     --dart-define=API_URL=http://192.168.1.15:8080 \
-     --dart-define=WS_URL=ws://192.168.1.15:8080/ws
+     --dart-define=API_URL=http://192.168.1.5:8080 \
+     --dart-define=WS_URL=ws://192.168.1.5:8080/ws
    ```
 
 3. **Alternatif Menggunakan File `.env` (Lebih Praktis):**
    Ubah isi file `apps/mobile/.env` dan ganti `localhost` ke IP lokal laptop Anda:
    ```env
-   API_URL=http://192.168.1.15:8080
-   WS_URL=ws://192.168.1.15:8080/ws
+   API_URL=http://192.168.1.5:8080
+   WS_URL=ws://192.168.1.5:8080/ws
    ```
    Lalu jalankan dengan perintah:
    ```bash

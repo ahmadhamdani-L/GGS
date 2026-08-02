@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"html"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/ggs/werewolf-server/internal/auth"
 	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/ggs/werewolf-server/internal/security"
+	"github.com/ggs/werewolf-server/internal/ws"
 )
 
 // Input validation patterns
@@ -129,10 +131,16 @@ func sanitizeString(input string) string {
 	return html.EscapeString(strings.TrimSpace(input))
 }
 
-type Server struct{}
+type Server struct {
+	Hub *ws.Hub
+}
 
-func NewServer() *Server {
-	return &Server{}
+func NewServer(h ...*ws.Hub) *Server {
+	var hub *ws.Hub
+	if len(h) > 0 {
+		hub = h[0]
+	}
+	return &Server{Hub: hub}
 }
 
 func jsonResponse(w http.ResponseWriter, status int, data interface{}) {
@@ -156,6 +164,8 @@ func (s *Server) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, 405, "method not allowed")
 		return
 	}
+	// H-06 FIX: limit request body on all auth endpoints
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
 	var req struct {
 		Email       string `json:"email"`
 		Password    string `json:"password"`
@@ -230,6 +240,8 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, 405, "method not allowed")
 		return
 	}
+	// H-06 FIX: limit request body
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
 	var req struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -296,6 +308,8 @@ func (s *Server) HandleGuest(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, 405, "method not allowed")
 		return
 	}
+	// H-06 FIX: limit request body
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
 	var req struct {
 		DisplayName string `json:"displayName"`
 	}
@@ -384,47 +398,68 @@ func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// HandleForgotPassword allows a user to reset their password
+// HandleForgotPassword implements a two-step reset flow.
+// H-04 FIX: Step 1 — POST email → generates a short-lived reset token stored in DB.
+//           Step 2 — POST email + token + newPassword → validates token then resets.
+// In production this token would be sent by email; here it is returned directly
+// so the client can drive the "enter token" UI (e.g., shown in-app for dev,
+// sent via email service integration for prod).
 func (s *Server) HandleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		errorResponse(w, 405, "method not allowed")
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
 
 	var req struct {
 		Email       string `json:"email"`
-		NewPassword string `json:"newPassword"`
+		Token       string `json:"token"`       // empty on step 1, filled on step 2
+		NewPassword string `json:"newPassword"` // empty on step 1
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errorResponse(w, 400, "invalid body")
 		return
 	}
-
 	req.Email = strings.TrimSpace(req.Email)
-	if req.Email == "" || req.NewPassword == "" {
-		errorResponse(w, 400, "email and newPassword required")
+	if req.Email == "" {
+		errorResponse(w, 400, "email required")
 		return
 	}
-
 	if !validateEmail(req.Email) {
 		errorResponse(w, 400, "invalid email format")
 		return
 	}
 
+	if req.Token == "" {
+		// Step 1: generate reset token
+		token, err := db.CreatePasswordResetToken(req.Email)
+		if err != nil {
+			// Always return 200 to prevent email enumeration
+			jsonResponse(w, 200, map[string]string{"message": "Jika email terdaftar, kode reset telah dikirim."})
+			return
+		}
+		// In production: send token via email service. For dev/testing return it.
+		devMode := os.Getenv("APP_ENV") != "production"
+		resp := map[string]string{"message": "Kode reset berhasil dikirim."}
+		if devMode {
+			resp["token"] = token // dev only
+		}
+		jsonResponse(w, 200, resp)
+		return
+	}
+
+	// Step 2: validate token + reset password
+	if req.NewPassword == "" {
+		errorResponse(w, 400, "newPassword required")
+		return
+	}
 	if valid, msg := validatePassword(req.NewPassword); !valid {
 		errorResponse(w, 400, msg)
 		return
 	}
 
-	var err error
-	if db.DB != nil {
-		err = db.ResetPassword(req.Email, req.NewPassword)
-	} else {
-		err = db.Mem.ResetPassword(req.Email, req.NewPassword)
-	}
-
-	if err != nil {
-		errorResponse(w, 400, err.Error())
+	if err := db.ResetPasswordWithToken(req.Email, req.Token, req.NewPassword); err != nil {
+		errorResponseWithCode(w, 400, err.Error(), "INVALID_RESET_TOKEN")
 		return
 	}
 
@@ -489,6 +524,24 @@ func (s *Server) HandleConvertGuest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleGetPublicRooms handles GET /api/rooms/public
+func (s *Server) HandleGetPublicRooms(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		errorResponse(w, 405, "Method not allowed")
+		return
+	}
+
+	var rooms []map[string]interface{}
+	if s.Hub != nil {
+		rooms = s.Hub.GetPublicRoomsList()
+	} else {
+		rooms = make([]map[string]interface{}, 0)
+	}
+	jsonResponse(w, 200, map[string]interface{}{
+		"rooms": rooms,
+	})
+}
+
 // ─── Profile ─────────────────────────────────────────────
 
 func (s *Server) HandleProfile(w http.ResponseWriter, r *http.Request) {
@@ -530,6 +583,7 @@ func (s *Server) HandleProfile(w http.ResponseWriter, r *http.Request) {
 			DisplayName string                 `json:"displayName"`
 			AvatarID    int                    `json:"avatarId"`
 			ChibiConfig map[string]interface{} `json:"chibiConfig"`
+			AvatarURL   string                 `json:"avatarUrl"` // Task #7: custom uploaded photo
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			errorResponseWithCode(w, 400, "invalid request body", "INVALID_BODY")
@@ -563,11 +617,18 @@ func (s *Server) HandleProfile(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if db.DB != nil {
 			profile, err = db.UpdateProfile(userID, req.DisplayName, req.AvatarID)
-			// Update chibi config separately if provided
 			if err == nil && req.ChibiConfig != nil {
 				err = db.UpdateChibiConfig(userID, req.ChibiConfig)
 				if err == nil {
-					profile, _ = db.GetProfile(userID) // Refresh to get updated chibi
+					profile, _ = db.GetProfile(userID)
+				}
+			}
+			// Task #7: save avatar_url if provided from profile setup
+			if err == nil && req.AvatarURL != "" {
+				db.DB.Exec(`UPDATE profiles SET avatar_url=$2, updated_at=now() WHERE user_id=$1`,
+					userID, req.AvatarURL)
+				if profile != nil {
+					profile.AvatarURL = req.AvatarURL
 				}
 			}
 		} else {
@@ -580,6 +641,10 @@ func (s *Server) HandleProfile(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			errorResponseWithCode(w, 500, "failed to update profile", "UPDATE_FAILED")
 			return
+		}
+		// M-01 FIX: Invalidate WS hub profile cache so next join uses fresh data
+		if s.Hub != nil {
+			s.Hub.InvalidateProfileCache(userID)
 		}
 		jsonResponse(w, 200, profile)
 
@@ -908,6 +973,36 @@ func (s *Server) HandleFriends(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, 405, "method not allowed")
 	}
 }
+
+// HandleSearchUsers searches users in DB by display name or user ID
+func (s *Server) HandleSearchUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		errorResponse(w, 405, "Method not allowed")
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	if strings.TrimSpace(query) == "" {
+		jsonResponse(w, 200, map[string]interface{}{"users": []db.Profile{}})
+		return
+	}
+
+	var users []db.Profile
+	if db.DB != nil {
+		users, _ = db.SearchUsers(query)
+	} else if db.Mem != nil {
+		users = db.Mem.SearchUsers(query)
+	} else {
+		users = []db.Profile{}
+	}
+
+	jsonResponse(w, 200, map[string]interface{}{"users": users})
+}
+
+// HandleSendGift is now fully implemented in handlers_social.go.
+// This stub is kept to prevent import errors during transition.
+// The route in main.go points to the new full implementation.
+// OLD stub removed — see handlers_social.go HandleSendGift.
 
 func (s *Server) HandleReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {

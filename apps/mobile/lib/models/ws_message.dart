@@ -114,11 +114,16 @@ class WsMessage {
     );
   }
 
-  factory WsMessage.startGame({required String roomId, required String hostId}) {
+  // C-1 FIX: noBotFill parameter added
+  factory WsMessage.startGame({
+    required String roomId,
+    required String hostId,
+    bool noBotFill = false,
+  }) {
     return WsMessage(
       type: 'start_game',
-      payload: {'roomId': roomId, 'hostId': hostId},
-      requestId: _newId(), // Prevent double-start from network retry
+      payload: {'roomId': roomId, 'hostId': hostId, 'noBotFill': noBotFill},
+      requestId: _newId(),
     );
   }
 
@@ -194,6 +199,16 @@ class WsMessage {
     return WsMessage(
       type: 'team_chat',
       payload: {'senderId': senderId, 'content': content},
+    );
+  }
+
+  factory WsMessage.kickPlayer({
+    required String roomId,
+    required String targetUserId,
+  }) {
+    return WsMessage(
+      type: 'kick_player',
+      payload: {'roomId': roomId, 'targetUserId': targetUserId},
     );
   }
 

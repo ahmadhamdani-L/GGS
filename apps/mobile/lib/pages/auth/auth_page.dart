@@ -21,7 +21,10 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  bool _obscure = true;
+  // #4 FIX: Separate _obscure state per form so toggling visibility in Login
+  // doesn't accidentally expose password in Register form and vice versa.
+  bool _obscureLogin = true;
+  bool _obscureRegister = true;
 
   @override
   void initState() {
@@ -126,15 +129,15 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                   const SizedBox(height: 40),
                   // Glass card with form
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                       child: Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                          color: const Color(0xFF1A1F2E).withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           children: [
@@ -177,44 +180,41 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   Widget _buildLogo() {
     return Column(
       children: [
+        // GGS Logo with chibi
         Container(
-          width: 80,
-          height: 80,
+          width: 90,
+          height: 90,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: AppColors.primaryGradient,
+            gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
             boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                blurRadius: 32,
-                spreadRadius: 2,
-              ),
+              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 24, spreadRadius: 2),
             ],
           ),
-          child: const Center(child: Text('🐺', style: TextStyle(fontSize: 38))),
+          child: const Center(child: Text('🐺', style: TextStyle(fontSize: 42))),
         ),
-        const SizedBox(height: 16),
-        Text(
-          'GGS WEREWOLF',
+        const SizedBox(height: 14),
+        const Text(
+          'GGS',
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 3,
-            shadows: [Shadow(color: AppColors.primary.withValues(alpha: 0.5), blurRadius: 20)],
+            color: Color(0xFFDAA520),
+            fontSize: 36,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 6,
+            shadows: [Shadow(color: Color(0xFFDAA520), blurRadius: 20)],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: AppColors.redTeam.withValues(alpha: 0.15),
-            border: Border.all(color: AppColors.redTeam.withValues(alpha: 0.3)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+            color: const Color(0xFFDAA520).withValues(alpha: 0.08),
           ),
           child: const Text(
-            'RED vs BLUE EDITION',
-            style: TextStyle(color: AppColors.redTeam, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5),
+            'WEREWOLF ONLINE',
+            style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2),
           ),
         ),
       ],
@@ -225,16 +225,17 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Container(
       height: 46,
       decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.5),
+        color: Colors.black.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
           borderRadius: BorderRadius.circular(10),
         ),
-        labelColor: AppColors.background,
+        labelColor: Colors.white,
         unselectedLabelColor: AppColors.textMuted,
         dividerHeight: 0,
         indicatorSize: TabBarIndicatorSize.tab,
@@ -281,15 +282,15 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   Widget _buildGuestButton(AuthState auth) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 48,
       child: OutlinedButton.icon(
         onPressed: auth.isLoading ? null : _guest,
-        icon: const Icon(Icons.person_outline_rounded, size: 20),
-        label: const Text('Main sebagai Tamu', style: TextStyle(fontWeight: FontWeight.w600)),
+        icon: const Icon(Icons.person_outline_rounded, size: 18),
+        label: const Text('Main sebagai Tamu', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textSecondary,
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          foregroundColor: const Color(0xFFDAA520),
+          side: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );
@@ -299,116 +300,277 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _input(_emailController, 'Email', Icons.email_outlined, keyboard: TextInputType.emailAddress),
+        const Text('Selamat datang kembali,\nWolves! 🐺', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
         const SizedBox(height: 14),
-        _input(_passwordController, 'Password', Icons.lock_outline, obscure: true),
-        const SizedBox(height: 6),
+        _input(_emailController, 'Email / Username', Icons.person_outline,
+            keyboard: TextInputType.emailAddress),
+        const SizedBox(height: 12),
+        _inputObscure(_passwordController, 'Password', Icons.lock_outline,
+            obscure: _obscureLogin,
+            onToggle: () => setState(() => _obscureLogin = !_obscureLogin)),
+        const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () => _showForgotPasswordDialog(context),
-            child: const Text('Lupa Password?', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+            child: const Text('Lupa password?',
+                style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w600)),
           ),
         ),
-        const SizedBox(height: 16),
-        GradientButton(label: 'Masuk', icon: Icons.login_rounded, onPressed: auth.isLoading ? null : _login, isLoading: auth.isLoading),
+        const SizedBox(height: 8),
+        // Golden Login button
+        GestureDetector(
+          onTap: auth.isLoading ? null : _login,
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+              border: Border.all(color: const Color(0xFFDAA520)),
+              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+            ),
+            child: Center(child: auth.isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Login', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Social login (coming soon)
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('atau lanjut dengan', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 10)),
+        ]),
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _socialButton('G', 'Google'),
+          const SizedBox(width: 10),
+          _socialButton('f', 'Facebook'),
+          const SizedBox(width: 10),
+          _socialButton('', 'Apple'),
+        ]),
       ],
     );
   }
 
+  Widget _socialButton(String icon, String label) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Segera hadir!'), backgroundColor: AppColors.warning, behavior: SnackBarBehavior.floating, duration: Duration(seconds: 1)),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white.withValues(alpha: 0.06),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 4),
+          Text('🔜', style: const TextStyle(fontSize: 8)),
+        ]),
+      ),
+    );
+  }
+
+  // #3 FIX: Forgot-password is now a true two-step flow.
+  // Step 1: user enters email → server sends/returns a 6-digit token.
+  // Step 2: user enters that token + new password → server validates and resets.
   void _showForgotPasswordDialog(BuildContext context) {
-    final resetEmailCtrl = TextEditingController(text: _emailController.text);
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    final tokenCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
     bool isSubmitting = false;
+    bool step2 = false; // false = step1 (email), true = step2 (token + new pass)
+    String? devToken; // shown in dev mode only
 
     showDialog(
       context: context,
+      barrierDismissible: !isSubmitting,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.surfaceElevated,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.lock_reset_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text('Lupa Password', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Masukkan email terdaftar dan password baru Anda.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceElevated,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(children: [
+              const Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                step2 ? 'Masukkan Kode Reset' : 'Lupa Password',
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: resetEmailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: const Icon(Icons.email_outlined, size: 18),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+            ]),
+            content: step2
+                // ── Step 2 ──────────────────────────────────────────────
+                ? Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.check_circle_outline, color: AppColors.success, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(
+                          devToken != null
+                              ? 'Kode reset (dev): $devToken'
+                              : 'Kode 6 digit telah dikirim ke email ${emailCtrl.text.trim()}.',
+                          style: TextStyle(
+                            color: devToken != null ? AppColors.warning : AppColors.success,
+                            fontSize: 12,
+                          ),
+                        )),
+                      ]),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: tokenCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 8),
+                      decoration: InputDecoration(
+                        hintText: '000000',
+                        hintStyle: TextStyle(
+                            color: AppColors.textMuted.withValues(alpha: 0.4),
+                            fontSize: 22,
+                            letterSpacing: 8),
+                        labelText: 'Kode 6 Digit',
+                        prefixIcon: const Icon(Icons.pin_outlined, size: 18),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        counterText: '',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: newPassCtrl,
+                      obscureText: true,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Password Baru (min 8, huruf besar & angka)',
+                        prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () => setDialogState(() { step2 = false; tokenCtrl.clear(); newPassCtrl.clear(); }),
+                      child: const Text('← Kirim ulang kode',
+                          style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
+                  ])
+                // ── Step 1 ──────────────────────────────────────────────
+                : Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Text(
+                      'Masukkan email terdaftar. Kode verifikasi akan dikirim untuk mereset password.',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ]),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPassCtrl,
-                obscureText: true,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Password Baru (min 8 char)',
-                  prefixIcon: const Icon(Icons.lock_outline, size: 18),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
-            ),
-            ElevatedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () async {
-                      final email = resetEmailCtrl.text.trim();
-                      final newPass = newPassCtrl.text;
-                      if (email.isEmpty || newPass.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Email dan password baru wajib diisi'), backgroundColor: AppColors.warning),
-                        );
-                        return;
-                      }
-                      setDialogState(() => isSubmitting = true);
-                      final api = ref.read(apiServiceProvider);
-                      final resp = await api.forgotPassword(email: email, newPassword: newPass);
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                        if (resp.isSuccess) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Password berhasil diperbarui! Silakan login.'), backgroundColor: AppColors.success),
-                          );
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final api = ref.read(apiServiceProvider);
+
+                        if (!step2) {
+                          // Step 1: request token
+                          final email = emailCtrl.text.trim();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('Email wajib diisi'),
+                                backgroundColor: AppColors.warning));
+                            return;
+                          }
+                          setDialogState(() => isSubmitting = true);
+                          final resp = await api.forgotPassword(email: email);
+                          if (!ctx.mounted) return;
+                          setDialogState(() => isSubmitting = false);
+                          if (resp.isSuccess) {
+                            // In dev mode server returns token directly
+                            devToken = resp.data?['token'] as String?;
+                            setDialogState(() => step2 = true);
+                          } else {
+                            // Always show generic message to prevent email enumeration
+                            setDialogState(() => step2 = true);
+                          }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(resp.error ?? 'Gagal me-reset password'), backgroundColor: AppColors.error),
-                          );
+                          // Step 2: submit token + new password
+                          final token = tokenCtrl.text.trim();
+                          final newPass = newPassCtrl.text;
+                          if (token.length != 6) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('Masukkan kode 6 digit'),
+                                backgroundColor: AppColors.warning));
+                            return;
+                          }
+                          if (newPass.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('Password baru wajib diisi'),
+                                backgroundColor: AppColors.warning));
+                            return;
+                          }
+                          setDialogState(() => isSubmitting = true);
+                          final resp = await api.forgotPassword(
+                              email: emailCtrl.text.trim(),
+                              token: token,
+                              newPassword: newPass);
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          if (!mounted) return;
+                          if (resp.isSuccess) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                content: Text('Password berhasil diubah! Silakan login.'),
+                                backgroundColor: AppColors.success));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(resp.error ?? 'Kode tidak valid atau sudah kadaluarsa'),
+                                backgroundColor: AppColors.error));
+                          }
                         }
-                      }
-                    },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: isSubmitting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Reset Password'),
-            ),
-          ],
-        ),
+                      },
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(step2 ? 'Reset Password' : 'Kirim Kode'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -417,38 +579,99 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _input(_nameController, 'Nama Tampilan', Icons.badge_outlined),
+        const Text('Buat akun baru,\nBergabunglah dengan Wolves!', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
         const SizedBox(height: 12),
-        _input(_emailController, 'Email', Icons.email_outlined, keyboard: TextInputType.emailAddress),
-        const SizedBox(height: 12),
-        _input(_passwordController, 'Password (min 6)', Icons.lock_outline, obscure: true),
-        const SizedBox(height: 24),
-        GradientButton(label: 'Daftar', icon: Icons.person_add_alt_1_rounded, onPressed: auth.isLoading ? null : _register, isLoading: auth.isLoading),
+        _input(_nameController, 'Username', Icons.person_outline),
+        const SizedBox(height: 10),
+        _input(_emailController, 'Email', Icons.email_outlined,
+            keyboard: TextInputType.emailAddress),
+        const SizedBox(height: 10),
+        _inputObscure(
+            _passwordController,
+            'Password',
+            Icons.lock_outline,
+            obscure: _obscureRegister,
+            onToggle: () => setState(() => _obscureRegister = !_obscureRegister)),
+        const SizedBox(height: 14),
+        // Golden Daftar button
+        GestureDetector(
+          onTap: auth.isLoading ? null : _register,
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+              border: Border.all(color: const Color(0xFFDAA520)),
+              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+            ),
+            child: Center(child: auth.isLoading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Daftar', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(child: Text('Dengan mendaftar, kamu setuju dengan\nSyarat & Ketentuan dan Kebijakan Privasi',
+          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 9), textAlign: TextAlign.center)),
       ],
     );
   }
 
+  /// Plain text input (no visibility toggle).
   Widget _input(TextEditingController ctrl, String label, IconData icon,
-      {bool obscure = false, TextInputType? keyboard}) {
+      {TextInputType? keyboard}) {
     return TextField(
       controller: ctrl,
-      obscureText: obscure && _obscure,
       keyboardType: keyboard,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: label,
-        prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
-        suffixIcon: obscure
-            ? IconButton(
-                icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: AppColors.textMuted, size: 20),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              )
-            : null,
+        hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 20),
         filled: true,
-        fillColor: AppColors.background.withValues(alpha: 0.5),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+        fillColor: Colors.black.withValues(alpha: 0.3),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFDAA520), width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      ),
+    );
+  }
+
+  /// Password input with its own visibility toggle (no shared state).
+  Widget _inputObscure(TextEditingController ctrl, String label, IconData icon,
+      {required bool obscure, required VoidCallback onToggle}) {
+    return TextField(
+      controller: ctrl,
+      obscureText: obscure,
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 20),
+        suffixIcon: IconButton(
+          icon: Icon(
+              obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              color: AppColors.textMuted, size: 20),
+          onPressed: onToggle,
+        ),
+        filled: true,
+        fillColor: Colors.black.withValues(alpha: 0.3),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFDAA520), width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
     );
   }

@@ -26,7 +26,11 @@ var defaultRoleCompositions = map[int]map[Role]int{
 
 func generateGameID() string {
 	b := make([]byte, 8)
-	rand.Read(b)
+	// L-02 FIX: check error from rand.Read
+	if _, err := rand.Read(b); err != nil {
+		// Fallback: use time-based ID
+		return fmt.Sprintf("%016x", time.Now().UnixNano())
+	}
 	return hex.EncodeToString(b)
 }
 
@@ -107,7 +111,7 @@ func CreateGame(playerInfos []PlayerInfo) *GameState {
 				Discussion:  60,
 				Voting:      30,
 				NightAction: 30,
-				Testament:   10,
+				Testament:   30, // UX-03 FIX: was 10s — 30s gives players enough time to write a testament
 			},
 			Mode:          "online",
 			FlexibleTimer: false,
@@ -153,27 +157,30 @@ func StartGame(state *GameState) *GameState {
 	return state
 }
 
-// ConfirmRoleReveal marks player as confirmed
+// ConfirmRoleReveal marks a player as having seen/confirmed their role.
+// #8 FIX: Use dedicated HasConfirmedRole flag instead of reusing ProtectedThisNight
+// (which is the doctor's protection flag and has a completely different meaning).
 func ConfirmRoleReveal(state *GameState, playerID string) *GameState {
 	for i := range state.Players {
 		if state.Players[i].ID == playerID {
-			state.Players[i].ProtectedThisNight = true
+			state.Players[i].HasConfirmedRole = true
 			break
 		}
 	}
 
-	// Check if all confirmed
+	// Check if all alive (non-bot) players have confirmed
 	allConfirmed := true
 	for _, p := range state.Players {
-		if !p.ProtectedThisNight {
+		if !p.IsBot && !p.HasConfirmedRole {
 			allConfirmed = false
 			break
 		}
 	}
 
 	if allConfirmed {
+		// Reset flag for future use (not strictly needed but keeps state clean)
 		for i := range state.Players {
-			state.Players[i].ProtectedThisNight = false
+			state.Players[i].HasConfirmedRole = false
 		}
 		state = StartNightPhase(state)
 	}
@@ -402,11 +409,34 @@ func CastVote(state *GameState, voterID, targetID string) (*GameState, error) {
 		return state, errors.New("voter must be alive player")
 	}
 
+	// P1-6 FIX: Validate vote target — must be alive player (not self, not dead, not invalid)
+	if targetID != "" { // empty targetID = skip/abstain
+		target := findPlayer(state, targetID)
+		if target == nil {
+			return state, errors.New("invalid vote target")
+		}
+		if !target.IsAlive {
+			return state, errors.New("cannot vote for dead player")
+		}
+		if targetID == voterID {
+			return state, errors.New("cannot vote for yourself")
+		}
+	}
+
 	state.Votes.Votes[voterID] = targetID
 
-	// Do NOT auto-resolve when all votes are in.
-	// Resolution happens ONLY when the timer expires (AutoAdvanceOnTimeout).
-	// This allows players to change their vote before the deadline.
+	// H-2 FIX: Auto-resolve immediately when ALL alive+connected players have voted.
+	// Previously waited for timer always — caused 30s dead wait when everyone voted early.
+	// Exception: during a tie-retry, only count connected players.
+	aliveConnected := 0
+	for _, p := range state.Players {
+		if p.IsAlive && p.IsConnected {
+			aliveConnected++
+		}
+	}
+	if len(state.Votes.Votes) >= aliveConnected && aliveConnected > 0 {
+		state = resolveVotes(state)
+	}
 
 	return state, nil
 }
@@ -423,18 +453,37 @@ func SubmitTestament(state *GameState, playerID, message string) *GameState {
 		message = message[:200]
 	}
 
-	state.Testaments = append(state.Testaments, Testament{
+	// Filter out previous testament by this player
+	updatedTestaments := make([]Testament, 0, len(state.Testaments)+1)
+	for _, t := range state.Testaments {
+		if t.PlayerID != playerID {
+			updatedTestaments = append(updatedTestaments, t)
+		}
+	}
+
+	updatedTestaments = append(updatedTestaments, Testament{
 		PlayerID:   playerID,
 		PlayerName: player.Name,
 		Message:    message,
 		Round:      state.Round,
-		Phase:      "day",
+		Phase:      string(state.Phase),
 		Timestamp:  time.Now().UnixMilli(),
 	})
 
+	state.Testaments = updatedTestaments
 	state.PendingTestamentPlayerID = nil
 
-	// After testament, decide where to go based on context
+	// M-2 FIX: If there are more players in the testament queue, advance to the next one.
+	if len(state.PendingTestamentQueue) > 0 {
+		next := state.PendingTestamentQueue[0]
+		state.PendingTestamentQueue = state.PendingTestamentQueue[1:]
+		state.PendingTestamentPlayerID = &next
+		state.Phase = PhaseTestament
+		state = SetTimerDeadline(state)
+		return state
+	}
+
+	// After all testaments, decide where to go based on context
 	winner := checkWinCondition(state)
 	if winner != nil {
 		state.Winner = winner
@@ -442,14 +491,21 @@ func SubmitTestament(state *GameState, playerID, message string) *GameState {
 		return state
 	}
 
+	// H-03 / M-02 FIX: Guard against empty EliminationHistory (panic guard)
+	if len(state.EliminationHistory) == 0 {
+		// No elimination recorded — go to night as safe default
+		state.Round++
+		state.Votes = VoteRecord{Votes: make(map[string]string), Round: state.Round}
+		state = StartNightPhase(state)
+		return state
+	}
+
 	// Check if this was a night-kill testament (go to DAY_START) or day-vote testament (go to NIGHT)
 	lastElim := state.EliminationHistory[len(state.EliminationHistory)-1]
 	if lastElim.Phase == "night" {
-		// Night kill testament → move to DAY_START
 		state.Phase = PhaseDayStart
 		state = SetTimerDeadline(state)
 	} else {
-		// Day vote testament → move to next night
 		state.Round++
 		state.Votes = VoteRecord{Votes: make(map[string]string), Round: state.Round}
 		state = StartNightPhase(state)
@@ -513,10 +569,15 @@ func resolveNight(state *GameState) *GameState {
 	}
 
 	// 6. Update doctor protect tracking
+	// #9 FIX: Only increment DoctorProtectsUsed if the doctor is ALIVE.
+	// A wolf could kill the doctor the same night they protect someone;
+	// the protect still applies (doctor saved someone before dying) but
+	// incrementing the count on a dead doctor is semantically wrong and
+	// can block the next doctor (if any) from protecting correctly.
 	if na.DoctorTarget != nil {
 		state.LastDoctorTarget = na.DoctorTarget
 		for i := range state.Players {
-			if state.Players[i].Role == RoleDoctor {
+			if state.Players[i].Role == RoleDoctor && state.Players[i].IsAlive {
 				state.Players[i].DoctorProtectsUsed++
 				break
 			}
@@ -531,7 +592,9 @@ func resolveNight(state *GameState) *GameState {
 		return state
 	}
 
-	// If someone died at night, give them testament opportunity
+	// If someone died at night, give them testament opportunity.
+	// M-2 FIX: Previously only the FIRST dead player got a testament.
+	// Now we store the full queue; each player gets their turn after the previous one submits/times out.
 	nightDeaths := []string{}
 	for _, e := range state.EliminationHistory {
 		if e.Round == state.Round && e.Phase == "night" {
@@ -539,8 +602,12 @@ func resolveNight(state *GameState) *GameState {
 		}
 	}
 	if len(nightDeaths) > 0 {
-		// First dead player gets testament
+		// First dead player gets testament; the rest are stored in PendingTestamentQueue.
+		// SubmitTestament / AutoAdvanceOnTimeout will advance to the next in queue.
 		state.PendingTestamentPlayerID = &nightDeaths[0]
+		if len(nightDeaths) > 1 {
+			state.PendingTestamentQueue = nightDeaths[1:]
+		}
 		state.Phase = PhaseTestament
 		state = SetTimerDeadline(state)
 		return state
@@ -577,7 +644,7 @@ func resolveVotes(state *GameState) *GameState {
 	}
 
 	if len(topVoted) == 1 {
-		// Eliminate
+		// Single winner — eliminate
 		eliminatedID := topVoted[0]
 		for i := range state.Players {
 			if state.Players[i].ID == eliminatedID {
@@ -588,13 +655,11 @@ func resolveVotes(state *GameState) *GameState {
 					Phase:    "day",
 					Role:     string(state.Players[i].Role),
 				})
-				// Set up testament for eliminated player
 				state.PendingTestamentPlayerID = &eliminatedID
 				break
 			}
 		}
 
-		// Check win condition
 		winner := checkWinCondition(state)
 		if winner != nil {
 			state.Winner = winner
@@ -602,18 +667,20 @@ func resolveVotes(state *GameState) *GameState {
 			return state
 		}
 
-		// Go to testament phase for the eliminated player
 		state.Phase = PhaseTestament
 		state = SetTimerDeadline(state)
 	} else {
 		// Tie — retry or skip
 		state.RetryVoteCount++
 		if state.RetryVoteCount >= 2 {
-			// Skip elimination, go to night
+			// M-3 FIX: On double tie, go through DAY_START (3s announcement) before night
+			// so players know why nobody was eliminated — not just silently jump to night.
 			state.Round++
 			state.RetryVoteCount = 0
 			state.Votes = VoteRecord{Votes: make(map[string]string), Round: state.Round}
-			state = StartNightPhase(state)
+			// Use DayStart phase briefly to show "voting draw — no elimination" message
+			state.Phase = PhaseDayStart
+			state = SetTimerDeadline(state)
 		} else {
 			state.Votes = VoteRecord{
 				Votes:       make(map[string]string),

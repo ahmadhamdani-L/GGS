@@ -97,7 +97,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFDAA520)),
                         )
                       : const Icon(Icons.refresh_rounded, color: AppColors.textMuted, size: 22),
                 ),
@@ -127,7 +127,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
               decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(10)),
               child: TabBar(
                 controller: _tabCtrl,
-                indicator: BoxDecoration(gradient: AppColors.primaryGradient, borderRadius: BorderRadius.circular(8)),
+                indicator: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]), borderRadius: BorderRadius.circular(8)),
                 labelColor: AppColors.background,
                 unselectedLabelColor: AppColors.textMuted,
                 dividerHeight: 0,
@@ -148,7 +148,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
+                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFDAA520))),
                     SizedBox(width: 8),
                     Text('Memproses...', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                   ],
@@ -166,7 +166,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
 
   Widget _buildContent() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFFDAA520)));
     }
 
     if (_error != null) {
@@ -188,7 +188,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
                 onPressed: _loadData,
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Coba Lagi'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDAA520)),
               ),
             ],
           ),
@@ -212,7 +212,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
     }
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: AppColors.primary,
+      color: const Color(0xFFDAA520),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: _friends.length,
@@ -233,7 +233,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
     }
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: AppColors.primary,
+      color: const Color(0xFFDAA520),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: _pending.length,
@@ -254,7 +254,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
     }
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: AppColors.primary,
+      color: const Color(0xFFDAA520),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: _recent.length,
@@ -262,7 +262,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
           final p = _recent[i] as Map<String, dynamic>;
           final isFriend = p['isFriend'] == true;
           return _playerTile(p, actions: [
-            if (!isFriend) _actionBtn(Icons.person_add_rounded, AppColors.primary, 'Tambah', () => _addFriend(p['userId'])),
+            if (!isFriend) _actionBtn(Icons.person_add_rounded, const Color(0xFFDAA520), 'Tambah', () => _addFriend(p['userId'])),
             _actionBtn(Icons.flag_rounded, AppColors.warning, 'Report', () => _showReportDialog(p['userId'])),
           ]);
         },
@@ -275,9 +275,9 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
       ),
       child: Row(children: [
         Container(
@@ -487,24 +487,70 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
   }
 
   void _searchUser(String query) async {
-    if (query.trim().isEmpty) return;
+    final q = query.trim();
+    if (q.isEmpty) return;
 
+    setState(() => _actionLoading = true);
+    final api = ref.read(apiServiceProvider);
+    final resp = await api.searchUsers(q);
+    // #14 FIX: check mounted after async gap before both setState and showDialog.
+    if (!mounted) return;
+    setState(() => _actionLoading = false);
+
+    final rawList = resp.isSuccess && resp.data?['users'] != null
+        ? (resp.data!['users'] as List)
+        : [];
+    final matches = rawList.map((e) => e as Map<String, dynamic>).toList();
+
+    // Second mounted check before showDialog (setState above is fine, but
+    // showDialog also requires a valid BuildContext).
+    if (!mounted) return;
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Hasil pencarian: "$query"',
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+          'Hasil Pencarian DB: "$query"',
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700),
         ),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text(
-            'Fitur pencarian akan segera hadir!',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (matches.isNotEmpty) ...[
+                ...matches.map((p) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFDAA520),
+                        child: Icon(Icons.person, color: Colors.white, size: 18),
+                      ),
+                      title: Text(p['displayName'] as String? ?? 'Pemain', style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                      subtitle: Text('✨ ${p['charm'] ?? 300} | ❤️ ${p['popularity'] ?? 150} | Lv.${p['level'] ?? 1}', style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDAA520), padding: const EdgeInsets.symmetric(horizontal: 10)),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _addFriend(p['userId'] as String? ?? p['id'] as String);
+                        },
+                        child: const Text('+ Teman', style: TextStyle(fontSize: 11)),
+                      ),
+                    )),
+              ] else ...[
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('Pemain tidak ditemukan di database.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                ),
+              ],
+            ],
           ),
-        ]),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tutup', style: TextStyle(color: AppColors.textMuted)),
+          ),
         ],
       ),
     );

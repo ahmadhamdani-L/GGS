@@ -10,8 +10,22 @@ out/
 # Turbo
 .turbo/
 
-# Environment files
+# Environment files — NEVER commit secrets
 .env
+.env.local
+.env.production
+
+# User-uploaded files — never commit
+backend/go-server/uploads/avatars/*.jpg
+backend/go-server/uploads/avatars/*.jpeg
+backend/go-server/uploads/avatars/*.png
+backend/go-server/uploads/avatars/*.webp
+
+# Android signing — NEVER commit
+apps/mobile/android/key.properties
+apps/mobile/android/app/keystore.jks
+apps/mobile/android/app/*.jks
+apps/mobile/android/app/*.keystore
 .env.local
 .env.*.local
 
@@ -38,3 +52,6 @@ pnpm-debug.log*
 .cache/
 *.tsbuildinfo
 apps/mobile/.env
+nginx/certs/*.crt
+nginx/certs/*.key
+nginx/certs/*.pem

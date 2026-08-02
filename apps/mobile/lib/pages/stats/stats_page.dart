@@ -118,9 +118,13 @@ class _StatsPageState extends ConsumerState<StatsPage> {
   }
 
   Widget _buildHistoryItem(Map<String, dynamic> match) {
-    final isWin = match['result'] == 'win';
+    // API returns 'won' (bool), not 'result' (string) — fix field name
+    final isWin = match['won'] as bool? ?? false;
     final role = match['role'] as String? ?? 'villager';
     final date = match['playedAt'] as String? ?? '';
+    final xp = match['xpEarned'] as int? ?? 0;
+    final coins = match['coinsEarned'] as int? ?? 0;
+    final rounds = match['totalRounds'] as int? ?? 0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -137,14 +141,39 @@ class _StatsPageState extends ConsumerState<StatsPage> {
             shape: BoxShape.circle,
             color: (isWin ? AppColors.success : AppColors.error).withValues(alpha: 0.12),
           ),
-          child: Center(child: Icon(isWin ? Icons.check_rounded : Icons.close_rounded, color: isWin ? AppColors.success : AppColors.error, size: 20)),
+          child: Center(child: Icon(isWin ? Icons.check_rounded : Icons.close_rounded,
+              color: isWin ? AppColors.success : AppColors.error, size: 20)),
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(isWin ? 'Menang' : 'Kalah', style: TextStyle(color: isWin ? AppColors.success : AppColors.error, fontWeight: FontWeight.w600, fontSize: 14)),
-          Text('Peran: $role', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          Row(children: [
+            Text(isWin ? 'Menang' : 'Kalah',
+                style: TextStyle(
+                    color: isWin ? AppColors.success : AppColors.error,
+                    fontWeight: FontWeight.w600, fontSize: 14)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(role, style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w600)),
+            ),
+          ]),
+          const SizedBox(height: 2),
+          Row(children: [
+            // #10 FIX: Show XP, coins, and rounds
+            Text('+$xp XP', style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 8),
+            Text('+$coins 🪙', style: const TextStyle(color: AppColors.warning, fontSize: 11, fontWeight: FontWeight.w600)),
+            if (rounds > 0) ...[
+              const SizedBox(width: 8),
+              Text('$rounds ronde', style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
+            ],
+          ]),
+          Text(date.split('T').first, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
         ])),
-        Text(date.split('T').first, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
       ]),
     );
   }

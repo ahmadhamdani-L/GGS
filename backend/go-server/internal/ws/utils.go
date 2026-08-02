@@ -3,14 +3,20 @@ package ws
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strings"
+	"time"
 )
 
-// generateID creates a random hex ID
+// generateID creates a cryptographically random hex ID.
+// rand.Read never actually errors in Go's crypto/rand, but we check for correctness.
 func generateID() string {
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		// Extremely unlikely; fall back to time-based ID
+		return fmt.Sprintf("%016x%016x", time.Now().UnixNano(), time.Now().UnixNano()+1)
+	}
 	return hex.EncodeToString(b)
 }
 

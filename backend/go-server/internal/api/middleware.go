@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -177,10 +178,15 @@ func TimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 	}
 }
 
-// DebugLogsHandler returns recent logs for debugging
+// DebugLogsHandler returns recent logs for debugging.
+// #5 FIX: The key comparison now uses the DEBUG_KEY env var instead of a
+// hardcoded string. If DEBUG_KEY is not set, ALL requests are rejected.
+// main.go already gates the route registration on DEBUG_KEY != "", but this
+// handler guards itself too so it can never be reached with the old hardcoded
+// key even if registered elsewhere by accident.
 func DebugLogsHandler(w http.ResponseWriter, r *http.Request) {
-	// Only allow in development
-	if r.Header.Get("X-Debug-Key") != "ggs-debug-2024" {
+	debugKey := os.Getenv("DEBUG_KEY")
+	if debugKey == "" || r.Header.Get("X-Debug-Key") != debugKey {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

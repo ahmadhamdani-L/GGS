@@ -56,6 +56,9 @@ func Connect() error {
 		return fmt.Errorf("failed to ping db: %w", err)
 	}
 
+	// P2-37: Set default statement timeout to prevent runaway queries
+	DB.Exec("SET statement_timeout = '5000'") // 5 seconds max per query
+
 	log.Printf("✓ Connected to PostgreSQL (pool: %d max, %d idle, %v lifetime)", maxOpen, maxIdle, connLifetime)
 	return nil
 }

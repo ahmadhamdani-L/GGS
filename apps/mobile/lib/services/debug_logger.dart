@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Log levels for filtering
 enum LogLevel { debug, info, warn, error }
@@ -101,6 +104,40 @@ class DebugLogger {
   /// Whether to print to console
   bool printToConsole = kDebugMode;
 
+  /// Whether to write to file (enabled in debug mode)
+  bool writeToFile = kDebugMode;
+
+  /// File log path — written to app's documents directory
+  /// On iOS simulator: ~/Library/Developer/CoreSimulator/Devices/.../Documents/ggs_debug.log
+  /// On real device: accessible via Files app or Xcode device logs
+  IOSink? _fileSink;
+  String? logFilePath;
+
+  /// Initialize file logging — call once at app start
+  Future<void> initFileLogging() async {
+    if (!writeToFile) return;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/ggs_debug.log');
+      // Truncate on each app start (keep fresh)
+      _fileSink = file.openWrite(mode: FileMode.write);
+      logFilePath = file.path;
+      _fileSink!.writeln('=== GGS Werewolf Debug Log ===');
+      _fileSink!.writeln('Started: ${DateTime.now().toIso8601String()}');
+      _fileSink!.writeln('${'=' * 50}\n');
+      debugPrint('[LOG] File logging to: ${file.path}');
+    } catch (e) {
+      debugPrint('[LOG] File logging init failed: $e');
+    }
+  }
+
+  /// Flush and close the log file
+  Future<void> closeFileLog() async {
+    await _fileSink?.flush();
+    await _fileSink?.close();
+    _fileSink = null;
+  }
+
   /// Recent logs (circular buffer)
   final Queue<LogEntry> _logs = Queue<LogEntry>();
 
@@ -160,6 +197,14 @@ class DebugLogger {
       debugPrint(entry.toColoredString());
       if (stackTrace != null && level == LogLevel.error) {
         debugPrint(stackTrace.toString());
+      }
+    }
+
+    // Write to file if enabled
+    if (writeToFile && _fileSink != null) {
+      _fileSink!.writeln(entry.toColoredString());
+      if (stackTrace != null && level == LogLevel.error) {
+        _fileSink!.writeln(stackTrace.toString());
       }
     }
   }

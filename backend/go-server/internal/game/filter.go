@@ -129,3 +129,47 @@ func FilterStateForPlayer(state *GameState, playerID string) *GameState {
 
 	return &filtered
 }
+
+// FilterStateForSpectator creates a view of the game for spectators.
+// Shows: player names, alive/dead status, current phase, timer, votes (public).
+// Hides: all roles (until game end), night actions, seer results, team info.
+func FilterStateForSpectator(state *GameState) *GameState {
+	if state == nil {
+		return nil
+	}
+
+	// Copy players without role info (unless game ended)
+	players := make([]PlayerState, len(state.Players))
+	for i, p := range state.Players {
+		players[i] = PlayerState{
+			ID:          p.ID,
+			Name:        p.Name,
+			AvatarID:    p.AvatarID,
+			ChibiConfig: p.ChibiConfig,
+			IsAlive:     p.IsAlive,
+			IsBot:       p.IsBot,
+			IsConnected: p.IsConnected,
+		}
+		// Reveal roles only after game ends
+		if state.Phase == PhaseGameEnd {
+			players[i].Role = p.Role
+		} else {
+			players[i].Role = "" // hide role from spectators
+		}
+	}
+
+	spectatorState := &GameState{
+		ID:      state.ID,
+		Phase:   state.Phase,
+		Round:   state.Round,
+		Config:  state.Config,
+		Players: players,
+		Votes:   state.Votes,  // votes are public
+		Winner:  state.Winner,
+		TimerDeadline: state.TimerDeadline,
+		EliminationHistory: state.EliminationHistory,
+		Testaments:         state.Testaments,
+		// Hide: NightActions, Teammates, SeerResult, etc.
+	}
+	return spectatorState
+}

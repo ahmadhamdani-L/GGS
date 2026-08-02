@@ -72,6 +72,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
             // Logout
             _buildLogoutButton(),
+            const SizedBox(height: 12),
+
+            // Delete Account
+            _buildDeleteAccountButton(),
             const SizedBox(height: 20),
           ],
         ),
@@ -80,7 +84,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _sectionTitle(String text) {
-    return Text(text, style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1));
+    return Text(text, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1));
   }
 
   Widget _buildAccountCard(dynamic profile) {
@@ -91,9 +95,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
+            color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
           ),
           child: Column(children: [
             _infoRow(Icons.person_rounded, 'Nama', profile?.displayName ?? 'Player'),
@@ -111,7 +115,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Widget _infoRow(IconData icon, String label, String value) {
     return Row(children: [
-      Icon(icon, color: AppColors.primary, size: 20),
+      Icon(icon, color: const Color(0xFFDAA520), size: 20),
       const SizedBox(width: 12),
       Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
       const Spacer(),
@@ -127,9 +131,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
+            color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
           ),
           child: Column(children: [
             // BGM toggle + slider
@@ -143,7 +147,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   setState(() => _bgmEnabled = v);
                   ref.read(audioServiceProvider).toggleBgm(v);
                 },
-                activeColor: AppColors.primary,
+                activeThumbColor: const Color(0xFFDAA520),
               ),
             ]),
             if (_bgmEnabled) Slider(
@@ -167,7 +171,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   setState(() => _sfxEnabled = v);
                   ref.read(audioServiceProvider).toggleSfx(v);
                 },
-                activeColor: AppColors.primary,
+                activeThumbColor: const Color(0xFFDAA520),
               ),
             ]),
             if (_sfxEnabled) Slider(
@@ -193,9 +197,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
+            color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
           ),
           child: Column(children: [
             _infoRow(Icons.info_outline_rounded, 'Versi', '1.0.0'),
@@ -210,14 +214,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildLogoutButton() {
+    // #5 FIX: confirmation dialog sebelum logout
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: OutlinedButton.icon(
-        onPressed: () {
-          ref.read(authProvider.notifier).logout();
-          context.go('/auth');
-        },
+        onPressed: () => _showLogoutConfirmation(context),
         icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.error),
         label: const Text('Keluar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
@@ -226,5 +228,151 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showLogoutConfirmation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(children: [
+          Icon(Icons.logout_rounded, color: AppColors.error),
+          SizedBox(width: 8),
+          Text('Keluar?',
+              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        ]),
+        content: const Text(
+          'Yakin ingin keluar dari akun ini?',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      ref.read(authProvider.notifier).logout();
+      context.go('/auth');
+    }
+  }
+
+  Widget _buildDeleteAccountButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton.icon(
+        onPressed: () => _showDeleteAccountDialog(context),
+        icon: Icon(Icons.delete_forever_rounded, size: 18,
+          color: Colors.red.shade900),
+        label: Text('Hapus Akun Permanen',
+          style: TextStyle(color: Colors.red.shade900, fontWeight: FontWeight.w600)),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.red.shade900.withValues(alpha: 0.3)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context) async {
+    final passwordCtrl = TextEditingController();
+    final isGuest = ref.read(authProvider).profile?.isGuest ?? false;
+    bool deleting = false;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceElevated,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
+            const SizedBox(width: 8),
+            const Text('Hapus Akun?',
+              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text(
+              'PERINGATAN: Aksi ini tidak bisa dibatalkan!\n\n'
+              'Semua data akan dihapus permanen:\n'
+              '• Profil & statistik\n'
+              '• Diamond & inventori\n'
+              '• Riwayat pertandingan\n'
+              '• Foto avatar\n'
+              '• Pertemanan',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.5),
+            ),
+            if (!isGuest) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: true,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Masukkan password untuk konfirmasi',
+                  prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ]),
+          actions: [
+            TextButton(onPressed: deleting ? null : () => Navigator.pop(ctx, false),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textMuted))),
+            ElevatedButton(
+              onPressed: deleting ? null : () async {
+                if (!isGuest && passwordCtrl.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Password wajib diisi'), backgroundColor: AppColors.warning));
+                  return;
+                }
+                setDialogState(() => deleting = true);
+                final api = ref.read(apiServiceProvider);
+                final res = await api.deleteAccount(
+                  password: isGuest ? null : passwordCtrl.text);
+                if (!ctx.mounted) return;
+                if (res.isSuccess) {
+                  Navigator.pop(ctx, true);
+                } else {
+                  setDialogState(() => deleting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(res.error ?? 'Gagal menghapus akun'),
+                    backgroundColor: AppColors.error));
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade700,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              child: deleting
+                  ? const SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Hapus Permanen', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ),
+    );
+    passwordCtrl.dispose();
+    if (confirmed == true && mounted) {
+      ref.read(authProvider.notifier).logout();
+      context.go('/auth');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Akun berhasil dihapus. Selamat tinggal!'),
+        backgroundColor: AppColors.success));
+    }
   }
 }

@@ -7,28 +7,112 @@ on:
     branches: [main]
 
 jobs:
+  # ─── Go Backend ──────────────────────────────────────────────────
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ggs_werewolf_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
+          cache-dependency-path: backend/go-server/go.sum
+
       - name: Build
         run: cd backend/go-server && go build ./...
-      - name: Test
-        run: cd backend/go-server && go test ./... -v
 
+      - name: Vet
+        run: cd backend/go-server && go vet ./...
+
+      - name: Test (with race detector)
+        env:
+          DATABASE_URL: postgres://postgres:testpassword@localhost:5432/ggs_werewolf_test?sslmode=disable
+          JWT_SECRET: ci-test-secret-key-32chars-minimum
+          APP_ENV: test
+        run: cd backend/go-server && go test -race -count=1 -coverprofile=coverage.out ./...
+
+      - name: Run migrations (P2-39 check)
+        env:
+          PGPASSWORD: testpassword
+        run: |
+          for f in backend/go-server/migrations/[0-9]*.sql; do
+            echo "Applying $f..."
+            psql -h localhost -U postgres -d ggs_werewolf_test -f "$f" || exit 1
+          done
+          echo "✅ All migrations applied successfully"
+
+      - name: Coverage report
+        run: cd backend/go-server && go tool cover -func=coverage.out
+
+  # ─── Flutter Mobile ──────────────────────────────────────────────
   mobile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
+          cache: true
+
       - name: Get dependencies
         run: cd apps/mobile && flutter pub get
+
       - name: Analyze
         run: cd apps/mobile && flutter analyze --no-fatal-infos
-      - name: Build APK
-        run: cd apps/mobile && flutter build apk --release
+
+      # L-10 FIX: Run tests BEFORE building
+      - name: Test
+        run: cd apps/mobile && flutter test --coverage
+
+      # Build debug APK in CI (release requires signing config).
+      # To enable release builds in CI:
+      # 1. Add KEYSTORE_BASE64, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD to GitHub Secrets
+      # 2. Uncomment the release build steps below
+      - name: Build APK (debug)
+        run: |
+          cd apps/mobile && flutter build apk --debug \
+            --build-number=${{ github.run_number }}
+
+      # ── Release build (uncomment when signing is configured) ──────────────────
+      # - name: Decode keystore
+      #   if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      #   run: |
+      #     echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > apps/mobile/android/app/keystore.jks
+      #     cat > apps/mobile/android/key.properties << EOF
+      #     storePassword=${{ secrets.STORE_PASSWORD }}
+      #     keyPassword=${{ secrets.KEY_PASSWORD }}
+      #     keyAlias=${{ secrets.KEY_ALIAS }}
+      #     storeFile=keystore.jks
+      #     EOF
+      #
+      # - name: Build APK (release)
+      #   if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      #   run: |
+      #     cd apps/mobile && flutter build apk --release \
+      #       --build-number=${{ github.run_number }} \
+      #       --dart-define=API_URL=https://api.yourproductiondomain.com \
+      #       --dart-define=WS_URL=wss://api.yourproductiondomain.com/ws
+      #
+      # - name: Upload Release APK
+      #   if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: release-apk
+      #     path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk

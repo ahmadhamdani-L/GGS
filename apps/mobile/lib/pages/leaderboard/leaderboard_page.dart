@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/avatar_image.dart';
 
 class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
@@ -63,7 +64,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
             // List
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFDAA520)))
                   : _players == null || _players!.isEmpty
                       ? const Center(child: Text('Belum ada data.', style: TextStyle(color: AppColors.textMuted)))
                       : ListView.builder(
@@ -85,11 +86,11 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
+          color: selected ? const Color(0xFFDAA520).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? AppColors.primary.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: selected ? const Color(0xFFDAA520).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.1)),
         ),
-        child: Text(label, style: TextStyle(color: selected ? AppColors.primary : AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+        child: Text(label, style: TextStyle(color: selected ? const Color(0xFFDAA520) : AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
       ),
     );
   }
@@ -107,7 +108,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
   }
 
   Widget _podiumItem(Map<String, dynamic> player, int rank, double size) {
-    final colors = [AppColors.primary, AppColors.blueTeam, AppColors.secondary];
+    final colors = [const Color(0xFFDAA520), AppColors.blueTeam, AppColors.secondary];
     final color = colors[rank - 1];
     final medals = ['🥇', '🥈', '🥉'];
     final avatarId = player['avatarId'] ?? 1;
@@ -126,8 +127,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
         ),
         child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Padding(
           padding: const EdgeInsets.all(2),
-          child: Image.asset(AppConstants.avatarPath(avatarId), fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 24)),
+          child: AvatarImage(displayName: name, size: 40),
         )),
       ),
       const SizedBox(height: 6),
@@ -147,12 +147,12 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: rank <= 3 ? AppColors.primary.withValues(alpha: 0.04) : Colors.white.withValues(alpha: 0.02),
+        color: rank <= 3 ? const Color(0xFFDAA520).withValues(alpha: 0.04) : const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: rank <= 3 ? const Color(0xFFDAA520).withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(children: [
-        SizedBox(width: 28, child: Text('#$rank', style: TextStyle(color: rank <= 3 ? AppColors.primary : AppColors.textMuted, fontWeight: FontWeight.w700, fontSize: 13))),
+        SizedBox(width: 28, child: Text('#$rank', style: TextStyle(color: rank <= 3 ? const Color(0xFFDAA520) : AppColors.textMuted, fontWeight: FontWeight.w700, fontSize: 13))),
         Container(
           width: 34, height: 44,
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.15))),
@@ -165,7 +165,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
         const SizedBox(width: 12),
         Expanded(child: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14))),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('$rating', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 14)),
+          Text('$rating', style: const TextStyle(color: Color(0xFFDAA520), fontWeight: FontWeight.w700, fontSize: 14)),
           Text('$wins W', style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
         ]),
       ]),

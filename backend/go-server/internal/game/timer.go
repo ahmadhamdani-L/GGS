@@ -37,9 +37,15 @@ func SetTimerDeadline(state *GameState) *GameState {
 func AutoAdvanceOnTimeout(state *GameState) *GameState {
 	switch state.Phase {
 	case PhaseRoleReveal:
-		// Auto-confirm all players
+		// Auto-confirm all non-bot players (timer expired)
 		for i := range state.Players {
-			state.Players[i].ProtectedThisNight = false
+			if !state.Players[i].IsBot {
+				state.Players[i].HasConfirmedRole = true
+			}
+		}
+		// Reset flag then advance
+		for i := range state.Players {
+			state.Players[i].HasConfirmedRole = false
 		}
 		state = StartNightPhase(state)
 
@@ -89,17 +95,40 @@ func AutoAdvanceOnTimeout(state *GameState) *GameState {
 		}
 
 	case PhaseTestament:
-		// Time's up for testament
+		// #6 FIX: Time's up for testament — route correctly based on whether this was a
+		// night-kill (→ DAY_START) or a day-vote elimination (→ next NIGHT).
 		state.PendingTestamentPlayerID = nil
+
+		// M-2 FIX: If queue has more players, advance to next testament before routing
+		if len(state.PendingTestamentQueue) > 0 {
+			next := state.PendingTestamentQueue[0]
+			state.PendingTestamentQueue = state.PendingTestamentQueue[1:]
+			state.PendingTestamentPlayerID = &next
+			state.Phase = PhaseTestament
+			state = SetTimerDeadline(state)
+			return state
+		}
+
 		winner := checkWinCondition(state)
 		if winner != nil {
 			state.Winner = winner
 			state.Phase = PhaseGameEnd
-		} else {
-			state.Round++
-			state.Votes = VoteRecord{Votes: make(map[string]string), Round: state.Round}
-			state = StartNightPhase(state)
+			return state
 		}
+		// Mirror the logic in SubmitTestament: check EliminationHistory for context
+		if len(state.EliminationHistory) > 0 {
+			lastElim := state.EliminationHistory[len(state.EliminationHistory)-1]
+			if lastElim.Phase == "night" {
+				// Night-kill testament timed out → announce death then discussion
+				state.Phase = PhaseDayStart
+				state = SetTimerDeadline(state)
+				return state
+			}
+		}
+		// Day-vote testament timed out → next night
+		state.Round++
+		state.Votes = VoteRecord{Votes: make(map[string]string), Round: state.Round}
+		state = StartNightPhase(state)
 	}
 
 	return state

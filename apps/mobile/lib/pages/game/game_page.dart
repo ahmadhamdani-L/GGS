@@ -18,6 +18,8 @@ import '../../widgets/chibi_avatar.dart';
 import '../../widgets/connection_indicator.dart';
 import '../../widgets/game_avatar.dart';
 import '../../widgets/narrator_overlay.dart';
+import '../../widgets/quick_chat_bar.dart';
+import '../../widgets/reconnect_overlay.dart';
 import '../../widgets/report_dialog.dart';
 
 class GamePage extends ConsumerStatefulWidget {
@@ -62,6 +64,47 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
     _phaseFadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _phaseAnimCtrl, curve: const Interval(0.0, 0.3, curve: Curves.easeIn)),
     );
+
+    // H-4 FIX: Listen for game_aborted event — show overlay then navigate home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.listenManual<GameState?>(gameProvider, (prev, next) {
+        if (prev != null && next == null && mounted) {
+          // Game was cleared — check if it was an abort (room has error) or normal end
+          final roomErr = ref.read(roomProvider).error;
+          if (roomErr != null && mounted) {
+            _showAbortOverlay(roomErr);
+          }
+        }
+      });
+    });
+  }
+
+  void _showAbortOverlay(String reason) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(children: [
+          Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+          SizedBox(width: 8),
+          Text('Game Dibatalkan', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        ]),
+        content: Text(reason, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (mounted) context.go('/home');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Kembali ke Home'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -74,6 +117,32 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final game = ref.watch(gameProvider);
     if (game == null) {
+      // H-4 FIX: If game is null AND there is a room error, it means the game was aborted.
+      // Show a proper message instead of an infinite spinner.
+      final roomErr = ref.watch(roomProvider.select((r) => r.error));
+      if (roomErr != null) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 56),
+                const SizedBox(height: 16),
+                const Text('Game Dibatalkan', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Text(roomErr, style: const TextStyle(color: AppColors.textMuted, fontSize: 13), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                GradientButton(
+                  label: 'Kembali ke Home',
+                  gradient: AppColors.primaryGradient,
+                  onPressed: () => context.go('/home'),
+                ),
+              ]),
+            ),
+          ),
+        );
+      }
       return const Scaffold(
         backgroundColor: AppColors.background,
         body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
@@ -133,6 +202,8 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
               children: [
                 // Connection indicator
                 const ConnectionIndicator(),
+                // Reconnect overlay (shown when WS disconnects mid-game)
+                const ReconnectOverlay(),
                 // Top bar
                 _TopBar(game: game),
                 const SizedBox(height: 8),
@@ -304,6 +375,9 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
         return _DiscussionScreen(game: game, me: me);
       case GamePhase.voting:
         return _VotingScreen(game: game, me: me);
+      case GamePhase.voteResolve:
+      case GamePhase.elimination:
+        return _VoteResultScreen(game: game, me: me);
       case GamePhase.testament:
         return _TestamentScreen(game: game, me: me);
       case GamePhase.gameEnd:
@@ -357,72 +431,80 @@ class _TopBarState extends State<_TopBar> {
   @override
   Widget build(BuildContext context) {
     final phase = widget.game.phase;
-    final phaseText = _phaseLabel(phase);
     final alive = widget.game.alivePlayers.length;
     final total = widget.game.players.length;
+    final dead = total - alive;
+
+    // Phase label & color
+    final isNight = phase.isNight;
+    final phaseLabel = isNight ? 'MALAM' : (phase == GamePhase.voting ? 'VOTE' : (phase == GamePhase.discussion ? 'HARI' : 'HARI'));
+    final phaseEmoji = isNight ? '🌙' : '☀️';
 
     // Timer color
-    Color timerColor = AppColors.success;
+    Color timerColor = const Color(0xFFDAA520);
     if (_remaining < 10) timerColor = AppColors.error;
     else if (_remaining < 20) timerColor = AppColors.warning;
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Phase + Day
+          // Phase badge (golden frame)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(phase.isNight ? '🌙' : '☀️', style: const TextStyle(fontSize: 14)),
+              Text(phaseEmoji, style: const TextStyle(fontSize: 14)),
               const SizedBox(width: 6),
-              Text('DAY ${widget.game.round}', style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+              Text(phaseLabel, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1)),
             ]),
           ),
           const Spacer(),
-          // Large circular timer
+          // Large circular timer (golden border)
           if (_remaining > 0)
             Container(
               width: 52, height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.black.withValues(alpha: 0.5),
-                border: Border.all(color: timerColor.withValues(alpha: 0.6), width: 3),
+                color: Colors.black.withValues(alpha: 0.6),
+                border: Border.all(color: timerColor, width: 3),
                 boxShadow: [BoxShadow(color: timerColor.withValues(alpha: 0.3), blurRadius: 12)],
               ),
-              child: Center(child: Text('$_remaining', style: TextStyle(color: timerColor, fontSize: 18, fontWeight: FontWeight.w900))),
+              child: Center(child: Text('$_remaining', style: TextStyle(color: timerColor, fontSize: 20, fontWeight: FontWeight.w900))),
             ),
           const Spacer(),
-          // Player count
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.people_rounded, color: AppColors.textMuted, size: 16),
-              const SizedBox(width: 4),
-              Text('$alive/$total', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
-            ]),
+          // Player count (alive/dead)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('HIDUP ', style: TextStyle(color: AppColors.success.withValues(alpha: 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
+                Text('$alive', style: const TextStyle(color: AppColors.success, fontSize: 14, fontWeight: FontWeight.w900)),
+              ]),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('MATI ', style: TextStyle(color: AppColors.error.withValues(alpha: 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
+                Text('$dead', style: const TextStyle(color: AppColors.error, fontSize: 14, fontWeight: FontWeight.w900)),
+              ]),
+            ],
           ),
         ],
       ),
     );
   }
 
+  // #7 FIX: _phaseLabel sekarang dalam Bahasa Indonesia
+  // (dipakai di future TopBar variants jika diperlukan)
   String _phaseLabel(GamePhase p) => switch (p) {
-    GamePhase.night || GamePhase.nightStart || GamePhase.wolfTurn => 'Night',
-    GamePhase.dayStart => 'Morning',
-    GamePhase.discussion => 'Discussion',
+    GamePhase.night || GamePhase.nightStart || GamePhase.wolfTurn => 'Malam',
+    GamePhase.dayStart => 'Pagi Hari',
+    GamePhase.discussion => 'Diskusi',
     GamePhase.voting => 'Voting',
-    GamePhase.testament => 'Testament',
-    GamePhase.gameEnd => 'Game Over',
+    GamePhase.testament => 'Wasiat',
+    GamePhase.gameEnd => 'Selesai',
     _ => '',
   };
 }
@@ -441,49 +523,90 @@ class _RoleRevealScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (me == null) return const SizedBox();
     final c = me!.role.team == Team.red ? AppColors.redTeam : AppColors.blueTeam;
+    final chibiConfig = ref.watch(chibiProvider);
 
-    return Center(child: Padding(padding: const EdgeInsets.all(32), child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('YOUR ROLE', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 2)),
-        const SizedBox(height: 20),
-        // Role icon large
-        Container(
-          width: 130, height: 130,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: c.withValues(alpha: 0.15),
-            border: Border.all(color: c, width: 3),
-            boxShadow: [BoxShadow(color: c.withValues(alpha: 0.4), blurRadius: 40)],
+    return Center(child: Padding(padding: const EdgeInsets.all(24), child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF1A1F2E),
+        border: Border.all(color: const Color(0xFFDAA520), width: 2),
+        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 20)],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header ornate
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+              color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+            ),
+            child: const Text('ROLE REVEAL', style: TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 2)),
           ),
-          child: Center(child: Text(me!.role.emoji, style: const TextStyle(fontSize: 56))),
-        ),
-        const SizedBox(height: 20),
-        Text(me!.role.displayName.toUpperCase(), style: TextStyle(color: c, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 2)),
-        const SizedBox(height: 12),
-        Text(_roleObjective(me!.role), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13), textAlign: TextAlign.center),
-        const SizedBox(height: 32),
-        const Text('Tap to continue', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-        const SizedBox(height: 12),
-        GradientButton(
-          label: 'Mengerti',
-          gradient: me!.role.team == Team.red ? AppColors.redGradient : AppColors.blueGradient,
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            ref.read(gameProvider.notifier).confirmRoleReveal(me!.id);
-          },
-        ),
-      ],
+          const SizedBox(height: 16),
+          const Text('PERANMU', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2)),
+          const SizedBox(height: 8),
+          // Role name large
+          Text(me!.role.displayName.toUpperCase(), style: TextStyle(color: c, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 3)),
+          const SizedBox(height: 20),
+          // Chibi avatar with role glow
+          Container(
+            width: 120, height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: c.withValues(alpha: 0.1),
+              border: Border.all(color: c.withValues(alpha: 0.5), width: 2),
+              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.3), blurRadius: 24)],
+            ),
+            child: ClipOval(child: ChibiAvatar(config: chibiConfig, size: 90, animate: true, showShadow: false)),
+          ),
+          const SizedBox(height: 20),
+          // Role description
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.black.withValues(alpha: 0.3),
+              border: Border.all(color: c.withValues(alpha: 0.2)),
+            ),
+            child: Text(
+              _roleObjective(me!.role),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Tap to continue
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              ref.read(gameProvider.notifier).confirmRoleReveal(me!.id);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+                border: Border.all(color: const Color(0xFFDAA520)),
+              ),
+              child: const Text('Tap untuk lanjut', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
     )));
   }
 
   String _roleObjective(Role r) => switch (r) {
-    Role.werewolf => 'Eliminate all villagers\nand avoid being discovered.',
-    Role.seer => 'Find the werewolves\nby revealing player roles.',
-    Role.doctor => 'Protect villagers\nfrom werewolf attacks.',
-    Role.witch => 'Use your potions wisely\nto help or harm.',
-    Role.villager => 'Find and vote out\nthe werewolves.',
-    _ => '',
+    Role.werewolf => 'Setiap malam kamu dapat memilih 1 pemain untuk dieliminasi bersama rekan werewolf.',
+    Role.seer     => 'Setiap malam kamu dapat memeriksa 1 pemain untuk melihat apakah dia Werewolf atau bukan.',
+    Role.doctor   => 'Setiap malam kamu dapat melindungi 1 pemain dari serangan werewolf.',
+    Role.witch    => 'Kamu memiliki 1 ramuan penyembuh dan 1 racun. Gunakan dengan bijak untuk membantu timmu.',
+    Role.villager => 'Diskusikan dan vote bersama warga untuk menemukan dan mengeliminasi werewolf.',
+    _             => '',
   };
 }
 
@@ -505,22 +628,41 @@ class _NightScreenState extends ConsumerState<_NightScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _teamMessages = [];
   StreamSubscription? _sub;
+  // #15 FIX: Track submitted night action so we can show confirmation checkmark.
+  // Prevents double-tap and gives immediate visual feedback.
+  String? _submittedTargetId;
 
   @override
   void initState() {
     super.initState();
-    _sub = ref.read(webSocketProvider).messages.listen((msg) {
-      if (msg.type == 'team_chat_message') {
-        setState(() => _teamMessages.add({
-          'senderId': msg.payload['senderId'] as String? ?? '',
-          'content': msg.payload['content'] as String? ?? '',
-        }));
-      }
-    });
+    // M-11 FIX: Guard against duplicate subscription on hot-reload.
+    // _sub is null-checked before subscribing; dispose() always cancels it.
+    if (_sub == null) {
+      _sub = ref.read(webSocketProvider).messages.listen((msg) {
+        if (!mounted) return;
+        if (msg.type == 'team_chat_message') {
+          setState(() => _teamMessages.add({
+            'senderId': msg.payload['senderId'] as String? ?? '',
+            'content': msg.payload['content'] as String? ?? '',
+          }));
+        }
+      });
+    }
   }
 
   @override
   void dispose() { _sub?.cancel(); _chatCtrl.dispose(); super.dispose(); }
+
+  @override
+  void didUpdateWidget(_NightScreen old) {
+    super.didUpdateWidget(old);
+    // #15 FIX: Clear submitted state when round/phase advances so the
+    // checkmark doesn't persist into the next night phase.
+    if (old.game.round != widget.game.round ||
+        old.game.phase != widget.game.phase) {
+      if (mounted) setState(() => _submittedTargetId = null);
+    }
+  }
 
   void _sendTeamChat() {
     final text = _chatCtrl.text.trim();
@@ -536,112 +678,171 @@ class _NightScreenState extends ConsumerState<_NightScreen> {
     final currentTurn = game.nightActions.currentTurn ?? '';
     final isMyTurn = me != null && me.isAlive && _isMyRoleTurn(me.role, currentTurn);
     final canTeamChat = me != null && me.isAlive && (me.role == Role.werewolf || me.role == Role.seer);
-    final playerCount = game.players.length;
-    final cols = playerCount <= 12 ? 4 : 5;
+
+    // Valid targets for night action
+    final targets = me != null && me.isAlive
+        ? game.players.where((p) => p.isAlive && p.id != me.id && _canTarget(me, p)).toList()
+        : <PlayerState>[];
 
     return Column(
       children: [
-        // Teammates banner
-        if (game.teammates.isNotEmpty)
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: (me?.role == Role.werewolf ? AppColors.redTeam : AppColors.blueTeam).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '${me?.role == Role.werewolf ? "🐺" : "🔮"} Tim: ${game.teammates.map((t) => t.name).join(", ")}',
-              style: TextStyle(color: me?.role == Role.werewolf ? AppColors.redTeam : AppColors.blueTeam, fontSize: 11, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
+        // Subtitle: "Semua pemain tutup mata"
+        Padding(
+          padding: const EdgeInsets.only(top: 2, bottom: 4),
+          child: Text(
+            me != null && me.isAlive ? _turnBanner(currentTurn) : '☠️ Kamu sudah mati',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
-        // Seer result
-        if (me != null && me.role == Role.seer && game.nightActions.seerResult != null)
-          _SeerResultBanner(targetId: game.nightActions.seerTarget, result: game.nightActions.seerResult!, players: game.players),
-        // Doctor protect counter
-        if (me != null && me.role == Role.doctor && me.isAlive)
-          _DoctorProtectBanner(protectsUsed: me.doctorProtectsUsed),
-        // WITCH SPECIAL PANEL - shows wolf target + heal/poison options
-        if (me != null && me.role == Role.witch && me.isAlive && currentTurn == 'witch')
-          _WitchActionPanel(
-            game: game,
-            me: me,
-            onHeal: () {
-              HapticFeedback.heavyImpact();
-              ref.read(gameProvider.notifier).submitWitchAction(me.id, useHeal: true);
-            },
-            onPoison: (targetId) {
-              HapticFeedback.heavyImpact();
-              ref.read(gameProvider.notifier).submitWitchAction(me.id, poisonTarget: targetId);
-            },
-            onSkip: () {
-              HapticFeedback.mediumImpact();
-              ref.read(gameProvider.notifier).submitWitchAction(me.id);
-            },
-          ),
-        // PLAYER GRID (5-4-4-5 layout, tappable for night actions) - hide for witch when it's their turn
-        if (!(me != null && me.role == Role.witch && currentTurn == 'witch'))
+        ),
+        // Player grid (all greyed out during night)
         Expanded(
-          flex: 8,
+          flex: 6,
           child: _PlayerGrid18(
             players: game.players,
             me: me,
             cardBuilder: (p, i) {
               final isPlayerMe = p.id == me?.id;
               final isDead = !p.isAlive;
-              final canTarget = isMyTurn && !isPlayerMe && !isDead && _canTarget(me!, p);
-              final wolfVotesOnThis = (me?.role == Role.werewolf && game.nightActions.wolfVotes != null)
-                  ? game.nightActions.wolfVotes!.values.where((tid) => tid == p.id).length
-                  : 0;
-              return GestureDetector(
-                onTap: canTarget ? () {
-                  HapticFeedback.heavyImpact();
-                  ref.read(gameProvider.notifier).submitNightAction(me!.id, p.id);
-                } : null,
-                onLongPress: isPlayerMe ? null : () => _showReportDialog(context, ref, p),
-                child: Stack(children: [
-                  _GameSeatCard(player: p, index: i, isMe: isPlayerMe, isDead: isDead, isTarget: canTarget),
-                  if (wolfVotesOnThis > 0)
-                    Positioned(right: 3, top: 3, child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: AppColors.redTeam.withValues(alpha: 0.9)),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Text('🐺', style: TextStyle(fontSize: 7)),
-                        Text('$wolfVotesOnThis', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900)),
-                      ]),
-                    )),
-                ]),
-              );
+              final isSubmitted = _submittedTargetId == p.id;
+              return Stack(children: [
+                Opacity(
+                  opacity: isDead ? 0.3 : 0.6,
+                  child: _GameSeatCard(player: p, index: i, isMe: isPlayerMe, isDead: isDead),
+                ),
+                if (isSubmitted)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.success.withValues(alpha: 0.2),
+                        border: Border.all(color: AppColors.success, width: 2.5),
+                      ),
+                      child: const Center(child: Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24)),
+                    ),
+                  ),
+              ]);
             },
           ),
         ),
-        // CHAT PANEL (below grid - with swipeable tabs for werewolf/seer)
-        Expanded(
-          flex: 2,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: canTeamChat
-                ? _SwipeableChatPanel(game: game, me: me!, teamMessages: _teamMessages, chatCtrl: _chatCtrl, onSendTeam: _sendTeamChat)
-                : _NightInfoPanel(me: me, currentTurn: currentTurn, turnBanner: _turnBanner(currentTurn)),
-          ),
-        ),
-        // Action panel at bottom (only when it's your turn) — show role hint
-        if (isMyTurn)
+        // ROLE ACTION PANEL (bottom card) — "KAMU ADALAH [ROLE]"
+        if (me != null && me.isAlive && me.role != Role.villager)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: Colors.black.withValues(alpha: 0.5),
-            child: Text(
-              '${me!.role.emoji} Tap pemain untuk ${me.role == Role.werewolf ? "membunuh" : me.role == Role.doctor ? "melindungi" : me.role == Role.seer ? "menyelidiki" : "menggunakan ramuan"}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1F2E),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              children: [
+                // Role label
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('KAMU ADALAH ', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.w600)),
+                  Text(me.role.displayName.toUpperCase(), style: TextStyle(
+                    color: me.role.team == Team.red ? AppColors.redTeam : AppColors.blueTeam,
+                    fontSize: 12, fontWeight: FontWeight.w900,
+                  )),
+                ]),
+                const SizedBox(height: 4),
+                Text(
+                  me.role == Role.werewolf ? 'Pilih pemain yang ingin kamu eliminasi' :
+                  me.role == Role.doctor ? 'Pilih pemain yang ingin kamu lindungi' :
+                  me.role == Role.seer ? 'Pilih pemain yang ingin kamu selidiki' :
+                  'Pilih aksi yang ingin kamu lakukan',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                ),
+                // WITCH special: show heal/poison options
+                if (me.role == Role.witch && currentTurn == 'witch') ...[
+                  const SizedBox(height: 8),
+                  _WitchActionPanel(
+                    game: game, me: me,
+                    onHeal: () { HapticFeedback.heavyImpact(); ref.read(gameProvider.notifier).submitWitchAction(me.id, useHeal: true); },
+                    onPoison: (tid) { HapticFeedback.heavyImpact(); ref.read(gameProvider.notifier).submitWitchAction(me.id, poisonTarget: tid); },
+                    onSkip: () { HapticFeedback.mediumImpact(); ref.read(gameProvider.notifier).submitWitchAction(me.id); },
+                  ),
+                ] else if (isMyTurn && _submittedTargetId == null) ...[
+                  // Target selection row (horizontal chibi circles)
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 56,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: targets.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, i) {
+                        final t = targets[i];
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.heavyImpact();
+                            setState(() => _submittedTargetId = t.id);
+                            ref.read(gameProvider.notifier).submitNightAction(me.id, t.id);
+                          },
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            Container(
+                              width: 38, height: 38,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.6), width: 1.5),
+                                color: Colors.black.withValues(alpha: 0.4),
+                              ),
+                              child: ClipOval(child: ChibiAvatar(
+                                config: parseChibiConfig(t.chibiConfig) ?? generateChibiFromId(t.id),
+                                size: 32, animate: false, showShadow: false,
+                              )),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(t.name.length > 6 ? '${t.name.substring(0, 5)}…' : t.name,
+                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 8, fontWeight: FontWeight.w600)),
+                          ]),
+                        );
+                      },
+                    ),
+                  ),
+                  // Skip button
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() => _submittedTargetId = 'skip');
+                        ref.read(gameProvider.notifier).submitNightAction(me.id, '');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white.withValues(alpha: 0.06),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                        ),
+                        child: const Text('Skip ›', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                ] else if (_submittedTargetId != null) ...[
+                  const SizedBox(height: 8),
+                  const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                    SizedBox(width: 6),
+                    Text('Aksi terkirim!', style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ]),
+                ],
+              ],
             ),
           ),
+        // Chat Night counter at bottom
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(children: [
+            Container(
+              width: 8, height: 8,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: canTeamChat ? AppColors.success : AppColors.textMuted),
+            ),
+            const SizedBox(width: 6),
+            Text('Chat Night  ${_teamMessages.length}', style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+          ]),
+        ),
       ],
     );
   }
@@ -718,10 +919,10 @@ class _NightPlayerDot extends ConsumerWidget {
       const SizedBox(height: 2),
       Text(
         isMe ? 'You' : player.name,
-        style: TextStyle(color: isDead ? AppColors.textMuted : (isMe ? AppColors.primary : AppColors.textSecondary), fontSize: 8, fontWeight: FontWeight.w600),
+        style: TextStyle(color: isDead ? AppColors.textMuted : (isMe ? AppColors.primary : AppColors.textSecondary), fontSize: 10, fontWeight: FontWeight.w600),
         maxLines: 1, overflow: TextOverflow.ellipsis,
       ),
-      if (isDead) const Text('☠️', style: TextStyle(fontSize: 8)),
+      if (isDead) const Text('☠️', style: TextStyle(fontSize: 10)),
     ]);
   }
 }
@@ -744,10 +945,10 @@ class _GameSeatCard extends ConsumerWidget {
         : (player.role.team == Team.red ? AppColors.redTeam : AppColors.blueTeam);
 
     final borderColor = isDead
-        ? Colors.white.withValues(alpha: 0.06)
+        ? const Color(0xFF2A2F3A)
         : isTarget
             ? AppColors.error
-            : (isMe ? AppColors.primary : Colors.white.withValues(alpha: 0.1));
+            : (isMe ? const Color(0xFFDAA520) : const Color(0xFF3D4450));
 
     // Use ChibiAvatar for current player
     final chibiConfig = isMe ? ref.watch(chibiProvider) : null;
@@ -758,13 +959,13 @@ class _GameSeatCard extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: isDead
-                ? Colors.black.withValues(alpha: 0.5)
+                ? const Color(0xFF0D1117).withValues(alpha: 0.7)
                 : isTarget
                     ? AppColors.error.withValues(alpha: 0.06)
-                    : Colors.black.withValues(alpha: 0.35),
-            border: Border.all(color: borderColor, width: isMe || isTarget ? 2.5 : 1),
+                    : const Color(0xFF1A1F2E),
+            border: Border.all(color: borderColor, width: isMe || isTarget ? 2.5 : 1.5),
             boxShadow: isMe
-                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 10)]
+                ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 10)]
                 : isTarget
                     ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.3), blurRadius: 8)]
                     : null,
@@ -774,63 +975,84 @@ class _GameSeatCard extends ConsumerWidget {
               // Character area
               Expanded(
                 child: isDead
-                    ? Center(
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.lock_rounded, color: Colors.white.withValues(alpha: 0.15), size: 18),
-                          const SizedBox(height: 2),
-                          Text(player.name, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 7, decoration: TextDecoration.lineThrough), maxLines: 1),
-                          if (player.role != Role.unknown && player.role.displayName.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                '${player.role.emoji} ${player.role.displayName}',
-                                style: TextStyle(color: roleColor.withValues(alpha: 0.7), fontSize: 7, fontWeight: FontWeight.w700),
+                    ? Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Show greyed-out chibi (same size as alive) for consistency
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
+                            child: Opacity(
+                              opacity: 0.25,
+                              child: RepaintBoundary(
+                                child: ChibiAvatar(
+                                  config: isMe && chibiConfig != null
+                                      ? chibiConfig
+                                      : (parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id)),
+                                  size: 45,
+                                  animate: false,
+                                  showShadow: false,
+                                ),
                               ),
                             ),
-                        ]),
+                          ),
+                          // Overlay: skull/lock icon
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withValues(alpha: 0.6),
+                            ),
+                            child: Icon(Icons.close_rounded, color: Colors.white.withValues(alpha: 0.7), size: 16),
+                          ),
+                        ],
                       )
                     : Padding(
                         padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
-                        child: ChibiAvatar(
-                          config: isMe && chibiConfig != null 
-                              ? chibiConfig 
-                              : (parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id)),
-                          size: 45, 
-                          animate: false, 
-                          showShadow: false,
+                        // P-04 FIX: RepaintBoundary isolates each ChibiAvatar repaint.
+                        // With 18 players, without this, every chat message repaints all 18 chibi widgets.
+                        child: RepaintBoundary(
+                          child: ChibiAvatar(
+                            config: isMe && chibiConfig != null
+                                ? chibiConfig
+                                : (parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id)),
+                            size: 45,
+                            animate: false,
+                            showShadow: false,
+                          ),
                         ),
                       ),
               ),
-              // Name
-              if (!isDead)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Text(
-                    player.name,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isMe ? AppColors.primary : AppColors.textPrimary,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
+              // Name (always shown for consistency)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  player.name,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDead
+                        ? Colors.white.withValues(alpha: 0.35)
+                        : (isMe ? const Color(0xFFDAA520) : Colors.white),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    decoration: isDead ? TextDecoration.lineThrough : null,
                   ),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
                 ),
-              // Role label (only visible if role is known — for player themselves or game end)
-              if (!isDead && player.role != Role.unknown && player.role.displayName.isNotEmpty)
+              ),
+              // Role label (show for dead players too if role revealed)
+              if (player.role != Role.unknown && player.role.displayName.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4, top: 1),
-                  // Color-blind: prefix with shape (⬡ wolf-team, ○ village-team) not just color
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
                     Text(
                       player.role.team == Team.red ? '⬡' : '○',
-                      style: TextStyle(color: roleColor, fontSize: 7, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: isDead ? roleColor.withValues(alpha: 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(width: 1),
-                    Text('${player.role.emoji} ', style: const TextStyle(fontSize: 7)),
+                    Text('${player.role.emoji} ', style: const TextStyle(fontSize: 9)),
                     Text(
                       player.role.displayName.toUpperCase(),
-                      style: TextStyle(color: roleColor, fontSize: 7, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: isDead ? roleColor.withValues(alpha: 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
                     ),
                   ]),
                 )
@@ -843,12 +1065,13 @@ class _GameSeatCard extends ConsumerWidget {
         Positioned(
           left: 4, top: 4,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+            width: 16, height: 16,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(3),
-              color: Colors.black.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+              color: Colors.black.withValues(alpha: 0.6),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.6), width: 1),
             ),
-            child: Text('${index + 1}', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 7, fontWeight: FontWeight.w700)),
+            child: Center(child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withValues(alpha: 0.8), fontSize: 8, fontWeight: FontWeight.w700))),
           ),
         ),
         // "YOU" badge (top-center)
@@ -860,9 +1083,9 @@ class _GameSeatCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
-                  color: AppColors.primary,
+                  color: const Color(0xFFDAA520),
                 ),
-                child: const Text('YOU', style: TextStyle(color: Colors.black, fontSize: 7, fontWeight: FontWeight.w900)),
+                child: const Text('YOU', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900)),
               ),
             ),
           ),
@@ -924,42 +1147,10 @@ class _CrossPainter extends CustomPainter {
   bool shouldRepaint(_CrossPainter old) => false;
 }
 
-class _CircularAvatars extends StatelessWidget {
-  final GameState game;
-  final PlayerState? me;
-  const _CircularAvatars({required this.game, this.me});
+// L-09 FIX: _CircularAvatars was dead code — never used anywhere in the app.
+// Removed to reduce file size and avoid confusion.
 
-  @override
-  Widget build(BuildContext context) {
-    final players = game.players;
-    final count = players.length;
-    // Grid: 4 columns, up to 4 rows (max 16 players)
-    final avatarSize = count <= 8 ? 48.0 : 40.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
-          childAspectRatio: 0.6,
-        ),
-        itemCount: count,
-        itemBuilder: (context, i) {
-          final p = players[i];
-          final isMe = p.id == me?.id;
-          final isDead = !p.isAlive;
-          return _PlayerAvatar(player: p, isMe: isMe, isDead: isDead, size: avatarSize);
-        },
-      ),
-    );
-  }
-}
-
-/// Reusable 18-player grid with custom 5-4-4-5 row layout
+/// Reusable 16-player grid with 4×4 layout (matches reference design)
 /// Used across ALL game screens (night, discussion, voting, testament)
 class _PlayerGrid18 extends StatelessWidget {
   final List<PlayerState> players;
@@ -968,9 +1159,9 @@ class _PlayerGrid18 extends StatelessWidget {
   final bool showCenterButton;
   final VoidCallback? onCenterTap;
   final String centerLabel;
-  final List<String> testamentPlayerIds; // IDs of players who have testaments
-  final void Function(String playerId)? onTapDead; // Callback when tapping dead player with testament
-  final void Function(PlayerState player)? onLongPressPlayer; // Callback for long press (report)
+  final List<String> testamentPlayerIds;
+  final void Function(String playerId)? onTapDead;
+  final void Function(PlayerState player)? onLongPressPlayer;
 
   const _PlayerGrid18({
     required this.players,
@@ -986,192 +1177,59 @@ class _PlayerGrid18 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Always show 18 seats (5-4-4-5). Fill missing with null placeholders.
+    // Pad to 16 slots
     final padded = List<PlayerState?>.from(players);
-    while (padded.length < 18) padded.add(null);
-
-    final row1 = padded.sublist(0, 5);
-    final row2 = padded.sublist(5, 9);
-    final row3 = padded.sublist(9, 13);
-    final row4 = padded.sublist(13, 18);
+    while (padded.length < 16) padded.add(null);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        children: [
-          // Row 1 (5 players)
-          Expanded(child: _buildRow(row1, 0, 5)),
-          const SizedBox(height: 3),
-          // Row 2 (4 players)
-          Expanded(child: _buildRow(row2, 5, 4)),
-          const SizedBox(height: 3),
-          // Center button (between row 2 and 3)
-          if (showCenterButton)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: GestureDetector(
-                onTap: onCenterTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: onCenterTap != null ? AppColors.primaryGradient : null,
-                    color: onCenterTap == null ? Colors.white.withValues(alpha: 0.05) : null,
-                  ),
-                  child: Text(centerLabel, style: TextStyle(
-                    color: onCenterTap != null ? Colors.white : AppColors.textMuted,
-                    fontSize: 11, fontWeight: FontWeight.w700,
-                  )),
-                ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: GridView.builder(
+        padding: EdgeInsets.zero,
+        physics: const ClampingScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 5,
+          crossAxisSpacing: 5,
+          childAspectRatio: 0.7,
+        ),
+        itemCount: 16,
+        itemBuilder: (_, index) {
+          final player = index < padded.length ? padded[index] : null;
+          if (player == null) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFF0D1117).withValues(alpha: 0.5),
+                border: Border.all(color: const Color(0xFF2A2F3A)),
               ),
-            ),
-          // Row 3 (4 players)
-          Expanded(child: _buildRow(row3, 9, 4)),
-          const SizedBox(height: 3),
-          // Row 4 (5 players)
-          Expanded(child: _buildRow(row4, 13, 5)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRow(List<PlayerState?> rowPlayers, int startIndex, int expectedCount) {
-    if (expectedCount == 4 && rowPlayers.length == 4) {
-      // Row with 4 players: 2 left - gap - 2 right
-      return Row(
-        children: [
-          _buildSeat(rowPlayers[0], startIndex),
-          _buildSeat(rowPlayers[1], startIndex + 1),
-          const Expanded(child: SizedBox()),
-          _buildSeat(rowPlayers[2], startIndex + 2),
-          _buildSeat(rowPlayers[3], startIndex + 3),
-        ],
-      );
-    }
-    // Row with 5 players: all equal
-    return Row(
-      children: [
-        for (int i = 0; i < rowPlayers.length; i++)
-          _buildSeat(rowPlayers[i], startIndex + i),
-        for (int i = rowPlayers.length; i < 5; i++)
-          const Expanded(child: SizedBox()),
-      ],
-    );
-  }
-
-  Widget _buildSeat(PlayerState? player, int index) {
-    if (player == null) {
-      // Empty seat
-      return Expanded(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white.withValues(alpha: 0.02),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
-            ),
-            child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.event_seat_rounded, color: Colors.white.withValues(alpha: 0.08), size: 16),
-              const SizedBox(height: 2),
-              Text('${index + 1}', style: TextStyle(color: Colors.white.withValues(alpha: 0.1), fontSize: 8)),
-            ])),
-          ),
-        ),
-      );
-    }
-    final isDead = !player.isAlive;
-    final hasTest = testamentPlayerIds.contains(player.id);
-    final isMe = player.id == me?.id;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: GestureDetector(
-          onTap: (isDead && hasTest && onTapDead != null) ? () => onTapDead!(player.id) : null,
-          onLongPress: (!isMe && onLongPressPlayer != null) ? () => onLongPressPlayer!(player) : null,
-          child: cardBuilder != null
-              ? cardBuilder!(player, index)
-              : _GameSeatCard(
-                  player: player,
-                  index: index,
-                  isMe: isMe,
-                  isDead: isDead,
-                  hasTestament: hasTest,
-                ),
-        ),
+              child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w700)),
+              ])),
+            );
+          }
+          final isDead = !player.isAlive;
+          final hasTest = testamentPlayerIds.contains(player.id);
+          final isMe = player.id == me?.id;
+          return GestureDetector(
+            onTap: (isDead && hasTest && onTapDead != null) ? () => onTapDead!(player.id) : null,
+            onLongPress: (!isMe && onLongPressPlayer != null) ? () => onLongPressPlayer!(player) : null,
+            child: cardBuilder != null
+                ? cardBuilder!(player, index)
+                : _GameSeatCard(
+                    player: player,
+                    index: index,
+                    isMe: isMe,
+                    isDead: isDead,
+                    hasTestament: hasTest,
+                  ),
+          );
+        },
       ),
     );
   }
 }
 
-class _PlayerAvatar extends ConsumerWidget {
-  final PlayerState player;
-  final bool isMe;
-  final bool isDead;
-  final double size;
-  final String? currentUserId;
-  final VoidCallback? onLongPress;
-  const _PlayerAvatar({required this.player, this.isMe = false, this.isDead = false, this.size = 52, this.currentUserId, this.onLongPress});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final borderColor = isDead ? AppColors.textMuted : (isMe ? AppColors.primary : Colors.white.withValues(alpha: 0.4));
-    final avatarWidth = size * 0.85;
-    final avatarHeight = size * 1.15;
-
-    Widget avatarContent;
-    if (isMe) {
-      // Show chibi for current player
-      final chibiConfig = ref.watch(chibiProvider);
-      avatarContent = ChibiAvatar(
-        config: chibiConfig,
-        size: avatarWidth * 0.9,
-        animate: !isDead,
-        showShadow: false,
-      );
-    } else {
-      // Show generated chibi for other players
-      avatarContent = ChibiAvatar(
-        config: parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id),
-        size: avatarWidth * 0.9,
-        animate: !isDead,
-        showShadow: false,
-      );
-    }
-
-    return GestureDetector(
-      onLongPress: isMe ? null : onLongPress,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          width: avatarWidth, height: avatarHeight,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor, width: isMe ? 3 : 2),
-            boxShadow: isMe ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.5), blurRadius: 14)] : null,
-            color: Colors.black.withValues(alpha: 0.3),
-          ),
-          child: ClipRRect(borderRadius: BorderRadius.circular(8), child: ColorFiltered(
-            colorFilter: isDead ? const ColorFilter.mode(Colors.grey, BlendMode.saturation) : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: avatarContent,
-            ),
-          )),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(isMe ? 'You' : player.name, style: TextStyle(color: isDead ? AppColors.textMuted : (isMe ? AppColors.primary : AppColors.textPrimary), fontSize: 10, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-        if (isDead) const Text('☠️', style: TextStyle(fontSize: 12)),
-      ]),
-    );
-  }
-}
+// #14 FIX: _PlayerAvatar removed — dead code (replaced by _GameSeatCard everywhere).
 
 /// Night chat panel — shows below player grid during night
 class _NightChatPanel extends StatelessWidget {
@@ -1869,10 +1927,11 @@ class _MorningScreen extends StatelessWidget {
     return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
       const Text('☀️', style: TextStyle(fontSize: 48)),
       const SizedBox(height: 12),
-      Text('DAY ${game.round}', style: const TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.w800)),
+      // #7 FIX: Bahasa Indonesia
+      Text('HARI KE-${game.round}', style: const TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.w800)),
       const SizedBox(height: 16),
       if (victim != null) ...[
-        Text('The village wakes up.', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        const Text('Desa terbangun...', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
         const SizedBox(height: 12),
         Container(
           width: 64, height: 64,
@@ -1881,18 +1940,16 @@ class _MorningScreen extends StatelessWidget {
             colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.saturation),
             child: ChibiAvatar(
               config: parseChibiConfig(victim.chibiConfig) ?? generateChibiFromId(victim.id),
-              size: 58,
-              animate: false,
-              showShadow: false,
+              size: 58, animate: false, showShadow: false,
             ),
           )),
         ),
         const SizedBox(height: 8),
         Text(victim.name, style: const TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.w700, decoration: TextDecoration.lineThrough)),
-        const Text('was killed last night', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+        const Text('dibunuh semalam', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
       ] else ...[
-        const Text('Nobody was killed.', style: TextStyle(color: AppColors.success, fontSize: 16, fontWeight: FontWeight.w600)),
-        const Text('Peaceful night.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+        const Text('Tidak ada yang terbunuh.', style: TextStyle(color: AppColors.success, fontSize: 16, fontWeight: FontWeight.w600)),
+        const Text('Malam yang tenang.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
       ],
     ]));
   }
@@ -2072,7 +2129,7 @@ class _DiscussionScreen extends ConsumerStatefulWidget {
   ConsumerState<_DiscussionScreen> createState() => _DayDiscussionScreenState();
 }
 
-class _DayDiscussionScreenState extends ConsumerState<_DayDiscussionScreen> {
+class _DayDiscussionScreenState extends ConsumerState<_DiscussionScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
@@ -2081,11 +2138,18 @@ class _DayDiscussionScreenState extends ConsumerState<_DayDiscussionScreen> {
   @override
   void initState() {
     super.initState();
-    _sub = ref.read(webSocketProvider).messages.listen((msg) {
-      if (msg.type == 'chat_message') {
-        setState(() => _messages.add({'senderId': msg.payload['senderId'] as String? ?? '', 'content': msg.payload['content'] as String? ?? ''}));
-      }
-    });
+    // M-11 FIX: Guard against duplicate subscription in _DiscussionScreen.
+    if (_sub == null) {
+      _sub = ref.read(webSocketProvider).messages.listen((msg) {
+        if (!mounted) return;
+        if (msg.type == 'chat_message') {
+          setState(() => _messages.add({
+            'senderId': msg.payload['senderId'] as String? ?? '',
+            'content': msg.payload['content'] as String? ?? '',
+          }));
+        }
+      });
+    }
   }
 
   @override
@@ -2100,8 +2164,40 @@ class _DayDiscussionScreenState extends ConsumerState<_DayDiscussionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final alive = widget.game.alivePlayers.length;
+    final dead = widget.game.players.length - alive;
+
     return Column(children: [
-      // Player grid (5-4-4-5 layout) — dynamically adjusts flex based on chat size
+      // Subtitle: "Waktu Diskusi"
+      Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1F2E),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+        ),
+        child: Row(children: [
+          const Text('💬', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 8),
+          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Waktu Diskusi', style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w700)),
+            Text('Berdiskusilah dan tentukan siapa Werewolf', style: TextStyle(color: AppColors.textMuted, fontSize: 9)),
+          ])),
+          // HIDUP / MATI indicators
+          Column(children: [
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              const Text('HIDUP ', style: TextStyle(color: AppColors.success, fontSize: 8, fontWeight: FontWeight.w700)),
+              Text('$alive', style: const TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w900)),
+            ]),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              const Text('MATI ', style: TextStyle(color: AppColors.error, fontSize: 8, fontWeight: FontWeight.w700)),
+              Text('$dead', style: const TextStyle(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w900)),
+            ]),
+          ]),
+        ]),
+      ),
+      // Player grid (4×4)
       Expanded(
         flex: 10 - _chatFlex,
         child: _PlayerGrid18(
@@ -2275,6 +2371,17 @@ class _DayDiscussionScreenState extends ConsumerState<_DayDiscussionScreen> {
                   )).toList(),
                 ),
               ),
+            // Quick chat presets — one-tap send
+            if (widget.me != null && widget.me!.isAlive)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: QuickChatBar(onSend: (msg) {
+                  ref.read(webSocketProvider).send(WsMessage.sendChat(
+                    senderId: widget.me!.id, content: msg));
+                  setState(() => _messages.add({
+                    'senderId': widget.me!.id, 'content': msg}));
+                }),
+              ),
             // Input bar
             if (widget.me != null && widget.me!.isAlive)
               Container(
@@ -2329,16 +2436,23 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
-  int _chatFlex = 3; // Default size: 3. Modes: 1 (Collapsed), 3 (Normal), 6 (Expanded)
+  String? _selectedTargetId; // Selected but not yet submitted
+  bool _hasVoted = false;
 
   @override
   void initState() {
     super.initState();
-    _sub = ref.read(webSocketProvider).messages.listen((msg) {
-      if (msg.type == 'chat_message') {
-        setState(() => _messages.add({'senderId': msg.payload['senderId'] as String? ?? '', 'content': msg.payload['content'] as String? ?? ''}));
-      }
-    });
+    if (_sub == null) {
+      _sub = ref.read(webSocketProvider).messages.listen((msg) {
+        if (!mounted) return;
+        if (msg.type == 'chat_message') {
+          setState(() => _messages.add({
+            'senderId': msg.payload['senderId'] as String? ?? '',
+            'content': msg.payload['content'] as String? ?? '',
+          }));
+        }
+      });
+    }
   }
 
   @override
@@ -2357,39 +2471,23 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
     final myVote = widget.me != null ? widget.game.votes.votes[widget.me!.id] : null;
     final voteCount = widget.game.votes.votes.length;
     final aliveCount = widget.game.alivePlayers.length;
-    final canIVote = widget.me != null && widget.me!.isAlive;
+    final canIVote = widget.me != null && widget.me!.isAlive && myVote == null && !_hasVoted;
     final isRetry = widget.game.votes.isRetry;
     final tiedPlayers = widget.game.votes.tiedPlayers;
 
     return Column(
       children: [
-        // Vote counter + retry indicator
+        // Instruction text
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(children: [
-            if (isRetry && tiedPlayers != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
-                ),
-                child: Text(
-                  '⚠️ SERI! Vote ulang antara ${tiedPlayers.length} pemain',
-                  style: const TextStyle(color: AppColors.warning, fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-              ),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Text('🗳️ ', style: TextStyle(fontSize: 12)),
-              Text('$voteCount/$aliveCount voted', style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w700)),
-            ]),
-          ]),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Text(
+            isRetry ? '⚠️ Seri! Vote ulang antara pemain yang seri' : 'Pilih pemain yang menurutmu adalah Werewolf!',
+            style: TextStyle(color: isRetry ? AppColors.warning : AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
         ),
-        // Player grid (5-4-4-5 tappable to vote)
+        // Player grid (4×4 tappable to select)
         Expanded(
-          flex: 10 - _chatFlex,
           child: _PlayerGrid18(
             players: players,
             me: widget.me,
@@ -2397,27 +2495,27 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
               final isTiedTarget = tiedPlayers != null && tiedPlayers.contains(p.id);
               final votesOnThis = widget.game.votes.votes.values.where((v) => v == p.id).length;
               final isDead = !p.isAlive;
+              final isSelected = _selectedTargetId == p.id || myVote == p.id;
+              final canTap = canIVote && !isDead && p.id != widget.me?.id && (tiedPlayers == null || isTiedTarget);
               return GestureDetector(
-                onTap: (canIVote && !isDead && (tiedPlayers == null || isTiedTarget)) ? () {
-                  HapticFeedback.heavyImpact();
-                  ref.read(gameProvider.notifier).castVote(widget.me!.id, p.id);
+                onTap: canTap ? () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedTargetId = p.id);
                 } : null,
-                onLongPress: (p.id == widget.me?.id) ? null : () => _showReportDialog(context, ref, p),
                 child: Stack(children: [
-                  _GameSeatCard(player: p, index: i, isMe: p.id == widget.me?.id, isDead: isDead, isTarget: myVote == p.id),
+                  _GameSeatCard(player: p, index: i, isMe: p.id == widget.me?.id, isDead: isDead, isTarget: isSelected),
                   if (votesOnThis > 0)
                     Positioned(right: 2, top: 2, child: Container(
-                      width: 14, height: 14,
+                      width: 16, height: 16,
                       decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
                       child: Center(child: Text('$votesOnThis', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900))),
                     )),
-                  // Highlight tied players with golden border during retry
-                  if (isTiedTarget && isRetry && !isDead)
+                  if (isSelected)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.warning, width: 2),
+                          border: Border.all(color: AppColors.error, width: 2.5),
                         ),
                       ),
                     ),
@@ -2426,94 +2524,88 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
             },
           ),
         ),
-        // Expandable Chat panel
-        Expanded(
-          flex: _chatFlex,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            margin: const EdgeInsets.fromLTRB(10, 2, 10, 6),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Column(children: [
-              // Header with controls
-              Row(children: [
-                const Text('💬', style: TextStyle(fontSize: 11)),
-                const SizedBox(width: 4),
-                const Text('Chat Voting', style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
-                const Spacer(),
-                if (_chatFlex > 1)
-                  GestureDetector(
-                    onTap: () => setState(() => _chatFlex = 1),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 8)),
-                    ),
-                  ),
-                if (_chatFlex != 3)
-                  GestureDetector(
-                    onTap: () => setState(() => _chatFlex = 3),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('Sedang', style: TextStyle(color: AppColors.primary, fontSize: 8)),
-                    ),
-                  ),
-                if (_chatFlex < 6)
-                  GestureDetector(
-                    onTap: () => setState(() => _chatFlex = 6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
-                      child: const Text('Perbesar', style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w700)),
+        // Vote counter: "X / Y SUDAH MEMILIH" + dot indicators
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$voteCount / $aliveCount ', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+              const Text('SUDAH MEMILIH', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              // Green dots for voted
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                for (int i = 0; i < aliveCount && i < 16; i++)
+                  Container(
+                    width: 8, height: 8,
+                    margin: const EdgeInsets.only(right: 2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i < voteCount ? AppColors.success : const Color(0xFF3D4450),
                     ),
                   ),
               ]),
-              const SizedBox(height: 2),
-              Expanded(child: _messages.isEmpty
-                  ? Center(child: Text('💬 Chat aktif saat voting', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 10)))
-                  : ListView.builder(
-                      reverse: true,
-                      itemCount: _messages.length,
-                      itemBuilder: (_, i) {
-                        final msg = _messages[_messages.length - 1 - i];
-                        final sender = widget.game.players.where((p) => p.id == msg['senderId']).firstOrNull;
-                        return Padding(padding: const EdgeInsets.only(bottom: 4), child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(sender?.name ?? '???', style: const TextStyle(color: AppColors.primary, fontSize: 9, fontWeight: FontWeight.w700)),
-                            const SizedBox(width: 5),
-                            Expanded(child: Text(msg['content'] ?? '', style: const TextStyle(color: AppColors.textPrimary, fontSize: 10))),
-                          ],
-                        ));
-                      },
-                    ),
-              ),
-              // Input
+            ],
+          ),
+        ),
+        // Bottom buttons: Skip Vote | KIRIM VOTE
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+          child: Row(
+            children: [
+              // Skip Vote
               if (canIVote)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  height: 30,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: Colors.white.withValues(alpha: 0.06), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
-                  child: Row(children: [
-                    Expanded(child: TextField(
-                      controller: _chatCtrl,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 11),
-                      decoration: const InputDecoration(hintText: 'Ketik pesan...', hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 10), border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 7)),
-                      onSubmitted: (_) => _send(),
-                    )),
-                    GestureDetector(onTap: _send, child: const Icon(Icons.send_rounded, color: AppColors.primary, size: 14)),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    setState(() => _hasVoted = true);
+                    // Vote for empty/skip
+                    ref.read(gameProvider.notifier).castVote(widget.me!.id, '');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withValues(alpha: 0.06),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                    child: const Text('Skip Vote', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              const Spacer(),
+              // KIRIM VOTE button (golden, active when target selected)
+              GestureDetector(
+                onTap: (canIVote && _selectedTargetId != null) ? () {
+                  HapticFeedback.heavyImpact();
+                  setState(() => _hasVoted = true);
+                  ref.read(gameProvider.notifier).castVote(widget.me!.id, _selectedTargetId!);
+                } : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: (canIVote && _selectedTargetId != null)
+                        ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
+                        : null,
+                    color: (canIVote && _selectedTargetId != null) ? null : const Color(0xFF3A3A3A),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: (canIVote && _selectedTargetId != null) ? 1.0 : 0.3)),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                      _hasVoted ? 'VOTED ✓' : 'KIRIM VOTE',
+                      style: TextStyle(
+                        color: (canIVote && _selectedTargetId != null) ? Colors.white : AppColors.textMuted,
+                        fontSize: 13, fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (!_hasVoted) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.check_rounded, color: (canIVote && _selectedTargetId != null) ? Colors.white : AppColors.textMuted, size: 16),
+                    ],
                   ]),
                 ),
-            ]),
+              ),
+            ],
           ),
         ),
       ],
@@ -2521,6 +2613,152 @@ class _VotingScreenState extends ConsumerState<_VotingScreen> {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// VOTE RESULT — "HASIL VOTE" ornate card
+// ═══════════════════════════════════════════════════════════
+
+class _VoteResultScreen extends ConsumerWidget {
+  final GameState game;
+  final PlayerState? me;
+  const _VoteResultScreen({required this.game, this.me});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Find eliminated player from latest elimination history
+    final latestElim = game.eliminationHistory.isNotEmpty ? game.eliminationHistory.last : null;
+    final eliminatedPlayer = latestElim != null
+        ? game.players.where((p) => p.id == latestElim.playerId).firstOrNull
+        : null;
+
+    // Build vote tally (sorted by count descending)
+    final voteTally = <String, int>{};
+    for (final targetId in game.votes.votes.values) {
+      if (targetId.isNotEmpty) {
+        voteTally[targetId] = (voteTally[targetId] ?? 0) + 1;
+      }
+    }
+    final sortedTally = voteTally.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF1A1F2E),
+          border: Border.all(color: const Color(0xFFDAA520), width: 2),
+          boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 20)],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header: "HASIL VOTE"
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+                color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+              ),
+              child: const Text('HASIL VOTE', style: TextStyle(color: Color(0xFFDAA520), fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 2)),
+            ),
+            const SizedBox(height: 16),
+
+            if (eliminatedPlayer != null) ...[
+              // Eliminated player chibi + name
+              Container(
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  border: Border.all(color: AppColors.error, width: 2),
+                ),
+                child: ClipOval(child: ChibiAvatar(
+                  config: parseChibiConfig(eliminatedPlayer.chibiConfig) ?? generateChibiFromId(eliminatedPlayer.id),
+                  size: 65, animate: false, showShadow: false,
+                )),
+              ),
+              const SizedBox(height: 8),
+              Text(eliminatedPlayer.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              // "TERELIMINASI" badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.error,
+                ),
+                child: const Text('TERELIMINASI', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+              const SizedBox(height: 12),
+              // Role reveal
+              Text(
+                '${eliminatedPlayer.name} adalah ${eliminatedPlayer.role.displayName}',
+                style: TextStyle(
+                  color: eliminatedPlayer.role.team == Team.red ? AppColors.redTeam : AppColors.blueTeam,
+                  fontSize: 12, fontWeight: FontWeight.w700,
+                ),
+              ),
+            ] else ...[
+              // No one eliminated (skip/tie)
+              const Icon(Icons.cancel_outlined, color: AppColors.textMuted, size: 40),
+              const SizedBox(height: 8),
+              const Text('Tidak ada yang tereliminasi', style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+            ],
+
+            // Vote tally table
+            if (sortedTally.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    const Text('HASIL VOTE', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                    const SizedBox(height: 6),
+                    ...sortedTally.take(5).map((entry) {
+                      final player = game.players.where((p) => p.id == entry.key).firstOrNull;
+                      final maxVotes = sortedTally.first.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(children: [
+                          SizedBox(width: 20, child: Text('${sortedTally.indexOf(entry) + 1}', style: const TextStyle(color: AppColors.textMuted, fontSize: 10))),
+                          Text(player?.name ?? '???', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                          const Spacer(),
+                          // Bar
+                          Container(
+                            width: 60 * (entry.value / maxVotes),
+                            height: 8,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              color: entry.key == eliminatedPlayer?.id ? AppColors.error : AppColors.primary.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text('${entry.value}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                        ]),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 12),
+            Text(
+              'Game akan dilanjutkan ke malam hari.',
+              style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // TESTAMENT
@@ -2550,7 +2788,7 @@ class _TestamentScreenState extends ConsumerState<_TestamentScreen> {
     final me = widget.me;
     final isMyTestament = game.pendingTestamentPlayerId == me?.id;
     final playerCount = game.players.length;
-    final cols = playerCount <= 12 ? 4 : 5;
+    // playerCount retained for future row-layout adaptation
 
     // Auto-show new testament for 4 seconds
     if (game.testaments.length > _lastTestamentCount && !isMyTestament) {
@@ -2680,9 +2918,14 @@ class _GameEndScreen extends ConsumerStatefulWidget {
   ConsumerState<_GameEndScreen> createState() => _GameEndScreenState();
 }
 
+// M-05 FIX: _GameEndScreen uses actual rewards from game.rewards instead of hardcoded values.
 class _GameEndScreenState extends ConsumerState<_GameEndScreen> {
   int _countdown = 5;
   Timer? _timer;
+
+  // Actual reward values from game state (fallback to 0 if not available)
+  int get _xpEarned => widget.game.rewards?.xpEarned ?? 0;
+  int get _coinsEarned => widget.game.rewards?.coinsEarned ?? 0;
 
   @override
   void initState() {
@@ -2717,18 +2960,17 @@ class _GameEndScreenState extends ConsumerState<_GameEndScreen> {
       const SizedBox(height: 8),
       Text(winDesc, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       const SizedBox(height: 28),
-      // Rewards
+      // Rewards — using actual values from game state
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16)),
         child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-          _rewardItem('⭐', '+50', 'XP'),
+          _rewardItem('⭐', '+$_xpEarned', 'XP'),
           const SizedBox(width: 28),
-          _rewardItem('🪙', '+100', 'Coins'),
+          _rewardItem('🪙', '+$_coinsEarned', 'Coins'),
         ]),
       ),
       const SizedBox(height: 20),
-      // Countdown to results
       Text('Menuju hasil... $_countdown', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
       const SizedBox(height: 4),
       SizedBox(

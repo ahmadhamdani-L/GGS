@@ -112,16 +112,24 @@ class RoomNotifier extends StateNotifier<RoomState> {
     });
   }
 
+  // M-10 FIX: _isQuickPlay is declared here — reset on all paths including error/timeout.
+  String? _creatorName;
+  int? _creatorAvatar;
+  String? _creatorId;
+  bool _isQuickPlay = false;
+
   void _startTimeoutTimer(String operation) {
     _timeoutTimer?.cancel();
     _timeoutTimer = Timer(_operationTimeout, () {
       if (state.isLoading) {
-        logger.error(LogCategory.room, 'Operation timeout', 
+        logger.error(LogCategory.room, 'Operation timeout',
           error: 'Timeout after ${_operationTimeout.inSeconds}s',
           data: {'operation': operation});
+        // M-10 FIX: reset _isQuickPlay on timeout so next createRoom is not silent quickPlay
+        _isQuickPlay = false;
         state = state.copyWith(
           isLoading: false,
-          error: 'Operation timeout - please try again',
+          error: 'Koneksi timeout — coba lagi',
         );
       }
     });
@@ -262,6 +270,8 @@ class RoomNotifier extends StateNotifier<RoomState> {
         _cancelTimeout();
         final errorMsg = msg.payload['message'] as String?;
         logger.roomError('server', errorMsg ?? 'Unknown error');
+        // M-10 FIX: reset _isQuickPlay on server-side error too
+        _isQuickPlay = false;
         state = state.copyWith(
           isLoading: false,
           error: errorMsg,
@@ -271,8 +281,17 @@ class RoomNotifier extends StateNotifier<RoomState> {
       case 'kicked':
         final reason = msg.payload['reason'] as String? ?? msg.type;
         logger.roomLeft(state.room?.id ?? 'unknown', reason);
-        // Server cleaned up the room — reset local state
         state = const RoomState();
+        break;
+      // H-4 FIX: Handle server-side game abort (too many disconnects)
+      case 'game_aborted':
+        final abortReason = msg.payload['reason'] as String? ?? 'Game dibatalkan';
+        logger.warn(LogCategory.room, 'Game aborted by server', {'reason': abortReason});
+        state = state.copyWith(error: abortReason);
+        // Full reset after brief delay so UI can show the message
+        Future.delayed(const Duration(seconds: 3), () {
+          if (state.error == abortReason) state = const RoomState();
+        });
         break;
       case 'room_config_updated':
         // Handle room config update from host
@@ -324,11 +343,6 @@ class RoomNotifier extends StateNotifier<RoomState> {
     _isQuickPlay = quickPlay;
   }
 
-  String? _creatorName;
-  int? _creatorAvatar;
-  String? _creatorId;
-  bool _isQuickPlay = false;
-
   void joinRoom(String userId, String roomCode) {
     logger.roomJoining(roomCode);
     state = state.copyWith(isLoading: true, error: null, operationStartTime: DateTime.now());
@@ -342,9 +356,11 @@ class RoomNotifier extends StateNotifier<RoomState> {
     state = const RoomState();
   }
 
-  void startGame(String roomId, String hostId) {
+  // C-1 FIX: startGame now accepts noBotFill parameter.
+  // When true, the server starts with exactly the players who joined — no bots added.
+  void startGame(String roomId, String hostId, {bool noBotFill = false}) {
     logger.gameStarting(roomId, state.players.length);
-    _ws.send(WsMessage.startGame(roomId: roomId, hostId: hostId));
+    _ws.send(WsMessage.startGame(roomId: roomId, hostId: hostId, noBotFill: noBotFill));
   }
 
   /// C-04 FIX: Sends [player_ready] WebSocket event to server.
@@ -407,6 +423,11 @@ class RoomNotifier extends StateNotifier<RoomState> {
   }
 
   /// Update room configuration (host only)
+  void kickPlayer({required String roomId, required String targetUserId}) {
+    logger.info(LogCategory.room, 'Kicking player', {'roomId': roomId, 'targetUserId': targetUserId});
+    _ws.send(WsMessage.kickPlayer(roomId: roomId, targetUserId: targetUserId));
+  }
+
   void updateRoomConfig({
     required String roomId,
     required int maxPlayers,

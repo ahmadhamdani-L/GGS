@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -61,14 +63,15 @@ func GetNotifications(userID string, limit int, unreadOnly bool) ([]Notification
 	var notifications []Notification
 	for rows.Next() {
 		var n Notification
-		var dataJSON []byte
+		var dataJSON sql.NullString
 		if err := rows.Scan(&n.ID, &n.UserID, &n.Type, &n.Title, &n.Message, &dataJSON, &n.IsRead, &n.CreatedAt); err != nil {
 			continue
 		}
 		// Parse data JSON if present
-		if len(dataJSON) > 0 {
-			// Simple parsing - in production use json.Unmarshal
-			n.Data = make(map[string]interface{})
+		if dataJSON.Valid && len(dataJSON.String) > 2 {
+			if err := json.Unmarshal([]byte(dataJSON.String), &n.Data); err != nil {
+				n.Data = make(map[string]interface{})
+			}
 		}
 		notifications = append(notifications, n)
 	}
@@ -132,7 +135,7 @@ func MarkAllNotificationsRead(userID string) error {
 	return err
 }
 
-// CreateNotification creates a new notification for a user
+// Fix notifications.go — CreateNotification passes data as JSON bytes, not hardcoded "{}"
 func CreateNotification(userID, notifType, title, message string, data map[string]interface{}) (*Notification, error) {
 	if DB == nil {
 		if Mem != nil {
@@ -144,10 +147,18 @@ func CreateNotification(userID, notifType, title, message string, data map[strin
 	id := fmt.Sprintf("notif_%s_%d", userID[:8], time.Now().UnixNano())
 	now := time.Now()
 
+	// Marshal data to JSON; use empty object if nil
+	dataBytes := []byte("{}")
+	if data != nil {
+		if b, err := json.Marshal(data); err == nil {
+			dataBytes = b
+		}
+	}
+
 	_, err := DB.Exec(`
 		INSERT INTO notifications (id, user_id, type, title, message, data, is_read, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, FALSE, $7)
-	`, id, userID, notifType, title, message, "{}", now)
+	`, id, userID, notifType, title, message, string(dataBytes), now)
 	if err != nil {
 		return nil, err
 	}

@@ -30,6 +30,9 @@ class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProvid
     Future.delayed(const Duration(milliseconds: 1500), _navigate);
   }
 
+  int _navigateAttempts = 0;
+  static const int _maxNavigateAttempts = 10;
+
   void _navigate() {
     if (!mounted) return;
     final auth = ref.read(authProvider);
@@ -41,6 +44,12 @@ class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProvid
         context.go('/auth');
         break;
       case AuthStatus.unknown:
+        _navigateAttempts++;
+        if (_navigateAttempts >= _maxNavigateAttempts) {
+          // Auth stuck — force to auth page after 5s total
+          context.go('/auth');
+          return;
+        }
         Future.delayed(const Duration(milliseconds: 500), _navigate);
         break;
     }
