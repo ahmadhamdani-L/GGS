@@ -52,6 +52,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       
       // Load diamond balance
       ref.read(socialProvider.notifier).refreshDiamonds();
+      // Refresh profile (coins, games_won, xp may have changed after a game)
+      ref.read(authProvider.notifier).refreshProfile();
     });
     // Force reconnect WS to ensure clean state after leaving game/lobby
     _ensureWsConnected();
@@ -571,7 +573,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         Row(children: [
           Expanded(child: _actionButton('🏠', 'Buat Room', 'Buat room baru', () => context.push('/lobby-v2'))),
           const SizedBox(width: 10),
-          Expanded(child: _actionButton('🚪', 'Join Room', 'Masuk ke room', () => context.push('/lobby-v2'))),
+          Expanded(child: _actionButton('🚪', 'Join Room', 'Masuk ke room', () => _showJoinRoomDialog(context))),
         ]),
         const SizedBox(height: 14),
         // MAIN SEKARANG golden banner
@@ -649,6 +651,77 @@ class _HomePageState extends ConsumerState<HomePage> {
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 8, fontWeight: FontWeight.w600)),
         ]),
+      ),
+    );
+  }
+
+  void _showJoinRoomDialog(BuildContext context) {
+    final codeController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1B4B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(children: [
+          Text('🚪', style: TextStyle(fontSize: 22)),
+          SizedBox(width: 10),
+          Text('Join Room', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Masukkan kode room untuk bergabung', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: codeController,
+              textCapitalization: TextCapitalization.characters,
+              maxLength: 10,
+              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 3),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: 'KODE ROOM',
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), letterSpacing: 2),
+                counterText: '',
+                filled: true,
+                fillColor: Colors.black.withValues(alpha: 0.3),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFDAA520)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final code = codeController.text.trim().toUpperCase();
+              if (code.isEmpty) return;
+              Navigator.of(ctx).pop();
+              final userId = ref.read(authProvider).userId;
+              if (userId != null) {
+                ref.read(roomProvider.notifier).joinRoom(userId, code);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDAA520),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Gabung!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+          ),
+        ],
       ),
     );
   }

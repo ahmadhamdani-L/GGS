@@ -123,10 +123,10 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      SizedBox(height: size.height * 0.06),
+                      SizedBox(height: size.height * 0.04),
                   // Logo
                   _buildLogo(),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   // Glass card with form
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
@@ -147,8 +147,11 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                             // Error
                             if (auth.error != null) _buildError(auth.error!),
                             // Forms
-                            SizedBox(
-                              height: 300,
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.32,
+                                minHeight: 240,
+                              ),
                               child: TabBarView(
                                 controller: _tabController,
                                 children: [_loginForm(auth), _registerForm(auth)],
@@ -159,13 +162,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   // Divider
                   _buildDivider(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   // Guest button
                   _buildGuestButton(auth),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

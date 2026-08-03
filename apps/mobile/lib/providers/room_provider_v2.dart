@@ -24,6 +24,10 @@ final lobbyListProvider =
 class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
   final WebSocketService _ws;
   StreamSubscription? _sub;
+  final _errorController = StreamController<String>.broadcast();
+
+  /// Stream of error messages from server (for UI snackbars)
+  Stream<String> get errors => _errorController.stream;
 
   RoomV2Notifier(this._ws) : super(null) {
     _sub = _ws.messages.listen(_onMessage);
@@ -46,6 +50,12 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
         break;
       case 'room_closed':
         state = null;
+        break;
+      case 'error':
+        // Server error — store in error stream for UI to display
+        final code = msg.payload['code'] as String? ?? '';
+        final message = msg.payload['message'] as String? ?? 'Terjadi kesalahan';
+        _errorController.add('$message ($code)');
         break;
       case 'game_state_update':
       case 'game_started':
@@ -164,10 +174,8 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
   }
 
   void startGame(String roomId) {
-    _ws.send(WsMessage(type: 'start_game', payload: {
+    _ws.send(WsMessage(type: 'v2_start_game', payload: {
       'roomId': roomId,
-      'hostId': state?.hostId ?? '',
-      'noBotFill': true,
     }));
   }
 
@@ -175,6 +183,13 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
     _ws.send(WsMessage(type: 'v2_play_again', payload: {
       'userId': userId,
       'roomId': roomId,
+    }));
+  }
+
+  void sendChat(String roomId, String message) {
+    _ws.send(WsMessage(type: 'v2_room_chat', payload: {
+      'roomId': roomId,
+      'message': message,
     }));
   }
 
@@ -190,6 +205,7 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
   @override
   void dispose() {
     _sub?.cancel();
+    _errorController.close();
     super.dispose();
   }
 }
@@ -221,3 +237,56 @@ class LobbyListNotifier extends StateNotifier<List<LobbyRoomInfo>> {
     super.dispose();
   }
 }
+
+// ─── Room Chat Provider ──────────────────────────────────────
+
+class RoomChatMessage {
+  final String userId;
+  final String displayName;
+  final String message;
+  final DateTime timestamp;
+
+  const RoomChatMessage({
+    required this.userId,
+    required this.displayName,
+    required this.message,
+    required this.timestamp,
+  });
+}
+
+class RoomChatNotifier extends StateNotifier<List<RoomChatMessage>> {
+  final WebSocketService _ws;
+  StreamSubscription? _sub;
+
+  RoomChatNotifier(this._ws) : super([]) {
+    _sub = _ws.messages.listen(_onMessage);
+  }
+
+  void _onMessage(WsMessage msg) {
+    if (msg.type == 'room_chat') {
+      final chatMsg = RoomChatMessage(
+        userId: msg.payload['userId'] as String? ?? '',
+        displayName: msg.payload['displayName'] as String? ?? '',
+        message: msg.payload['message'] as String? ?? '',
+        timestamp: DateTime.now(),
+      );
+      // Keep last 100 messages
+      state = [...state, chatMsg].length > 100
+          ? [...state, chatMsg].sublist(state.length - 99)
+          : [...state, chatMsg];
+    }
+  }
+
+  void clear() => state = [];
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}
+
+final roomChatProvider =
+    StateNotifierProvider<RoomChatNotifier, List<RoomChatMessage>>((ref) {
+  return RoomChatNotifier(ref.watch(webSocketProvider));
+});

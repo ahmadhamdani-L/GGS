@@ -153,6 +153,19 @@ class _RoomHeader extends ConsumerWidget {
                 )
               else
                 const SizedBox(width: 36),
+              const SizedBox(width: 8),
+              // Chat button
+              GestureDetector(
+                onTap: () => _showChatSheet(context, ref),
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                  child: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white70, size: 18),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -167,7 +180,27 @@ class _RoomHeader extends ConsumerWidget {
   }
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
-    // TODO: settings bottom sheet
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1D2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => _SettingsSheet(room: room),
+    );
+  }
+
+  void _showChatSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1D2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => _ChatSheet(roomId: room.roomId),
+    );
   }
 }
 
@@ -444,13 +477,20 @@ class _BottomBar extends ConsumerWidget {
 
     if (isHost) {
       // Host: show Start button
-      final allHumansReady = room.players
-          .where((p) => !p.isBot && p.isSeated)
-          .every((p) => p.isReady);
-      final hasEnoughPlayers =
-          room.players.where((p) => p.isSeated).length >= MinPlayersToStart;
-      buttonEnabled = allHumansReady && hasEnoughPlayers && room.isWaiting;
-      buttonLabel = 'MULAI GAME';
+      // Host doesn't need to be ready themselves - only other humans must be ready.
+      // Backend validates readiness; client only checks player count.
+      
+      // Count occupied seats from seats array (most reliable source)
+      final occupiedSeats = room.seats.where((s) => !s.isEmpty).length;
+      // Fallback: count from players list
+      final seatedPlayers = room.players.where((p) => p.isSeated).length;
+      // Use whichever is higher (handles edge cases in data sync)
+      final effectiveSeated = occupiedSeats > seatedPlayers ? occupiedSeats : seatedPlayers;
+      
+      final hasEnoughPlayers = effectiveSeated >= 8;
+      // Host can always start if enough players — backend validates the rest
+      buttonEnabled = hasEnoughPlayers && room.isWaiting;
+      buttonLabel = hasEnoughPlayers ? 'MULAI GAME' : 'MIN 8 PEMAIN ($effectiveSeated/8)';
       onTap = buttonEnabled
           ? () {
               HapticFeedback.heavyImpact();
@@ -546,5 +586,259 @@ class _BottomBar extends ConsumerWidget {
   }
 }
 
-// Re-export constant for use in widget
-const MinPlayersToStart = 1;
+// Minimum 8 players (humans + bots) required to start
+const minPlayersToStart = 8;
+
+// ─── Settings Sheet ──────────────────────────────────────────
+
+class _SettingsSheet extends ConsumerStatefulWidget {
+  final RoomStateV2 room;
+  const _SettingsSheet({required this.room});
+
+  @override
+  ConsumerState<_SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
+  late int _maxPlayers;
+  late int _discussionTime;
+  late int _votingTime;
+  late int _nightTime;
+  late int _testamentTime;
+
+  @override
+  void initState() {
+    super.initState();
+    final s = widget.room.settings;
+    _maxPlayers = s.maxPlayers;
+    _discussionTime = s.discussionTime;
+    _votingTime = s.votingTime;
+    _nightTime = s.nightTime;
+    _testamentTime = s.testamentTime;
+  }
+
+  void _save() {
+    final settings = RoomSettingsV2(
+      maxPlayers: _maxPlayers,
+      discussionTime: _discussionTime,
+      votingTime: _votingTime,
+      nightTime: _nightTime,
+      testamentTime: _testamentTime,
+    );
+    ref.read(roomV2Provider.notifier).updateSettings(widget.room.roomId, settings);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 16),
+          const Text('Pengaturan Room', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 20),
+          _settingRow('Max Pemain', _maxPlayers, 8, 16, (v) => setState(() => _maxPlayers = v)),
+          _settingRow('Diskusi (detik)', _discussionTime, 30, 120, (v) => setState(() => _discussionTime = v)),
+          _settingRow('Voting (detik)', _votingTime, 15, 60, (v) => setState(() => _votingTime = v)),
+          _settingRow('Malam (detik)', _nightTime, 15, 60, (v) => setState(() => _nightTime = v)),
+          _settingRow('Wasiat (detik)', _testamentTime, 10, 60, (v) => setState(() => _testamentTime = v)),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _save,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
+              ),
+              child: const Center(
+                child: Text('SIMPAN', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _settingRow(String label, int value, int min, int max, ValueChanged<int> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13))),
+          GestureDetector(
+            onTap: value > min ? () => onChanged(value - (label.contains('Pemain') ? 1 : 5)) : null,
+            child: Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              child: Icon(Icons.remove, color: value > min ? Colors.white : Colors.white24, size: 16),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text('$value', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 14, fontWeight: FontWeight.w800)),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: value < max ? () => onChanged(value + (label.contains('Pemain') ? 1 : 5)) : null,
+            child: Container(
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              child: Icon(Icons.add, color: value < max ? Colors.white : Colors.white24, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Chat Sheet ──────────────────────────────────────────────
+
+class _ChatSheet extends ConsumerStatefulWidget {
+  final String roomId;
+  const _ChatSheet({required this.roomId});
+
+  @override
+  ConsumerState<_ChatSheet> createState() => _ChatSheetState();
+}
+
+class _ChatSheetState extends ConsumerState<_ChatSheet> {
+  final _msgCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _msgCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _send() {
+    final text = _msgCtrl.text.trim();
+    if (text.isEmpty) return;
+    ref.read(roomV2Provider.notifier).sendChat(widget.roomId, text);
+    _msgCtrl.clear();
+    // Scroll to bottom
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final messages = ref.watch(roomChatProvider);
+    final myId = ref.watch(authProvider).userId ?? '';
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 12),
+            const Text('Chat Room', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            // Messages list
+            Expanded(
+              child: messages.isEmpty
+                  ? const Center(child: Text('Belum ada pesan', style: TextStyle(color: Colors.white38, fontSize: 12)))
+                  : ListView.builder(
+                      controller: _scrollCtrl,
+                      itemCount: messages.length,
+                      itemBuilder: (_, i) {
+                        final msg = messages[i];
+                        final isMe = msg.userId == myId;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${msg.displayName}: ',
+                                style: TextStyle(
+                                  color: isMe ? const Color(0xFFDAA520) : const Color(0xFF5B8DEF),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  msg.message,
+                                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 8),
+            // Input
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _msgCtrl,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    maxLength: 200,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: 'Ketik pesan...',
+                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onSubmitted: (_) => _send(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _send,
+                  child: Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFFDAA520),
+                    ),
+                    child: const Icon(Icons.send_rounded, color: Colors.black, size: 18),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

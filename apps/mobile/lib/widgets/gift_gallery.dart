@@ -20,9 +20,9 @@ class GiftGallery extends ConsumerWidget {
         child: Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2))),
       error:   (_, __) => const SizedBox.shrink(),
       data: (data) {
-        final stats   = data['stats'] as SocialStats;
-        final album   = data['album'] as List<GiftAlbumEntry>;
-        final streak  = data['streak'] as GiftStreak;
+        final stats   = data['stats'] as SocialStats? ?? SocialStats.empty;
+        final album   = data['album'] as List<GiftAlbumEntry>? ?? [];
+        final streak  = data['streak'] as GiftStreak? ?? GiftStreak.empty;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _buildSectionHeader(),
           _buildStatRow(stats, streak),

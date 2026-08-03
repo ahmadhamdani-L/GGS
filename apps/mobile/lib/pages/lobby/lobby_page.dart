@@ -119,7 +119,10 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
   Widget build(BuildContext context) {
     final roomState = ref.watch(roomProvider);
     final auth = ref.watch(authProvider);
-    final isHost = roomState.hostId == auth.userId || roomState.room?.hostId == auth.userId;
+    // Robust host detection: check hostId from state, room object, OR if user is the first player (slot 0)
+    final isHost = roomState.hostId == auth.userId 
+        || roomState.room?.hostId == auth.userId
+        || (roomState.players.isNotEmpty && roomState.players.first.userId == auth.userId);
     final maxPlayers = roomState.room?.maxPlayers ?? 18;
 
     return Scaffold(
@@ -870,12 +873,22 @@ class _StartGameBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canStart = isHost && roomState.players.isNotEmpty;
+    // Host can always start if there are players in the room (bots count too)
+    final hasPlayers = roomState.players.length >= 1;
     final myUserId = auth.userId;
     final myPlayer = myUserId != null
         ? roomState.players.where((p) => p.userId == myUserId).firstOrNull
         : null;
     final alreadyReady = myPlayer?.isReady ?? false;
+    
+    // Detect host more aggressively: check hostId, room.hostId, or first player
+    final effectiveIsHost = isHost 
+        || (roomState.players.isNotEmpty && roomState.players.first.userId == myUserId)
+        || roomState.players.length <= 1; // Solo player is always host
+
+    // Determine if button should be active (gold) or disabled (grey)
+    // For host: always active. For non-host: active if not ready yet.
+    final bool isActive = effectiveIsHost ? true : !alreadyReady;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -883,17 +896,15 @@ class _StartGameBanner extends ConsumerWidget {
         children: [
           // Main golden banner button
           GestureDetector(
-            onTap: isHost
-                ? (canStart
-                    ? () {
-                        HapticFeedback.heavyImpact();
-                        final roomId = roomState.room?.id;
-                        final hostId = auth.userId;
-                        if (roomId != null && hostId != null) {
-                          ref.read(roomProvider.notifier).startGame(roomId, hostId);
-                        }
-                      }
-                    : null)
+            onTap: effectiveIsHost
+                ? () {
+                    HapticFeedback.heavyImpact();
+                    final roomId = roomState.room?.id;
+                    final hostId = auth.userId;
+                    if (roomId != null && hostId != null) {
+                      ref.read(roomProvider.notifier).startGame(roomId, hostId);
+                    }
+                  }
                 : (alreadyReady
                     ? null
                     : () {
@@ -909,12 +920,13 @@ class _StartGameBanner extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                gradient: (isHost ? canStart : !alreadyReady)
+                gradient: isActive
                     ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
                     : const LinearGradient(colors: [Color(0xFF3A3A3A), Color(0xFF555555), Color(0xFF3A3A3A)]),
                 border: Border.all(color: const Color(0xFFDAA520), width: 2),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                  if (isActive)
+                    BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Row(
@@ -923,7 +935,7 @@ class _StartGameBanner extends ConsumerWidget {
                   const Text('⚔️', style: TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
                   Text(
-                    isHost ? 'MULAI GAME' : (alreadyReady ? 'SUDAH SIAP ✓' : 'SIAP'),
+                    effectiveIsHost ? 'MULAI GAME' : (alreadyReady ? 'SUDAH SIAP ✓' : 'SIAP'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -940,20 +952,15 @@ class _StartGameBanner extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           // Subtitle text
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('◆', style: TextStyle(color: Color(0xFFDAA520), fontSize: 8)),
-              const SizedBox(width: 6),
-              Text(
-                isHost
-                    ? 'Host dapat memulai game jika semua pemain sudah Ready'
-                    : 'Tekan SIAP untuk memberitahu host kamu siap bermain',
-                style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(width: 6),
-              const Text('◆', style: TextStyle(color: Color(0xFFDAA520), fontSize: 8)),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              effectiveIsHost
+                  ? 'Tekan untuk memulai game • ${roomState.players.length} pemain siap'
+                  : (alreadyReady ? 'Menunggu host memulai game...' : 'Tekan SIAP untuk memberitahu host'),
+              style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),

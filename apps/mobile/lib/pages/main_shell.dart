@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/theme.dart';
 import '../models/game_state.dart';
+import '../models/ws_message.dart';
 import '../providers/auth_provider.dart';
 import '../providers/chibi_provider.dart';
 import '../providers/game_provider.dart';
@@ -704,67 +705,42 @@ class _EventBanner extends StatelessWidget {
 }
 
 
-// ─── Play Mode Cards (3 cards: Online, Bot, Custom Room) ─────
+// ─── Play Button (single unified button) ─────────────────────
 class _PlayModeCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: SizedBox(
-        height: 200,
-        child: Row(
-          children: [
-            // PLAY ONLINE
-            Expanded(
-              child: _PlayModeCard(
-                title: 'PLAY\nONLINE',
-                subtitle: 'Bermain dengan\npemain lain secara\nreal-time',
-                gradient: const [Color(0xFF1A2744), Color(0xFF0D1B3A)],
-                borderColor: const Color(0xFF4A7FBF),
-                icon: Icons.people_rounded,
-                iconColor: const Color(0xFF5B9BD5),
-                emoji: '🐺',
-                onTap: () {
-                  HapticFeedback.heavyImpact();
-                  context.push('/lobby-v2');
-                },
-              ),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.heavyImpact();
+          context.push('/lobby-v2');
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)],
             ),
-            const SizedBox(width: 8),
-            // PLAY WITH BOT
-            Expanded(
-              child: _PlayModeCard(
-                title: 'PLAY\nWITH BOT',
-                subtitle: 'Main dengan bot AI\ntingkat kesulitan\nberagam',
-                gradient: const [Color(0xFF1A3324), Color(0xFF0D2618)],
-                borderColor: const Color(0xFF4A9E6B),
-                icon: Icons.smart_toy_rounded,
-                iconColor: const Color(0xFF6BCB8B),
-                emoji: '🤖',
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  context.push('/lobby-v2');
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            // CUSTOM ROOM
-            Expanded(
-              child: _PlayModeCard(
-                title: 'CUSTOM\nROOM',
-                subtitle: 'Buat room sendiri\ndan atur\nsesukamu',
-                gradient: const [Color(0xFF2D1F0E), Color(0xFF1A1308)],
-                borderColor: const Color(0xFFDAA520),
-                icon: Icons.edit_note_rounded,
-                iconColor: const Color(0xFFDAA520),
-                emoji: '👑',
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  context.push('/lobby-v2');
-                },
-              ),
-            ),
-          ],
+            border: Border.all(color: const Color(0xFFDAA520), width: 2),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: const Column(
+            children: [
+              Text('⚔️  MAIN SEKARANG  ⚔️', style: TextStyle(
+                color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+              )),
+              SizedBox(height: 4),
+              Text('Lobby • Quick Play • Custom Room', style: TextStyle(
+                color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500,
+              )),
+            ],
+          ),
         ),
       ),
     );
@@ -855,47 +831,141 @@ class _PlayModeCard extends StatelessWidget {
 
 
 // ─── Global Chat Bar ──────────────────────────────────────────
-class _GlobalChatBar extends StatelessWidget {
+class _GlobalChatBar extends ConsumerStatefulWidget {
   final dynamic profile;
   const _GlobalChatBar({this.profile});
+
+  @override
+  ConsumerState<_GlobalChatBar> createState() => _GlobalChatBarState();
+}
+
+class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
+  final _chatCtrl = TextEditingController();
+  final List<Map<String, String>> _messages = [];
+  StreamSubscription? _sub;
+  bool _expanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ws = ref.read(webSocketProvider);
+      // Request recent global chat
+      ws.send(WsMessage(type: 'get_global_chat', payload: {}));
+      _sub = ws.messages.listen((msg) {
+        if (!mounted) return;
+        if (msg.type == 'global_chat_message') {
+          setState(() => _messages.add({
+            'name': msg.payload['displayName'] as String? ?? 'Player',
+            'content': msg.payload['message'] as String? ?? '',
+          }));
+        } else if (msg.type == 'global_chat_history') {
+          final msgs = msg.payload['messages'] as List<dynamic>? ?? [];
+          setState(() {
+            _messages.clear();
+            for (final m in msgs) {
+              _messages.add({
+                'name': (m as Map<String, dynamic>)['displayName'] as String? ?? 'Player',
+                'content': m['message'] as String? ?? '',
+              });
+            }
+          });
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    _chatCtrl.dispose();
+    super.dispose();
+  }
+
+  void _send() {
+    final text = _chatCtrl.text.trim();
+    if (text.isEmpty) return;
+    ref.read(webSocketProvider).send(WsMessage(type: 'global_chat', payload: {
+      'message': text,
+    }));
+    _chatCtrl.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        constraints: BoxConstraints(maxHeight: _expanded ? 200 : 44),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Colors.black.withValues(alpha: 0.5),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          borderRadius: BorderRadius.circular(_expanded ? 14 : 20),
+          color: Colors.black.withValues(alpha: 0.6),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Avatar mini
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: const Color(0xFFDAA520).withValues(alpha: 0.2),
-              child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFDAA520), size: 12),
-            ),
-            const SizedBox(width: 8),
-            // Chat text preview
-            Expanded(
-              child: Text(
-                '[Global] ${profile?.displayName ?? 'Player'}: Ayo mabar malam ini!',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
-                overflow: TextOverflow.ellipsis,
+            // Header / collapsed bar (always visible)
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(children: [
+                  const Text('💬', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _expanded
+                        ? const Text('Global Chat', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))
+                        : Text(
+                            _messages.isNotEmpty ? '${_messages.last['name']}: ${_messages.last['content']}' : 'Global Chat — tap untuk buka',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                  ),
+                  Icon(_expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, color: AppColors.textMuted, size: 16),
+                ]),
               ),
             ),
-            // Send icon
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFDAA520).withValues(alpha: 0.15),
+            // Expanded: messages + input
+            if (_expanded) ...[
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  reverse: true,
+                  itemCount: _messages.length,
+                  itemBuilder: (_, i) {
+                    final msg = _messages[_messages.length - 1 - i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: RichText(text: TextSpan(children: [
+                        TextSpan(text: '${msg['name']}: ', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w700)),
+                        TextSpan(text: msg['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                      ])),
+                    );
+                  },
+                ),
               ),
-              child: const Icon(Icons.send_rounded, color: Color(0xFFDAA520), size: 13),
-            ),
+              // Input
+              Container(
+                margin: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white.withValues(alpha: 0.06),
+                ),
+                child: Row(children: [
+                  Expanded(child: TextField(
+                    controller: _chatCtrl,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    decoration: const InputDecoration(hintText: 'Ketik pesan...', border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero, hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                    onSubmitted: (_) => _send(),
+                  )),
+                  GestureDetector(onTap: _send, child: const Icon(Icons.send_rounded, color: Color(0xFFDAA520), size: 16)),
+                ]),
+              ),
+            ],
           ],
         ),
       ),

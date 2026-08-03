@@ -60,7 +60,7 @@ class GameSeatCard extends ConsumerWidget {
                         children: [
                           // Show greyed-out chibi (same size as alive) for consistency
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
+                            padding: const EdgeInsets.fromLTRB(2, 6, 2, 2),
                             child: Opacity(
                               opacity: 0.25,
                               child: RepaintBoundary(
@@ -68,7 +68,7 @@ class GameSeatCard extends ConsumerWidget {
                                   config: isMe && chibiConfig != null
                                       ? chibiConfig
                                       : (parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id)),
-                                  size: 45,
+                                  size: 50,
                                   animate: false,
                                   showShadow: false,
                                 ),
@@ -87,7 +87,7 @@ class GameSeatCard extends ConsumerWidget {
                         ],
                       )
                     : Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
+                        padding: const EdgeInsets.fromLTRB(2, 6, 2, 2),
                         // P-04 FIX: RepaintBoundary isolates each ChibiAvatar repaint.
                         // With 18 players, without this, every chat message repaints all 18 chibi widgets.
                         child: RepaintBoundary(
@@ -95,7 +95,7 @@ class GameSeatCard extends ConsumerWidget {
                             config: isMe && chibiConfig != null
                                 ? chibiConfig
                                 : (parseChibiConfig(player.chibiConfig) ?? generateChibiFromId(player.id)),
-                            size: 45,
+                            size: 50,
                             animate: false,
                             showShadow: false,
                           ),

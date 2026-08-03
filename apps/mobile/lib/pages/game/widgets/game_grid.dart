@@ -40,16 +40,17 @@ class PlayerGrid18 extends StatelessWidget {
       padded.add(null);
     }
 
+    // Use 4 columns — matches lobby grid layout
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: GridView.builder(
         padding: const EdgeInsets.symmetric(vertical: 4),
         physics: const BouncingScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 0.7, // Same as lobby — tall cards
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+          childAspectRatio: 0.75, // Slightly wider cards for better chibi visibility
         ),
         itemCount: slotCount,
         itemBuilder: (_, index) {
