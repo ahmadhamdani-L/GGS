@@ -401,6 +401,18 @@ class RoomNotifier extends StateNotifier<RoomState> {
     _ws.send(WsMessage(type: 'get_public_rooms', payload: {}));
   }
 
+  /// Signal play-again intent after a game ends.
+  /// The server will reset the room once all connected humans signal this.
+  void sendPlayAgain(String userId) {
+    final roomId = state.room?.id;
+    if (roomId == null) return;
+    logger.info(LogCategory.room, 'Sending play_again', {'userId': userId, 'roomId': roomId});
+    _ws.send(WsMessage(type: 'v2_play_again', payload: {
+      'userId': userId,
+      'roomId': roomId,
+    }));
+  }
+
   /// Report a player via WebSocket
   void reportPlayer(String reportedId, String reason, String? details) {
     logger.info(LogCategory.room, 'Reporting player', {

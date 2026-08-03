@@ -630,14 +630,14 @@ class _ChibiPainter extends CustomPainter {
     // Cheek blush (like reference)
     if (config.showBlush) {
       final blushPaint = Paint()
-        ..color = const Color(0xFFFFB4A2).withValues(alpha: 0.5)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        ..color = const Color(0xFFFF9B8E).withValues(alpha: 0.6)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx - r * 0.55, headY + r * 0.35), width: r * 0.4, height: r * 0.22),
+        Rect.fromCenter(center: Offset(cx - r * 0.5, headY + r * 0.35), width: r * 0.45, height: r * 0.28),
         blushPaint,
       );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx + r * 0.55, headY + r * 0.35), width: r * 0.4, height: r * 0.22),
+        Rect.fromCenter(center: Offset(cx + r * 0.5, headY + r * 0.35), width: r * 0.45, height: r * 0.28),
         blushPaint,
       );
     }

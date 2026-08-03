@@ -34,8 +34,10 @@ class GameSeatCard extends ConsumerWidget {
     final chibiConfig = isMe ? ref.watch(chibiProvider) : null;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Container(
+          width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: isDead

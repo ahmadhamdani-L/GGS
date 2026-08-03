@@ -142,13 +142,16 @@ func CreateGuest(displayName string) (*User, *Profile, error) {
 		return nil, nil, err
 	}
 
-	tx.Exec(`INSERT INTO player_stats (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, user.ID)
-	tx.Exec(`INSERT INTO leaderboard (user_id, display_name, coins) VALUES ($1, $2, 50) ON CONFLICT DO NOTHING`, user.ID, displayName)
-	tx.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, user.ID)
-
+	// Commit the critical user + profile creation first
 	if err := tx.Commit(); err != nil {
 		return nil, nil, fmt.Errorf("commit tx: %w", err)
 	}
+
+	// Non-critical auxiliary table inserts — these can fail without breaking guest creation.
+	// Run outside the transaction so failures don't poison anything.
+	DB.Exec(`INSERT INTO player_stats (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, user.ID)
+	DB.Exec(`INSERT INTO leaderboard (user_id, display_name, coins) VALUES ($1, $2, 50) ON CONFLICT DO NOTHING`, user.ID, displayName)
+	DB.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, user.ID)
 
 	return user, profile, nil
 }

@@ -50,9 +50,9 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
     if (roomV2 != null) {
       context.go('/room-v2/${roomV2.roomId}');
     } else {
-      // Go back to lobby (room still exists for play again)
+      // Go to results page — shows detailed match recap with countdown back to room
       final gameId = widget.game.id;
-      context.go('/lobby/$gameId');
+      context.go('/results/$gameId');
     }
   }
 

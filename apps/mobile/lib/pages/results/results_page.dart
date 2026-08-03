@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../../models/player.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/room_provider.dart';
+import '../../providers/social_provider.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/game_avatar.dart';
 
@@ -26,6 +28,8 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
   late AnimationController _revealCtrl;
   late Animation<double> _xpAnim;
   late Animation<double> _coinAnim;
+  Timer? _autoCloseTimer;
+  int _countdown = 60;
 
   // Rewards from game state (fallback to defaults if not available)
   int get _xpEarned => ref.read(gameProvider)?.rewards?.xpEarned ?? 50;
@@ -54,14 +58,53 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) _coinCtrl.forward();
     });
+
+    // Auto-close timer: return to room after 60 seconds
+    _autoCloseTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _countdown--);
+      if (_countdown <= 0) {
+        timer.cancel();
+        _returnToRoom();
+      }
+    });
+
+    // Refresh currency balances after game
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(socialProvider.notifier).refreshDiamonds();
+      ref.read(authProvider.notifier).refreshProfile();
+    });
   }
 
   @override
   void dispose() {
+    _autoCloseTimer?.cancel();
     _revealCtrl.dispose();
     _xpCtrl.dispose();
     _coinCtrl.dispose();
     super.dispose();
+  }
+
+  void _returnToRoom() {
+    _autoCloseTimer?.cancel();
+    if (!mounted) return;
+    // Signal play-again to server so room resets for next game
+    final userId = ref.read(authProvider).userId;
+    if (userId != null) {
+      ref.read(roomProvider.notifier).sendPlayAgain(userId);
+    }
+    // Clear game state but keep room — players return to lobby/room
+    ref.read(gameProvider.notifier).clear();
+    final room = ref.read(roomProvider).room;
+    if (room != null) {
+      context.go('/lobby/${room.code}');
+    } else {
+      context.go('/home');
+    }
   }
 
   @override
@@ -277,17 +320,42 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
 
   Widget _buildActions(BuildContext context, WidgetRef ref) {
     return Column(children: [
+      // Countdown indicator
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withValues(alpha: 0.04),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.timer_rounded, color: AppColors.textMuted, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            'Kembali ke room dalam $_countdown detik',
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      // OK / Return to Room button
       GradientButton(
-        label: 'Main Lagi',
-        icon: Icons.replay_rounded,
+        label: 'OK — Kembali ke Room',
+        icon: Icons.check_circle_rounded,
         gradient: AppColors.primaryGradient,
-        onPressed: () { ref.read(gameProvider.notifier).clear(); ref.read(roomProvider.notifier).clear(); context.go('/home'); },
+        onPressed: _returnToRoom,
       ),
       const SizedBox(height: 10),
+      // Leave / Back to Home button
       SizedBox(width: double.infinity, height: 48, child: OutlinedButton.icon(
-        onPressed: () { ref.read(gameProvider.notifier).clear(); ref.read(roomProvider.notifier).clear(); context.go('/home'); },
-        icon: const Icon(Icons.home_rounded, size: 18),
-        label: const Text('Kembali ke Home', style: TextStyle(fontWeight: FontWeight.w600)),
+        onPressed: () {
+          _autoCloseTimer?.cancel();
+          ref.read(gameProvider.notifier).clear();
+          ref.read(roomProvider.notifier).clear();
+          context.go('/home');
+        },
+        icon: const Icon(Icons.exit_to_app_rounded, size: 18),
+        label: const Text('Tinggalkan Room', style: TextStyle(fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textSecondary,
           side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),

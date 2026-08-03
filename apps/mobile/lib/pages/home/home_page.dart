@@ -555,9 +555,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             // Left side buttons
             Column(children: [
-              _sideButton('🎪', 'Event', () {}),
+              _sideButton('🎪', 'Event', () => context.push('/events')),
               _sideButton('🛒', 'Shop', () => context.push('/shop')),
-              _sideButton('📋', 'Quest', () {}),
+              _sideButton('📋', 'Quest', () => context.push('/quest')),
               _sideButton('🏆', 'Ranking', () => context.push('/leaderboard')),
             ]),
             // Right side buttons

@@ -278,7 +278,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           width: 140,
-          height: 190,
+          height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5), width: 2),
@@ -289,20 +289,17 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Stack(
-              children: [
-                // Chibi Avatar with key for rebuild animation
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: ChibiAvatar(
-                    key: ValueKey(config.hashCode),
-                    config: config, 
-                    size: 120, 
-                    animate: true, 
-                    showShadow: true,
-                  ),
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: ChibiAvatar(
+                  key: ValueKey(config.hashCode),
+                  config: config, 
+                  size: 110, 
+                  animate: true, 
+                  showShadow: true,
                 ),
-              ],
+              ),
             ),
           ),
         ),

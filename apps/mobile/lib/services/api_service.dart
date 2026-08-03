@@ -438,6 +438,15 @@ class ApiService {
   Future<ApiResponse<Map<String, dynamic>>> claimEventReward(String eventId) =>
       _post('/api/events/claim', {'eventId': eventId});
 
+  // ─── Quests ────────────────────────────────────────────────
+
+  /// GET /api/quests — get daily & weekly quests with progress
+  Future<ApiResponse<Map<String, dynamic>>> getQuests() => _get('/api/quests');
+
+  /// POST /api/quests/claim — claim quest reward
+  Future<ApiResponse<Map<String, dynamic>>> claimQuestReward(String questId) =>
+      _post('/api/quests/claim', {'questId': questId});
+
   // ─── Lucky Spin ────────────────────────────────────────────
 
   /// GET /api/lucky-spin — get spin status + prizes

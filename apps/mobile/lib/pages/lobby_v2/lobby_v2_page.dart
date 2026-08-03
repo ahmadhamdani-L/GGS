@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../../models/room_v2.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/room_provider.dart';
 import '../../providers/room_provider_v2.dart';
 
 /// Modern Lobby Page — shows public + private rooms, join/create flow
@@ -21,10 +22,21 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
   @override
   void initState() {
     super.initState();
-    // Request lobby list on mount
+    // Request lobby list on mount + ensure WS is connected
     Future.microtask(() {
+      _ensureWsConnected();
       ref.read(lobbyListProvider.notifier).refresh();
     });
+  }
+
+  Future<void> _ensureWsConnected() async {
+    final ws = ref.read(webSocketProvider);
+    final api = ref.read(apiServiceProvider);
+    if (api.token != null && !ws.isConnected) {
+      try {
+        await ws.connect(api.token!);
+      } catch (_) {}
+    }
   }
 
   @override

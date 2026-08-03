@@ -41,8 +41,9 @@ class PlayerGrid18 extends StatelessWidget {
     }
 
     // Use 4 columns — matches lobby grid layout
+    // All cards (filled + empty) use the same fixed aspect ratio so they are equal width.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: GridView.builder(
         padding: const EdgeInsets.symmetric(vertical: 4),
         physics: const BouncingScrollPhysics(),
@@ -50,7 +51,7 @@ class PlayerGrid18 extends StatelessWidget {
           crossAxisCount: 4,
           mainAxisSpacing: 6,
           crossAxisSpacing: 6,
-          childAspectRatio: 0.75, // Slightly wider cards for better chibi visibility
+          childAspectRatio: 0.7, // Equal width for all cards (filled & empty)
         ),
         itemCount: slotCount,
         itemBuilder: (_, index) {

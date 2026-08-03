@@ -28,6 +28,7 @@ import '../pages/wardrobe/wardrobe_page.dart';
 import '../pages/room/room_page.dart';
 import '../pages/tutorial/tutorial_page.dart';
 import '../pages/event/event_page.dart';
+import '../pages/quest/quest_page.dart';
 import '../pages/lucky_spin/lucky_spin_page.dart';
 import '../pages/gift_inbox/gift_inbox_page.dart';
 import '../pages/lobby_v2/lobby_v2_page.dart';
@@ -198,6 +199,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/events',
         builder: (context, state) => const EventPage(),
+      ),
+      // Quests
+      GoRoute(
+        path: '/quest',
+        builder: (context, state) => const QuestPage(),
       ),
       // Lucky Spin
       GoRoute(

@@ -101,14 +101,22 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
       // Show result
       setState(() => _showResult = true);
       HapticFeedback.mediumImpact();
-      // Refresh diamond balance
-      ref.read(socialProvider.notifier).refreshDiamonds();
+      // Refresh diamond and coin balance after spin with slight delay
+      // to ensure backend has committed the transaction
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
+        ref.read(socialProvider.notifier).refreshDiamonds();
+        ref.read(authProvider.notifier).refreshProfile();
+      });
     });
   }
 
   void _dismissResult() {
     setState(() => _showResult = false);
     ref.read(spinProvider.notifier).clearLastResult();
+    // Re-refresh balances on dismiss to ensure latest values are shown
+    ref.read(socialProvider.notifier).refreshDiamonds();
+    ref.read(authProvider.notifier).refreshProfile();
   }
 
   void _showHistory() {

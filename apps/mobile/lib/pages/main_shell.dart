@@ -225,7 +225,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                     }),
                     _moreMenuItem(Icons.assignment_rounded, 'Quest & Misi', 'Misi harian & mingguan', const Color(0xFF95E1D3), () {
                       Navigator.pop(ctx);
-                      context.push('/events');
+                      context.push('/quest');
                     }),
                     _moreMenuItem(Icons.history_rounded, 'Riwayat Match', 'History pertandingan', const Color(0xFF74B9FF), () {
                       Navigator.pop(ctx);
@@ -569,7 +569,7 @@ class _SideMenusAndCenter extends StatelessWidget {
           // Left side menu
           Column(children: [
             _SideMenuButton(icon: Icons.celebration_rounded, label: 'Event', onTap: () => context.push('/events')),
-            _SideMenuButton(icon: Icons.assignment_rounded, label: 'Quest', onTap: () => context.push('/events')),
+            _SideMenuButton(icon: Icons.assignment_rounded, label: 'Quest', onTap: () => context.push('/quest')),
             _SideMenuButton(icon: Icons.military_tech_rounded, label: 'Ranking', onTap: () => context.push('/leaderboard')),
           ]),
           // Center space (character area — placeholder until background is ready)
@@ -843,7 +843,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
   final _chatCtrl = TextEditingController();
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   void initState() {
@@ -898,7 +898,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        constraints: BoxConstraints(maxHeight: _expanded ? 200 : 44),
+        constraints: BoxConstraints(maxHeight: _expanded ? 180 : 44),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(_expanded ? 14 : 20),
           color: Colors.black.withValues(alpha: 0.6),
@@ -915,15 +915,19 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
                 child: Row(children: [
                   const Text('💬', style: TextStyle(fontSize: 14)),
                   const SizedBox(width: 6),
-                  Expanded(
-                    child: _expanded
-                        ? const Text('Global Chat', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))
-                        : Text(
-                            _messages.isNotEmpty ? '${_messages.last['name']}: ${_messages.last['content']}' : 'Global Chat — tap untuk buka',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                  const Text('GLOBAL CHAT', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  const SizedBox(width: 8),
+                  // Online indicator
+                  Container(
+                    width: 6, height: 6,
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF4ADE80)),
                   ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_messages.length > 0 ? _messages.length : 0} Online',
+                    style: TextStyle(color: const Color(0xFF4ADE80).withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
                   Icon(_expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, color: AppColors.textMuted, size: 16),
                 ]),
               ),

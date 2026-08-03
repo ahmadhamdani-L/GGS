@@ -123,10 +123,10 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.02),
                   // Logo
                   _buildLogo(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   // Glass card with form
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
@@ -149,8 +149,8 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                             // Forms
                             ConstrainedBox(
                               constraints: BoxConstraints(
-                                maxHeight: MediaQuery.of(context).size.height * 0.32,
-                                minHeight: 240,
+                                maxHeight: MediaQuery.of(context).size.height * 0.28,
+                                minHeight: 200,
                               ),
                               child: TabBarView(
                                 controller: _tabController,
@@ -162,13 +162,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // Divider
                   _buildDivider(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // Guest button
                   _buildGuestButton(auth),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
