@@ -29,11 +29,14 @@ class LegalPage extends StatelessWidget {
               fontWeight: FontWeight.w700),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: type == LegalPageType.privacyPolicy
-            ? const _PrivacyPolicyContent()
-            : const _TermsOfServiceContent(),
+      body: SafeArea(
+        bottom: true,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: type == LegalPageType.privacyPolicy
+              ? const _PrivacyPolicyContent()
+              : const _TermsOfServiceContent(),
+        ),
       ),
     );
   }

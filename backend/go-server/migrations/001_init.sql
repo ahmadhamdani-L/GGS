@@ -159,6 +159,11 @@ CREATE TABLE IF NOT EXISTS player_stats (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Phase 8 Performance: Indexes for Leaderboard sorting
+CREATE INDEX IF NOT EXISTS idx_player_stats_games_won ON player_stats(games_won DESC);
+CREATE INDEX IF NOT EXISTS idx_player_stats_win_streak ON player_stats(longest_win_streak DESC);
+CREATE INDEX IF NOT EXISTS idx_player_stats_total_kills ON player_stats(total_kills DESC);
+
 -- ─── MATCH HISTORY ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS match_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -203,3 +203,41 @@ func DebugLogsHandler(w http.ResponseWriter, r *http.Request) {
 		"logs":  logs,
 	})
 }
+
+// CSRFMiddleware wraps requests requiring CSRF protection.
+// It is bypassed automatically if ENABLE_CSRF environment variable is false,
+// ensuring the mobile app (which uses Bearer tokens without cookies) is not broken.
+func CSRFMiddleware(validateFunc func(string) bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip CSRF validation if not explicitly enabled (e.g. for mobile-only backends)
+			if os.Getenv("ENABLE_CSRF") != "true" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Only validate state-changing methods
+			if r.Method == "POST" || r.Method == "PUT" || r.Method == "DELETE" || r.Method == "PATCH" {
+				token := r.Header.Get("X-CSRF-Token")
+				if token == "" || !validateFunc(token) {
+					requestID, _ := r.Context().Value(ContextKeyRequestID).(string)
+					logger.Warn(logger.CatSecurity, "CSRF validation failed", map[string]interface{}{
+						"requestId": requestID,
+						"path":      r.URL.Path,
+						"method":    r.Method,
+						"ip":        r.RemoteAddr,
+					})
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusForbidden)
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"error":     "Invalid or missing CSRF token",
+						"requestId": requestID,
+					})
+					return
+				}
+			}
+			
+			next.ServeHTTP(w, r)
+		})
+	}
+}

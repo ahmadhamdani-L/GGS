@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/theme.dart';
 
 /// Accessible button with proper semantics for screen readers
-class AccessibleButton extends StatelessWidget {
+class AccessibleButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final Widget child;
   final String semanticLabel;
@@ -29,39 +29,55 @@ class AccessibleButton extends StatelessWidget {
   });
 
   @override
+  State<AccessibleButton> createState() => _AccessibleButtonState();
+}
+
+class _AccessibleButtonState extends State<AccessibleButton> {
+  DateTime? _lastTapTime;
+
+  void _handlePress() {
+    if (widget.onPressed == null) return;
+    final now = DateTime.now();
+    if (_lastTapTime == null || now.difference(_lastTapTime!) > const Duration(milliseconds: 500)) {
+      _lastTapTime = now;
+      widget.onPressed!();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isEnabled = onPressed != null;
+    final isEnabled = widget.onPressed != null;
     
     return Semantics(
       button: true,
       enabled: isEnabled,
-      label: semanticLabel,
-      hint: semanticHint,
+      label: widget.semanticLabel,
+      hint: widget.semanticHint,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isEnabled ? _handlePress : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDestructive
+          backgroundColor: widget.isDestructive
               ? Colors.red.shade700
-              : (isPrimary ? AppColors.primary : AppColors.surface),
+              : (widget.isPrimary ? AppColors.primary : AppColors.surface),
           foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.grey.shade700,
           disabledForegroundColor: Colors.grey.shade400,
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          minimumSize: Size(width ?? 0, height ?? 48),
+          padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          minimumSize: Size(widget.width ?? 0, widget.height ?? 48),
           shape: RoundedRectangleBorder(
-            borderRadius: borderRadius ?? BorderRadius.circular(12),
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
           ),
           // Ensure minimum touch target size for accessibility (48x48)
           tapTargetSize: MaterialTapTargetSize.padded,
         ),
-        child: child,
+        child: widget.child,
       ),
     );
   }
 }
 
 /// Accessible icon button with proper semantics
-class AccessibleIconButton extends StatelessWidget {
+class AccessibleIconButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final IconData icon;
   final String semanticLabel;
@@ -78,15 +94,31 @@ class AccessibleIconButton extends StatelessWidget {
   });
 
   @override
+  State<AccessibleIconButton> createState() => _AccessibleIconButtonState();
+}
+
+class _AccessibleIconButtonState extends State<AccessibleIconButton> {
+  DateTime? _lastTapTime;
+
+  void _handlePress() {
+    if (widget.onPressed == null) return;
+    final now = DateTime.now();
+    if (_lastTapTime == null || now.difference(_lastTapTime!) > const Duration(milliseconds: 500)) {
+      _lastTapTime = now;
+      widget.onPressed!();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      enabled: onPressed != null,
-      label: semanticLabel,
+      enabled: widget.onPressed != null,
+      label: widget.semanticLabel,
       child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, size: size, color: color),
-        tooltip: semanticLabel,
+        onPressed: widget.onPressed != null ? _handlePress : null,
+        icon: Icon(widget.icon, size: widget.size, color: widget.color),
+        tooltip: widget.semanticLabel,
         // Ensure minimum touch target (48x48)
         constraints: const BoxConstraints(
           minWidth: 48,

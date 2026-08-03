@@ -67,7 +67,8 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(
+        child: Column(
         children: [
           // Create / Join private room bar
           Container(
@@ -188,6 +189,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                   ),
           ),
         ],
+      ),
       ),
     );
   }
