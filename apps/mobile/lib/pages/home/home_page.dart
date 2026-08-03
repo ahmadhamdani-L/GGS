@@ -569,14 +569,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         const SizedBox(height: 16),
         // Buat Room + Join Room buttons
         Row(children: [
-          Expanded(child: _actionButton('🏠', 'Buat Room', 'Buat room baru', () => context.push('/room'))),
+          Expanded(child: _actionButton('🏠', 'Buat Room', 'Buat room baru', () => context.push('/lobby-v2'))),
           const SizedBox(width: 10),
-          Expanded(child: _actionButton('🚪', 'Join Room', 'Masuk ke room', () => context.push('/room'))),
+          Expanded(child: _actionButton('🚪', 'Join Room', 'Masuk ke room', () => context.push('/lobby-v2'))),
         ]),
         const SizedBox(height: 14),
         // MAIN SEKARANG golden banner
         GestureDetector(
-          onTap: () => context.push('/room'),
+          onTap: () => context.push('/lobby-v2'),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -598,7 +598,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         const SizedBox(height: 10),
         // Main dengan Bot
         GestureDetector(
-          onTap: () => context.push('/room'),
+          onTap: () => context.push('/lobby-v2'),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(

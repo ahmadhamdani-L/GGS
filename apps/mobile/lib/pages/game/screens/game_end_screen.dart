@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../models/game_state.dart';
 import '../../../models/player.dart';
+import '../../../providers/room_provider_v2.dart';
 
 // ═══════════════════════════════════════════════════════════
 // GAME END — Winner + Rewards
@@ -37,9 +38,22 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
       setState(() => _countdown--);
       if (_countdown <= 0) {
         _timer?.cancel();
-        context.go('/results/${widget.game.id}');
+        _navigateAfterGame();
       }
     });
+  }
+
+  void _navigateAfterGame() {
+    if (!mounted) return;
+    // If player is in a V2 room, go back to room (play again flow)
+    final roomV2 = ref.read(roomV2Provider);
+    if (roomV2 != null) {
+      context.go('/room-v2/${roomV2.roomId}');
+    } else {
+      // Go back to lobby (room still exists for play again)
+      final gameId = widget.game.id;
+      context.go('/lobby/$gameId');
+    }
   }
 
   @override
@@ -87,7 +101,7 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
       const SizedBox(height: 16),
       GradientButton(label: 'Lihat Hasil', gradient: AppColors.primaryGradient, onPressed: () {
         _timer?.cancel();
-        context.go('/results/${widget.game.id}');
+        _navigateAfterGame();
       }),
     ])));
   }

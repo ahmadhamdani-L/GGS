@@ -30,6 +30,8 @@ import '../pages/tutorial/tutorial_page.dart';
 import '../pages/event/event_page.dart';
 import '../pages/lucky_spin/lucky_spin_page.dart';
 import '../pages/gift_inbox/gift_inbox_page.dart';
+import '../pages/lobby_v2/lobby_v2_page.dart';
+import '../pages/lobby_v2/room_v2_page.dart';
 import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -206,6 +208,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/gift-inbox',
         builder: (context, state) => const GiftInboxPage(),
+      ),
+      // V2 Room System
+      GoRoute(
+        path: '/lobby-v2',
+        builder: (context, state) => const LobbyV2Page(),
+      ),
+      GoRoute(
+        path: '/room-v2/:roomId',
+        builder: (context, state) => RoomV2Page(
+          roomId: state.pathParameters['roomId']!,
+        ),
       ),
     ],
   );

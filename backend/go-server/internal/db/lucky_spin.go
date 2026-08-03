@@ -22,12 +22,15 @@ type SpinResult struct {
 	Prize     SpinPrize `json:"prize"`
 	IsFreeSpin bool     `json:"isFreeSpin"`
 	SpinsLeft  int      `json:"freeSpinsRemaining"`
+	LuckyPoints int    `json:"luckyPoints"`
 }
 
 // SpinStatus shows user's spin state
 type SpinStatus struct {
 	FreeSpinsRemaining int       `json:"freeSpinsRemaining"`
 	TotalSpins         int       `json:"totalSpins"`
+	LuckyPoints        int       `json:"luckyPoints"`
+	LuckyPointsMax     int       `json:"luckyPointsMax"`
 	LastResetAt        time.Time `json:"lastResetAt"`
 	Prizes             []SpinPrize `json:"prizes"`
 	SpinCostDiamonds   int       `json:"spinCostDiamonds"`
@@ -39,10 +42,13 @@ type SpinHistoryEntry struct {
 	PrizeName string    `json:"prizeName"`
 	PrizeType string    `json:"prizeType"`
 	Amount    int       `json:"amount"`
+	Rarity    string    `json:"rarity"`
 	SpunAt    time.Time `json:"spunAt"`
 }
 
 const spinCostDiamonds = 50
+const luckyPointsMax = 100
+const luckyPointsPerSpin = 10
 
 // GetSpinStatus returns the user's spin state and available prizes
 func GetSpinStatus(userID string) (*SpinStatus, error) {
@@ -50,6 +56,8 @@ func GetSpinStatus(userID string) (*SpinStatus, error) {
 	status := &SpinStatus{
 		FreeSpinsRemaining: 1,
 		TotalSpins:         0,
+		LuckyPoints:        0,
+		LuckyPointsMax:     luckyPointsMax,
 		LastResetAt:        time.Now(),
 		Prizes:             prizes,
 		SpinCostDiamonds:   spinCostDiamonds,
@@ -60,11 +68,11 @@ func GetSpinStatus(userID string) (*SpinStatus, error) {
 	}
 
 	// Get or create daily spin record
-	var freeSpins, totalSpins int
+	var freeSpins, totalSpins, luckyPts int
 	var lastReset time.Time
 	err := DB.QueryRow(`
-		INSERT INTO lucky_spin_daily (user_id, free_spins_remaining, last_reset_at, total_spins)
-		VALUES ($1, 1, now(), 0)
+		INSERT INTO lucky_spin_daily (user_id, free_spins_remaining, last_reset_at, total_spins, lucky_points)
+		VALUES ($1, 1, now(), 0, 0)
 		ON CONFLICT (user_id) DO UPDATE SET
 			free_spins_remaining = CASE
 				WHEN lucky_spin_daily.last_reset_at::date < CURRENT_DATE THEN 1
@@ -74,14 +82,15 @@ func GetSpinStatus(userID string) (*SpinStatus, error) {
 				WHEN lucky_spin_daily.last_reset_at::date < CURRENT_DATE THEN now()
 				ELSE lucky_spin_daily.last_reset_at
 			END
-		RETURNING free_spins_remaining, total_spins, last_reset_at
-	`, userID).Scan(&freeSpins, &totalSpins, &lastReset)
+		RETURNING free_spins_remaining, total_spins, last_reset_at, COALESCE(lucky_points, 0)
+	`, userID).Scan(&freeSpins, &totalSpins, &lastReset, &luckyPts)
 	if err != nil {
 		return status, nil
 	}
 
 	status.FreeSpinsRemaining = freeSpins
 	status.TotalSpins = totalSpins
+	status.LuckyPoints = luckyPts
 	status.LastResetAt = lastReset
 	return status, nil
 }
@@ -93,12 +102,13 @@ func DoSpin(userID string) (*SpinResult, error) {
 	}
 
 	// Check free spins first
-	var freeSpins int
-	err := DB.QueryRow(`SELECT free_spins_remaining FROM lucky_spin_daily WHERE user_id = $1`, userID).Scan(&freeSpins)
+	var freeSpins, luckyPts int
+	err := DB.QueryRow(`SELECT free_spins_remaining, COALESCE(lucky_points, 0) FROM lucky_spin_daily WHERE user_id = $1`, userID).Scan(&freeSpins, &luckyPts)
 	if err != nil {
 		// First spin — create record
 		freeSpins = 1
-		DB.Exec(`INSERT INTO lucky_spin_daily (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, userID)
+		luckyPts = 0
+		DB.Exec(`INSERT INTO lucky_spin_daily (user_id, lucky_points) VALUES ($1, 0) ON CONFLICT DO NOTHING`, userID)
 	}
 
 	isFreeSpin := freeSpins > 0
@@ -122,17 +132,33 @@ func DoSpin(userID string) (*SpinResult, error) {
 	// Increment total spins
 	DB.Exec(`UPDATE lucky_spin_daily SET total_spins = total_spins + 1 WHERE user_id = $1`, userID)
 
-	// Roll prize
-	prize := rollPrize()
+	// Roll prize — use pity system if lucky points >= max
+	var prize SpinPrize
+	newLuckyPts := luckyPts + luckyPointsPerSpin
+
+	if newLuckyPts >= luckyPointsMax {
+		// Guaranteed epic or legendary!
+		prize = rollGuaranteedHighRarity()
+		newLuckyPts = 0 // Reset lucky points
+	} else {
+		prize = rollPrize()
+		// If they naturally got epic/legendary, also reset points
+		if prize.Rarity == "epic" || prize.Rarity == "legendary" {
+			newLuckyPts = 0
+		}
+	}
+
+	// Update lucky points
+	DB.Exec(`UPDATE lucky_spin_daily SET lucky_points = $2 WHERE user_id = $1`, userID, newLuckyPts)
 
 	// Grant reward
 	grantSpinReward(userID, prize)
 
 	// Record history
 	DB.Exec(`
-		INSERT INTO lucky_spin_history (user_id, prize_name, prize_type, amount)
-		VALUES ($1, $2, $3, $4)
-	`, userID, prize.Name, prize.PrizeType, prize.Amount)
+		INSERT INTO lucky_spin_history (user_id, prize_name, prize_type, amount, rarity)
+		VALUES ($1, $2, $3, $4, $5)
+	`, userID, prize.Name, prize.PrizeType, prize.Amount, prize.Rarity)
 
 	// Get remaining spins
 	remainingSpins := 0
@@ -141,9 +167,10 @@ func DoSpin(userID string) (*SpinResult, error) {
 	}
 
 	return &SpinResult{
-		Prize:      prize,
-		IsFreeSpin: isFreeSpin,
-		SpinsLeft:  remainingSpins,
+		Prize:       prize,
+		IsFreeSpin:  isFreeSpin,
+		SpinsLeft:   remainingSpins,
+		LuckyPoints: newLuckyPts,
 	}, nil
 }
 
@@ -212,9 +239,36 @@ func getSpinPrizes() []SpinPrize {
 	}
 }
 
+func rollGuaranteedHighRarity() SpinPrize {
+	prizes := getSpinPrizes()
+	var highRarity []SpinPrize
+	for _, p := range prizes {
+		if p.Rarity == "epic" || p.Rarity == "legendary" {
+			highRarity = append(highRarity, p)
+		}
+	}
+	if len(highRarity) == 0 {
+		return rollPrize()
+	}
+	// Weighted random among epic/legendary only
+	totalWeight := 0
+	for _, p := range highRarity {
+		totalWeight += p.Weight
+	}
+	roll := rand.Intn(totalWeight)
+	cumulative := 0
+	for _, p := range highRarity {
+		cumulative += p.Weight
+		if roll < cumulative {
+			return p
+		}
+	}
+	return highRarity[len(highRarity)-1]
+}
+
 func doMemorySpin() *SpinResult {
 	prize := rollPrize()
-	return &SpinResult{Prize: prize, IsFreeSpin: true, SpinsLeft: 0}
+	return &SpinResult{Prize: prize, IsFreeSpin: true, SpinsLeft: 0, LuckyPoints: 10}
 }
 
 // GetSpinHistory returns recent spin history
@@ -226,7 +280,7 @@ func GetSpinHistory(userID string, limit int) ([]SpinHistoryEntry, error) {
 		limit = 20
 	}
 	rows, err := DB.Query(`
-		SELECT id, prize_name, prize_type, amount, spun_at
+		SELECT id, prize_name, prize_type, amount, COALESCE(rarity, 'common'), spun_at
 		FROM lucky_spin_history
 		WHERE user_id = $1
 		ORDER BY spun_at DESC
@@ -240,7 +294,7 @@ func GetSpinHistory(userID string, limit int) ([]SpinHistoryEntry, error) {
 	var history []SpinHistoryEntry
 	for rows.Next() {
 		var h SpinHistoryEntry
-		rows.Scan(&h.ID, &h.PrizeName, &h.PrizeType, &h.Amount, &h.SpunAt)
+		rows.Scan(&h.ID, &h.PrizeName, &h.PrizeType, &h.Amount, &h.Rarity, &h.SpunAt)
 		history = append(history, h)
 	}
 	return history, nil

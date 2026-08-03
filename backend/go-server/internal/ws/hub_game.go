@@ -2,7 +2,6 @@ package ws
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/ggs/werewolf-server/internal/bot"
 	"github.com/ggs/werewolf-server/internal/db"
@@ -363,7 +362,8 @@ func (h *Hub) broadcastGameState(roomID string) {
 
 	if recordWinner != nil {
 		go h.recordGameResultsAsync(recordPlayers, recordGameID, *recordWinner, recordRound, recordPlayerCount)
-		time.AfterFunc(60*time.Second, func() { h.cleanupRoom(roomID) })
+		// Don't cleanup room — keep alive for "play again" flow
+		// Room will be cleaned up when all players leave
 	}
 }
 

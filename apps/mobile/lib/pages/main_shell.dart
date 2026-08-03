@@ -726,7 +726,7 @@ class _PlayModeCards extends StatelessWidget {
                 emoji: '🐺',
                 onTap: () {
                   HapticFeedback.heavyImpact();
-                  context.push('/room');
+                  context.push('/lobby-v2');
                 },
               ),
             ),
@@ -743,7 +743,7 @@ class _PlayModeCards extends StatelessWidget {
                 emoji: '🤖',
                 onTap: () {
                   HapticFeedback.mediumImpact();
-                  context.push('/room');
+                  context.push('/lobby-v2');
                 },
               ),
             ),
@@ -760,7 +760,7 @@ class _PlayModeCards extends StatelessWidget {
                 emoji: '👑',
                 onTap: () {
                   HapticFeedback.mediumImpact();
-                  context.push('/room');
+                  context.push('/lobby-v2');
                 },
               ),
             ),
