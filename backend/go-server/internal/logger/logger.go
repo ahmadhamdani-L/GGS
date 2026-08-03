@@ -49,6 +49,7 @@ const (
 	CatGame      LogCategory = "GAME"
 	CatRoom      LogCategory = "ROOM"
 	CatAuth      LogCategory = "AUTH"
+	CatSecurity  LogCategory = "SECURITY"
 	CatDB        LogCategory = "DB"
 	CatBot       LogCategory = "BOT"
 	CatTimer     LogCategory = "TIMER"
