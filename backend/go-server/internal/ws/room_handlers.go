@@ -461,9 +461,10 @@ func (h *Hub) handleStartGameV2(client *Client, payload json.RawMessage) {
 		return
 	}
 
-	// Check all seated humans are ready
+	// Check all seated humans (except host) are ready.
+	// Host is implicitly ready by pressing "Start Game".
 	for _, p := range room.Players {
-		if !p.IsBot && p.SeatIndex >= 0 && !p.IsReady {
+		if !p.IsBot && p.SeatIndex >= 0 && p.UserID != room.HostID && !p.IsReady {
 			room.mu.Unlock()
 			sendErrorV2(client, "NOT_ALL_READY", "Semua pemain harus ready sebelum mulai")
 			return
