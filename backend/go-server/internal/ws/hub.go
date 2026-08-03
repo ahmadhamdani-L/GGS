@@ -40,6 +40,9 @@ type Hub struct {
 	// Room ID → Room
 	rooms map[string]*Room
 
+	// V2 Room Manager (production-ready)
+	roomMgr *RoomManager
+
 	// Register requests
 	register chan *Client
 
@@ -136,6 +139,9 @@ func NewHub() *Hub {
 		workerCount: workers,
 		maxRooms:    100, // default; overridden by loadMaxRooms()
 	}
+
+	// Initialize V2 Room Manager
+	h.roomMgr = NewRoomManager(h)
 
 	return h
 }
@@ -370,6 +376,33 @@ func (h *Hub) handleMessage(cm *ClientMessage) {
 		client.Send <- &Message{Type: "pong", Payload: json.RawMessage(`{}`)}
 	case "get_public_rooms":
 		h.handleGetPublicRooms(client)
+	// ─── V2 Room Manager Events ──────────────────────────────
+	case "v2_create_room":
+		h.handleCreateRoomV2(client, msg.Payload)
+	case "v2_join_room":
+		h.handleJoinRoomV2(client, msg.Payload)
+	case "v2_leave_room":
+		h.handleLeaveRoomV2(client, msg.Payload)
+	case "v2_select_seat":
+		h.handleSelectSeatV2(client, msg.Payload)
+	case "v2_release_seat":
+		h.handleReleaseSeatV2(client, msg.Payload)
+	case "v2_ready":
+		h.handleReadyV2(client, msg.Payload)
+	case "v2_add_bot":
+		h.handleAddBotV2(client, msg.Payload)
+	case "v2_remove_bot":
+		h.handleRemoveBotV2(client, msg.Payload)
+	case "v2_kick":
+		h.handleKickV2(client, msg.Payload)
+	case "v2_settings":
+		h.handleUpdateSettingsV2(client, msg.Payload)
+	case "v2_play_again":
+		h.handlePlayAgainV2(client, msg.Payload)
+	case "v2_get_lobby":
+		h.handleGetLobbyV2(client)
+	case "v2_reconnect_room":
+		h.handleReconnectRoomV2(client, msg.Payload)
 	case "spectate_game":
 		h.handleSpectateGame(client, msg.Payload)
 	case "global_chat":
