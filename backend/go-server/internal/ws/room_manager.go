@@ -32,7 +32,7 @@ import (
 
 const (
 	MaxSeats             = 16
-	MinPlayersToStart    = 1  // Allow 1 player + bots for testing
+	MinPlayersToStart    = 8  // Minimum seated players (humans + bots) to start
 	HostGracePeriod      = 30 * time.Second
 	ReconnectGracePeriod = 30 * time.Second
 	PublicRoomCount      = 5

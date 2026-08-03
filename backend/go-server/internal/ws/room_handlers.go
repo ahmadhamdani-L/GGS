@@ -3,6 +3,8 @@ package ws
 import (
 	"encoding/json"
 
+	"github.com/ggs/werewolf-server/internal/bot"
+	"github.com/ggs/werewolf-server/internal/game"
 	"github.com/ggs/werewolf-server/internal/logger"
 )
 
@@ -416,6 +418,191 @@ func (h *Hub) handleReconnectRoomV2(client *Client, payload json.RawMessage) {
 	})
 	// Send full state to reconnected player
 	h.roomMgr.BroadcastRoomState(room)
+}
+
+// handleStartGameV2 — host starts the game from V2 room system
+func (h *Hub) handleStartGameV2(client *Client, payload json.RawMessage) {
+	var req struct {
+		RoomID string `json:"roomId"`
+	}
+	if err := json.Unmarshal(payload, &req); err != nil {
+		sendErrorV2(client, "INVALID_PAYLOAD", "Invalid start_game payload")
+		return
+	}
+
+	room := h.roomMgr.GetRoom(req.RoomID)
+	if room == nil {
+		sendErrorV2(client, "ROOM_NOT_FOUND", "Room tidak ditemukan")
+		return
+	}
+
+	room.mu.Lock()
+	if room.HostID != client.UserID {
+		room.mu.Unlock()
+		sendErrorV2(client, "NOT_HOST", "Hanya host yang bisa memulai game")
+		return
+	}
+	if room.State != StateWaiting {
+		room.mu.Unlock()
+		sendErrorV2(client, "INVALID_STATE", "Room tidak dalam status waiting")
+		return
+	}
+
+	// Count seated players (humans + bots)
+	seatedCount := 0
+	for _, p := range room.Players {
+		if p.SeatIndex >= 0 {
+			seatedCount++
+		}
+	}
+	if seatedCount < 8 {
+		room.mu.Unlock()
+		sendErrorV2(client, "NOT_ENOUGH_PLAYERS", "Butuh minimal 8 pemain (termasuk bot) untuk mulai")
+		return
+	}
+
+	// Check all seated humans are ready
+	for _, p := range room.Players {
+		if !p.IsBot && p.SeatIndex >= 0 && !p.IsReady {
+			room.mu.Unlock()
+			sendErrorV2(client, "NOT_ALL_READY", "Semua pemain harus ready sebelum mulai")
+			return
+		}
+	}
+
+	// Transition to countdown
+	room.State = StateCountdown
+	room.mu.Unlock()
+
+	// Broadcast countdown
+	h.roomMgr.BroadcastEvent(room, "game_countdown", map[string]interface{}{
+		"seconds": 3,
+	})
+
+	// Collect player info from seated players
+	room.mu.Lock()
+	playerInfos := make([]game.PlayerInfo, 0, seatedCount)
+	for _, p := range room.Players {
+		if p.SeatIndex < 0 {
+			continue // skip unseated players
+		}
+		playerInfos = append(playerInfos, game.PlayerInfo{
+			ID:          p.UserID,
+			DisplayName: p.DisplayName,
+			AvatarID:    p.AvatarID,
+			ChibiConfig: p.ChibiConfig,
+		})
+	}
+
+	// Apply room settings to game config
+	settings := room.Settings
+	room.mu.Unlock()
+
+	// Create the game state
+	gameState := game.CreateGame(playerInfos)
+
+	// Apply timer settings from room
+	if settings.DiscussionTime > 0 {
+		gameState.Config.TimerDuration.Discussion = settings.DiscussionTime
+	}
+	if settings.VotingTime > 0 {
+		gameState.Config.TimerDuration.Voting = settings.VotingTime
+	}
+	if settings.NightTime > 0 {
+		gameState.Config.TimerDuration.NightAction = settings.NightTime
+	}
+
+	// Mark bots
+	bot.MarkBots(gameState)
+	gameState = game.StartGame(gameState)
+
+	// Process initial bot actions (role confirmations)
+	gameState = bot.ProcessBotActions(gameState, bot.Medium)
+
+	// Store game state in room
+	room.mu.Lock()
+	room.Game = gameState
+	room.State = StatePlaying
+	room.mu.Unlock()
+
+	logger.Info(logger.CatRoom, "Game started via V2 room", map[string]interface{}{
+		"roomId":  room.ID,
+		"players": seatedCount,
+	})
+
+	// Also register room in hub.rooms for game state broadcasts
+	h.mu.Lock()
+	h.rooms[room.ID] = &Room{
+		ID:       room.ID,
+		Code:     room.Code,
+		HostID:   room.HostID,
+		Status:   RoomPlaying,
+		Game:     gameState,
+		Players:  make(map[string]*RoomPlayer),
+		Clients:  make(map[string]*Client),
+	}
+	// Copy clients from managed room to v1 room for broadcastGameState compatibility
+	room.mu.Lock()
+	for uid, c := range room.Clients {
+		h.rooms[room.ID].Clients[uid] = c
+		h.rooms[room.ID].Players[uid] = &RoomPlayer{
+			UserID:      uid,
+			DisplayName: room.Players[uid].DisplayName,
+			AvatarID:    room.Players[uid].AvatarID,
+			ChibiConfig: room.Players[uid].ChibiConfig,
+		}
+	}
+	room.mu.Unlock()
+	h.mu.Unlock()
+
+	// Start the timer goroutine
+	h.startRoomTimer(room.ID)
+
+	// Broadcast game_started event so Flutter navigates
+	h.roomMgr.BroadcastEvent(room, "game_started", map[string]interface{}{
+		"roomId": room.ID,
+		"gameId": room.ID,
+	})
+
+	// Broadcast filtered game state per player
+	h.broadcastGameState(room.ID)
+}
+
+// handleRoomChatV2 — send a chat message in the room lobby
+func (h *Hub) handleRoomChatV2(client *Client, payload json.RawMessage) {
+	var req struct {
+		RoomID  string `json:"roomId"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(payload, &req); err != nil {
+		return
+	}
+	if len(req.Message) == 0 || len(req.Message) > 200 {
+		return
+	}
+
+	room := h.roomMgr.GetRoom(req.RoomID)
+	if room == nil {
+		return
+	}
+
+	// Verify player is in this room
+	room.mu.Lock()
+	player, exists := room.Players[client.UserID]
+	if !exists {
+		room.mu.Unlock()
+		return
+	}
+	displayName := player.DisplayName
+	room.mu.Unlock()
+
+	// Broadcast chat to all in room
+	h.roomMgr.BroadcastEvent(room, "room_chat", map[string]interface{}{
+		"userId":      client.UserID,
+		"displayName": displayName,
+		"message":     req.Message,
+		"timestamp":   json.Number("0"), // client uses local time
+	})
 }
 
 // ─── Helper: broadcast lobby to all connected clients ────────

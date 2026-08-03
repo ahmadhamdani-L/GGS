@@ -403,6 +403,10 @@ func (h *Hub) handleMessage(cm *ClientMessage) {
 		h.handleGetLobbyV2(client)
 	case "v2_reconnect_room":
 		h.handleReconnectRoomV2(client, msg.Payload)
+	case "v2_start_game":
+		h.handleStartGameV2(client, msg.Payload)
+	case "v2_room_chat":
+		h.handleRoomChatV2(client, msg.Payload)
 	case "spectate_game":
 		h.handleSpectateGame(client, msg.Payload)
 	case "global_chat":
