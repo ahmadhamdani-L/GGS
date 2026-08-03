@@ -2,6 +2,8 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/ggs/werewolf-server/internal/bot"
 	"github.com/ggs/werewolf-server/internal/game"
@@ -461,13 +463,18 @@ func (h *Hub) handleStartGameV2(client *Client, payload json.RawMessage) {
 		return
 	}
 
-	// Check all seated humans (except the one starting the game) are ready.
-	// Host/starter is implicitly ready by pressing "Start Game".
-	// Bots are always marked as ready when created.
+	// Mark the host/starter as ready (they pressed Start = implicitly ready)
+	if starter, ok := room.Players[client.UserID]; ok {
+		starter.IsReady = true
+	}
+
+	// All seated players must be ready (bots are auto-ready on add)
 	for _, p := range room.Players {
-		if !p.IsBot && p.SeatIndex >= 0 && p.UserID != client.UserID && !p.IsReady {
+		if p.SeatIndex >= 0 && !p.IsReady {
+			log.Printf("[START_GAME] Player NOT ready: userId=%s displayName=%s isBot=%v seatIndex=%d",
+				p.UserID, p.DisplayName, p.IsBot, p.SeatIndex)
 			room.mu.Unlock()
-			sendErrorV2(client, "NOT_ALL_READY", "Semua pemain harus ready sebelum mulai")
+			sendErrorV2(client, "NOT_ALL_READY", fmt.Sprintf("Pemain %s belum ready", p.DisplayName))
 			return
 		}
 	}
