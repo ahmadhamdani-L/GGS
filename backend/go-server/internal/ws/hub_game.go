@@ -24,6 +24,11 @@ func (h *Hub) handleStartGame(client *Client, payload json.RawMessage) {
 	room, ok := h.rooms[req.RoomID]
 	h.mu.RUnlock()
 	if !ok {
+		// Fallback: try V2 room manager (room may have been created via v2 system)
+		if managedRoom := h.roomMgr.GetRoom(req.RoomID); managedRoom != nil {
+			h.handleStartGameV2(client, payload)
+			return
+		}
 		sendError(client, "Room not found")
 		return
 	}
