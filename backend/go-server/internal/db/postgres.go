@@ -28,7 +28,7 @@ func Connect() error {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		// Default for local dev
-		dsn = "postgres://postgres:postgres@localhost:5433/ggs_werewolf?sslmode=disable"
+		dsn = "postgres://postgres:postgres@localhost:5432/ggs_werewolf?sslmode=disable"
 	}
 
 	var err error
