@@ -82,13 +82,22 @@ func (h *Hub) advanceRoomTimer(roomID string, expectedDeadline int64) {
 	log.Printf("[Timer] Phase expired for room %s, phase %s", roomID, room.Game.Phase)
 	room.Game = game.AutoAdvanceOnTimeout(room.Game)
 	room.Game = bot.ProcessBotActions(room.Game, bot.Medium)
-	// Schedule next phase timer if a new deadline was set
-	newDeadline := room.Game.TimerDeadline
+
+	// If game reached GAME_END, clear timer and broadcast ONCE only
+	isGameEnd := room.Game.Phase == game.PhaseGameEnd || room.Game.Phase == game.PhaseResults
+
+	// Schedule next phase timer if a new deadline was set (and game not ended)
+	var newDeadline *int64
+	if !isGameEnd {
+		newDeadline = room.Game.TimerDeadline
+	} else {
+		room.Game.TimerDeadline = nil
+	}
 	room.mu.Unlock()
 
 	h.broadcastGameState(roomID)
 
-	// Chain: schedule the next phase timer immediately
+	// Chain: schedule the next phase timer immediately (skip if game ended)
 	if newDeadline != nil {
 		h.scheduleRoomPhaseTimer(roomID, *newDeadline)
 	}
@@ -115,6 +124,13 @@ func (h *Hub) checkExpiredTimers() {
 
 		room.mu.Lock()
 		if room.Game == nil || room.Game.TimerDeadline == nil {
+			room.mu.Unlock()
+			continue
+		}
+
+		// Stop processing if game has ended — no more timer-driven broadcasts
+		if room.Game.Phase == game.PhaseGameEnd || room.Game.Phase == game.PhaseResults {
+			room.Game.TimerDeadline = nil // Clear deadline to prevent re-entry
 			room.mu.Unlock()
 			continue
 		}
@@ -153,8 +169,18 @@ func (h *Hub) checkExpiredTimers() {
 
 		log.Printf("[Timer] Fallback expired for room %s, phase %s", roomID, room.Game.Phase)
 		room.Game = game.AutoAdvanceOnTimeout(room.Game)
-		room.Game = bot.ProcessBotActions(room.Game, bot.Medium)
+
+		// Only process bots if game hasn't ended
+		if room.Game.Phase != game.PhaseGameEnd && room.Game.Phase != game.PhaseResults {
+			room.Game = bot.ProcessBotActions(room.Game, bot.Medium)
+		}
+
 		newDeadline := room.Game.TimerDeadline
+		// Clear deadline if game ended to prevent re-entry
+		if room.Game.Phase == game.PhaseGameEnd || room.Game.Phase == game.PhaseResults {
+			room.Game.TimerDeadline = nil
+			newDeadline = nil
+		}
 		room.mu.Unlock()
 
 		h.broadcastGameState(roomID)

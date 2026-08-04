@@ -59,3 +59,6 @@ nginx/certs/*.pem
 # Firebase service account — NEVER commit (contains private key)
 **/firebase-service-account.json
 **/family-manager-*.json
+
+# Backend log files (daily rotation)
+backend/go-server/logs/

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../core/config.dart';
+import 'debug_logger.dart';
 
 /// Response wrapper
 class ApiResponse<T> {
@@ -228,41 +229,74 @@ class ApiService {
   // --- HTTP helpers ---
 
   Future<ApiResponse<Map<String, dynamic>>> _get(String path) async {
+    final stopwatch = Stopwatch()..start();
+    logger.apiRequest('GET', path);
     try {
       final response = await http.get(
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
       );
-      return _parseResponse(response);
+      stopwatch.stop();
+      final result = _parseResponse(response);
+      if (result.isSuccess) {
+        logger.apiResponse('GET', path, response.statusCode, stopwatch.elapsed);
+      } else {
+        logger.apiError('GET', path, result.error ?? 'Unknown', status: response.statusCode);
+      }
+      return result;
     } catch (e) {
+      stopwatch.stop();
+      logger.apiError('GET', path, e.toString());
       return ApiResponse(error: e.toString(), statusCode: 0);
     }
   }
 
   Future<ApiResponse<Map<String, dynamic>>> _post(
       String path, Map<String, dynamic> body) async {
+    final stopwatch = Stopwatch()..start();
+    logger.apiRequest('POST', path, body: body);
     try {
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
         body: jsonEncode(body),
       );
-      return _parseResponse(response);
+      stopwatch.stop();
+      final result = _parseResponse(response);
+      if (result.isSuccess) {
+        logger.apiResponse('POST', path, response.statusCode, stopwatch.elapsed);
+      } else {
+        logger.apiError('POST', path, result.error ?? 'Unknown', status: response.statusCode);
+      }
+      return result;
     } catch (e) {
+      stopwatch.stop();
+      logger.apiError('POST', path, e.toString());
       return ApiResponse(error: e.toString(), statusCode: 0);
     }
   }
 
   Future<ApiResponse<Map<String, dynamic>>> _put(
       String path, Map<String, dynamic> body) async {
+    final stopwatch = Stopwatch()..start();
+    logger.apiRequest('PUT', path, body: body);
     try {
       final response = await http.put(
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
         body: jsonEncode(body),
       );
-      return _parseResponse(response);
+      stopwatch.stop();
+      final result = _parseResponse(response);
+      if (result.isSuccess) {
+        logger.apiResponse('PUT', path, response.statusCode, stopwatch.elapsed);
+      } else {
+        logger.apiError('PUT', path, result.error ?? 'Unknown', status: response.statusCode);
+      }
+      return result;
     } catch (e) {
+      stopwatch.stop();
+      logger.apiError('PUT', path, e.toString());
       return ApiResponse(error: e.toString(), statusCode: 0);
     }
   }
@@ -320,14 +354,27 @@ class ApiService {
 
   // Helper for DELETE requests
   Future<ApiResponse<Map<String, dynamic>>> _delete(String path) async {
+    final stopwatch = Stopwatch()..start();
+    logger.apiRequest('DELETE', path);
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}$path');
       final response = await http.delete(uri, headers: _headers)
           .timeout(const Duration(seconds: 15));
-      return _parseResponse(response);
+      stopwatch.stop();
+      final result = _parseResponse(response);
+      if (result.isSuccess) {
+        logger.apiResponse('DELETE', path, response.statusCode, stopwatch.elapsed);
+      } else {
+        logger.apiError('DELETE', path, result.error ?? 'Unknown', status: response.statusCode);
+      }
+      return result;
     } on TimeoutException {
+      stopwatch.stop();
+      logger.apiError('DELETE', path, 'Request timeout');
       return ApiResponse(error: 'Request timeout', statusCode: 408);
     } catch (e) {
+      stopwatch.stop();
+      logger.apiError('DELETE', path, e.toString());
       return ApiResponse(error: e.toString(), statusCode: 0);
     }
   }

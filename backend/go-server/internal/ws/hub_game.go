@@ -284,11 +284,19 @@ func (h *Hub) broadcastGameState(roomID string) {
 		return
 	}
 
+	// GAME_END guard: only broadcast GAME_END state ONCE (when ResultsRecorded flips to true).
+	// After recording, skip all further broadcasts to prevent message flooding.
+	if (room.Game.Phase == game.PhaseGameEnd || room.Game.Phase == game.PhaseResults) && room.Game.ResultsRecorded {
+		room.mu.Unlock()
+		return
+	}
+
 	// P0-2 FIX: Process bot actions INSIDE the lock to eliminate the race condition.
 	// Bot processing is CPU-only (random decisions, no I/O), so holding the lock is safe.
-	// Previously, unlocking for bot processing allowed the timer goroutine to advance
-	// the game concurrently, causing state corruption via shared slice backing arrays.
-	room.Game = bot.ProcessBotActions(room.Game, bot.Medium)
+	// Skip bot processing if game has already ended (prevents broadcast loop).
+	if room.Game.Phase != game.PhaseGameEnd && room.Game.Phase != game.PhaseResults {
+		room.Game = bot.ProcessBotActions(room.Game, bot.Medium)
+	}
 
 	// Record match results when game ends (collect data, write after unlock)
 	// CRITICAL: Only record ONCE using ResultsRecorded flag to prevent looping stats

@@ -530,15 +530,28 @@ func loggingMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		statusEmoji := "✓"
-		if wrapped.statusCode >= 400 {
-			statusEmoji = "✗"
+		// Get userID from context (set by AuthMiddleware)
+		var userID string
+		if uid, ok := r.Context().Value("userId").(string); ok {
+			userID = uid
 		}
+
+		level := logger.INFO
 		if wrapped.statusCode >= 500 {
-			statusEmoji = "⚠"
+			level = logger.ERROR
+		} else if wrapped.statusCode >= 400 {
+			level = logger.WARN
 		}
-		log.Printf("%s %d | %12v | %-6s %-30s | %s | %d bytes",
-			statusEmoji, wrapped.statusCode, duration.Round(time.Microsecond),
-			r.Method, r.URL.Path, ip, wrapped.size)
+
+		logger.GetLogger().Log(level, logger.CatAPI, fmt.Sprintf("%s %s → %d", r.Method, r.URL.Path, wrapped.statusCode), map[string]interface{}{
+			"requestId": requestID,
+			"userId":    userID,
+			"method":    r.Method,
+			"path":      r.URL.Path,
+			"status":    wrapped.statusCode,
+			"duration":  duration.String(),
+			"ip":        ip,
+			"bytes":     wrapped.size,
+		})
 	})
 }

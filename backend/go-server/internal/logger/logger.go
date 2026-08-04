@@ -80,6 +80,10 @@ type Logger struct {
 	mu          sync.Mutex
 	recentLogs  []LogEntry
 	maxRecent   int
+	// File logging
+	logFile     *os.File
+	logDate     string // current date string for rotation
+	logDir      string
 }
 
 var (
@@ -90,13 +94,25 @@ var (
 // Init initializes the global logger
 func Init() {
 	once.Do(func() {
+		logDir := os.Getenv("LOG_DIR")
+		if logDir == "" {
+			logDir = "logs"
+		}
+
 		defaultLogger = &Logger{
 			minLevel:   DEBUG,
 			useColors:  true,
 			useJSON:    os.Getenv("LOG_FORMAT") == "json",
 			recentLogs: make([]LogEntry, 0, 1000),
 			maxRecent:  1000,
+			logDir:     logDir,
 		}
+		
+		// Create log directory
+		os.MkdirAll(logDir, 0755)
+		
+		// Open today's log file
+		defaultLogger.rotateLogFile()
 		
 		// Set log level from environment
 		switch strings.ToUpper(os.Getenv("LOG_LEVEL")) {
@@ -122,6 +138,34 @@ func GetLogger() *Logger {
 		Init()
 	}
 	return defaultLogger
+}
+
+// rotateLogFile opens a new log file if the date has changed
+func (l *Logger) rotateLogFile() {
+	today := time.Now().Format("2006-01-02")
+	if l.logDate == today && l.logFile != nil {
+		return // same day, no rotation needed
+	}
+
+	// Close old file
+	if l.logFile != nil {
+		l.logFile.Close()
+	}
+
+	// Open new file for today
+	filePath := fmt.Sprintf("%s/%s.log", l.logDir, today)
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Failed to open log file %s: %v", filePath, err)
+		l.logFile = nil
+		return
+	}
+
+	l.logFile = f
+	l.logDate = today
+	
+	// Write header
+	f.WriteString(fmt.Sprintf("\n=== GGS Werewolf Server Log — %s ===\n\n", today))
 }
 
 // Log logs a message with the given level and category
@@ -190,8 +234,12 @@ func (l *Logger) Log(level LogLevel, cat LogCategory, msg string, fields map[str
 	if l.useJSON {
 		jsonBytes, _ := json.Marshal(entry)
 		fmt.Println(string(jsonBytes))
+		// Also write JSON to file
+		l.writeToFile(string(jsonBytes))
 	} else {
 		l.printColored(entry, level)
+		// Write plain text to file (without ANSI colors)
+		l.writeToFile(l.formatPlainText(entry))
 	}
 
 	if level == FATAL {
@@ -236,6 +284,49 @@ func (l *Logger) printColored(entry LogEntry, level LogLevel) {
 		entry.Message, extra,
 		colorReset,
 	)
+}
+
+// formatPlainText formats a log entry without ANSI colors (for file output)
+func (l *Logger) formatPlainText(entry LogEntry) string {
+	timestamp := entry.Timestamp.Format("2006-01-02 15:04:05.000")
+	
+	extra := ""
+	if entry.RequestID != "" {
+		extra += fmt.Sprintf(" req=%s", entry.RequestID)
+	}
+	if entry.UserID != "" {
+		extra += fmt.Sprintf(" user=%s", entry.UserID)
+	}
+	if entry.RoomID != "" {
+		extra += fmt.Sprintf(" room=%s", entry.RoomID)
+	}
+	if entry.Duration != "" {
+		extra += fmt.Sprintf(" dur=%s", entry.Duration)
+	}
+	if entry.Error != "" {
+		extra += fmt.Sprintf(" err=%s", entry.Error)
+	}
+	if len(entry.Extra) > 0 {
+		extraJSON, _ := json.Marshal(entry.Extra)
+		extra += fmt.Sprintf(" %s", string(extraJSON))
+	}
+
+	return fmt.Sprintf("[%s] [%-5s] [%-5s] %s%s", timestamp, entry.Level, entry.Category, entry.Message, extra)
+}
+
+// writeToFile writes a log line to the current day's log file
+func (l *Logger) writeToFile(line string) {
+	if l.logDir == "" {
+		return
+	}
+	// Check if we need to rotate (new day)
+	today := time.Now().Format("2006-01-02")
+	if l.logDate != today {
+		l.rotateLogFile()
+	}
+	if l.logFile != nil {
+		l.logFile.WriteString(line + "\n")
+	}
 }
 
 // GetRecentLogs returns recent log entries for the debug API
