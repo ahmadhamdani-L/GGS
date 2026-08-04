@@ -1439,7 +1439,7 @@ CMD ["./server"]
 
 **Backend CI:**
 - Go 1.21 with cache
-- PostgreSQL 15-alpine service (port 5432→5433)
+- PostgreSQL 15-alpine service (port 5432→5432)
 - Race detector enabled
 - Coverage report generated
 - All migrations applied and verified

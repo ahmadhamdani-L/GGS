@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import 'chibi_emotes.dart';
+
 /// Cute Chibi Avatar - Anime style like reference image
 /// Features: Big head, large eyes, messy hair, small body, outlined strokes
 class ChibiAvatar extends StatefulWidget {
@@ -8,6 +10,10 @@ class ChibiAvatar extends StatefulWidget {
   final double size;
   final bool animate;
   final bool showShadow;
+  /// Currently playing emote (set externally to trigger an animation)
+  final ChibiEmote emote;
+  /// Called when emote animation finishes
+  final VoidCallback? onEmoteComplete;
 
   const ChibiAvatar({
     super.key,
@@ -15,6 +21,8 @@ class ChibiAvatar extends StatefulWidget {
     this.size = 200,
     this.animate = true,
     this.showShadow = true,
+    this.emote = ChibiEmote.none,
+    this.onEmoteComplete,
   });
 
   @override
@@ -24,8 +32,11 @@ class ChibiAvatar extends StatefulWidget {
 class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin {
   late AnimationController _idleController;
   late AnimationController _blinkController;
+  late AnimationController _emoteController;
   late Animation<double> _bobAnimation;
   late Animation<double> _blinkAnimation;
+
+  ChibiEmote _activeEmote = ChibiEmote.none;
 
   @override
   void initState() {
@@ -46,10 +57,39 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
       CurvedAnimation(parent: _blinkController, curve: Curves.easeInOut),
     );
 
+    _emoteController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _emoteController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _activeEmote = ChibiEmote.none);
+        widget.onEmoteComplete?.call();
+      }
+    });
+
     if (widget.animate) {
       _idleController.repeat(reverse: true);
       _startBlinking();
     }
+
+    if (widget.emote != ChibiEmote.none) {
+      _playEmote(widget.emote);
+    }
+  }
+
+  @override
+  void didUpdateWidget(ChibiAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.emote != oldWidget.emote && widget.emote != ChibiEmote.none) {
+      _playEmote(widget.emote);
+    }
+  }
+
+  void _playEmote(ChibiEmote emote) {
+    _activeEmote = emote;
+    _emoteController.duration = Duration(milliseconds: emote.durationMs);
+    _emoteController.forward(from: 0);
   }
 
   void _startBlinking() async {
@@ -66,14 +106,27 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
   void dispose() {
     _idleController.dispose();
     _blinkController.dispose();
+    _emoteController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([_idleController, _blinkController]),
+      animation: Listenable.merge([_idleController, _blinkController, _emoteController]),
       builder: (context, child) {
+        // Compute current pose from emote or idle
+        final EmotePose pose;
+        if (_activeEmote != ChibiEmote.none) {
+          pose = computeEmotePose(_activeEmote, _emoteController.value);
+        } else {
+          // Idle: gentle arm sway from bob
+          pose = EmotePose(
+            rightArmAngle: math.sin(_idleController.value * math.pi) * 0.02,
+            leftArmAngle: -math.sin(_idleController.value * math.pi) * 0.02,
+          );
+        }
+
         return SizedBox(
           width: widget.size,
           height: widget.size * 1.6,
@@ -97,12 +150,13 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
                 ),
               // Character
               Transform.translate(
-                offset: Offset(0, -_bobAnimation.value),
+                offset: Offset(0, -_bobAnimation.value - pose.bodyBounce),
                 child: CustomPaint(
                   size: Size(widget.size, widget.size * 1.5),
                   painter: _ChibiPainter(
                     config: widget.config,
                     blinkValue: _blinkAnimation.value,
+                    pose: pose,
                   ),
                 ),
               ),
@@ -119,8 +173,9 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
 class _ChibiPainter extends CustomPainter {
   final ChibiConfig config;
   final double blinkValue;
+  final EmotePose pose;
 
-  _ChibiPainter({required this.config, this.blinkValue = 1.0});
+  _ChibiPainter({required this.config, this.blinkValue = 1.0, this.pose = const EmotePose()});
 
   // Outline paint helper
   Paint get _outline => Paint()
@@ -136,12 +191,20 @@ class _ChibiPainter extends CustomPainter {
     final h = size.height;
     final cx = w / 2;
 
-    // Proportions like reference: big head, small body
-    final headRadius = w * 0.42;
-    final headY = h * 0.30;
-    final bodyTop = headY + headRadius * 0.75;
-    final bodyW = w * 0.42;
-    final bodyH = h * 0.28;
+    // Apply body tilt from emote pose
+    if (pose.bodyTilt != 0) {
+      canvas.save();
+      canvas.translate(cx, h * 0.6);
+      canvas.rotate(pose.bodyTilt);
+      canvas.translate(-cx, -h * 0.6);
+    }
+
+    // Anime Kawaii Proportions: 1:1.5 Head to Body ratio
+    final headRadius = w * 0.45; // Bigger head
+    final headY = h * 0.35; // Head sits slightly lower
+    final bodyTop = headY + headRadius * 0.7; // Tighter neck joint
+    final bodyW = w * 0.35; // Thinner body
+    final bodyH = h * 0.22; // Shorter body
 
     // Draw order (back to front)
     _drawBackHair(canvas, cx, headY, headRadius);
@@ -154,6 +217,11 @@ class _ChibiPainter extends CustomPainter {
     _drawFace(canvas, cx, headY, headRadius);
     _drawFrontHair(canvas, cx, headY, headRadius);
     _drawAccessory(canvas, cx, headY, headRadius);
+
+    // Restore body tilt transform
+    if (pose.bodyTilt != 0) {
+      canvas.restore();
+    }
   }
 
   void _drawBackHair(Canvas canvas, double cx, double headY, double r) {
@@ -216,6 +284,17 @@ class _ChibiPainter extends CustomPainter {
 
     for (final side in [-1.0, 1.0]) {
       final lx = cx + (gap + legW / 2) * side - legW / 2;
+      final legAngle = side < 0 ? pose.leftLegAngle : pose.rightLegAngle;
+
+      // Apply leg rotation from emote pose
+      final hipX = lx + legW / 2;
+      final hipY = adjustedLegTop;
+      canvas.save();
+      if (legAngle != 0) {
+        canvas.translate(hipX, hipY);
+        canvas.rotate(legAngle);
+        canvas.translate(-hipX, -hipY);
+      }
 
       // Draw pants (skip for dress and skirt)
       if (!isDress && pantsStyle != PantsStyle.skirt) {
@@ -236,6 +315,8 @@ class _ChibiPainter extends CustomPainter {
 
       // Shoe
       _drawShoe(canvas, lx + legW / 2, skinTop + skinH - 2, legW * 1.3, shoeH);
+
+      canvas.restore();
     }
   }
 
@@ -572,6 +653,16 @@ class _ChibiPainter extends CustomPainter {
       final shoulderX = cx + (bodyW / 2 + armW * 0.2) * side;
       final shoulderY = bodyTop + bodyH * 0.18;
 
+      // Get rotation angle for this arm from pose
+      final armAngle = side < 0 ? pose.leftArmAngle : pose.rightArmAngle;
+
+      canvas.save();
+      if (armAngle != 0) {
+        canvas.translate(shoulderX, shoulderY);
+        canvas.rotate(armAngle * side); // Mirror for left side
+        canvas.translate(-shoulderX, -shoulderY);
+      }
+
       // Sleeve
       final sleevePath = Path();
       sleevePath.addRRect(RRect.fromRectAndRadius(
@@ -581,7 +672,7 @@ class _ChibiPainter extends CustomPainter {
       canvas.drawPath(sleevePath, Paint()..color = shirtColor);
       canvas.drawPath(sleevePath, _outline);
 
-      // Arm skin (shorter for hoodie/formal with long sleeves)
+      // Arm skin
       final skinLen = shirtStyle == ShirtStyle.hoodie || shirtStyle == ShirtStyle.formal
           ? armLen * 0.25
           : armLen * 0.55;
@@ -597,6 +688,8 @@ class _ChibiPainter extends CustomPainter {
       final handY = shoulderY + sleeveLen + skinLen - armW * 0.3;
       canvas.drawCircle(Offset(shoulderX, handY), armW * 0.55, Paint()..color = skinColor);
       canvas.drawCircle(Offset(shoulderX, handY), armW * 0.55, _outline);
+
+      canvas.restore();
     }
   }
 
@@ -617,27 +710,61 @@ class _ChibiPainter extends CustomPainter {
   void _drawHead(Canvas canvas, double cx, double headY, double r) {
     final skinColor = config.skinColor;
 
-    // Head shape - round with slight chin (like reference)
+    // Face shape variations
     final headPath = Path();
-    headPath.addOval(Rect.fromCenter(
-      center: Offset(cx, headY),
-      width: r * 2.05,
-      height: r * 1.95,
-    ));
+    switch (config.faceShape) {
+      case FaceShape.round:
+        // Classic round anime face — soft circular cheeks
+        headPath.moveTo(cx, headY - r * 0.95);
+        headPath.cubicTo(cx + r * 1.2, headY - r * 0.9, cx + r * 1.25, headY + r * 0.3, cx + r * 0.8, headY + r * 0.9);
+        headPath.cubicTo(cx + r * 0.3, headY + r * 1.05, cx - r * 0.3, headY + r * 1.05, cx - r * 0.8, headY + r * 0.9);
+        headPath.cubicTo(cx - r * 1.25, headY + r * 0.3, cx - r * 1.2, headY - r * 0.9, cx, headY - r * 0.95);
+        break;
+      case FaceShape.oval:
+        // Slightly elongated, elegant
+        headPath.moveTo(cx, headY - r * 1.0);
+        headPath.cubicTo(cx + r * 1.1, headY - r * 0.85, cx + r * 1.1, headY + r * 0.4, cx + r * 0.6, headY + r * 1.0);
+        headPath.cubicTo(cx + r * 0.2, headY + r * 1.15, cx - r * 0.2, headY + r * 1.15, cx - r * 0.6, headY + r * 1.0);
+        headPath.cubicTo(cx - r * 1.1, headY + r * 0.4, cx - r * 1.1, headY - r * 0.85, cx, headY - r * 1.0);
+        break;
+      case FaceShape.square:
+        // Wider jaw, more angular
+        headPath.moveTo(cx, headY - r * 0.95);
+        headPath.cubicTo(cx + r * 1.2, headY - r * 0.9, cx + r * 1.3, headY + r * 0.2, cx + r * 1.0, headY + r * 0.75);
+        headPath.cubicTo(cx + r * 0.85, headY + r * 1.0, cx - r * 0.85, headY + r * 1.0, cx - r * 1.0, headY + r * 0.75);
+        headPath.cubicTo(cx - r * 1.3, headY + r * 0.2, cx - r * 1.2, headY - r * 0.9, cx, headY - r * 0.95);
+        break;
+      case FaceShape.heart:
+        // Wide forehead, pointy chin
+        headPath.moveTo(cx, headY - r * 0.95);
+        headPath.cubicTo(cx + r * 1.3, headY - r * 0.9, cx + r * 1.2, headY + r * 0.2, cx + r * 0.7, headY + r * 0.8);
+        headPath.cubicTo(cx + r * 0.25, headY + r * 1.15, cx - r * 0.25, headY + r * 1.15, cx - r * 0.7, headY + r * 0.8);
+        headPath.cubicTo(cx - r * 1.2, headY + r * 0.2, cx - r * 1.3, headY - r * 0.9, cx, headY - r * 0.95);
+        break;
+      case FaceShape.slim:
+        // Narrow, delicate face
+        headPath.moveTo(cx, headY - r * 0.95);
+        headPath.cubicTo(cx + r * 1.0, headY - r * 0.85, cx + r * 1.0, headY + r * 0.3, cx + r * 0.55, headY + r * 0.95);
+        headPath.cubicTo(cx + r * 0.2, headY + r * 1.1, cx - r * 0.2, headY + r * 1.1, cx - r * 0.55, headY + r * 0.95);
+        headPath.cubicTo(cx - r * 1.0, headY + r * 0.3, cx - r * 1.0, headY - r * 0.85, cx, headY - r * 0.95);
+        break;
+    }
+    headPath.close();
+
     canvas.drawPath(headPath, Paint()..color = skinColor);
     canvas.drawPath(headPath, _outline..strokeWidth = 2.0);
 
-    // Cheek blush (like reference)
+    // Cheek blush (controlled by config.showBlush toggle)
     if (config.showBlush) {
       final blushPaint = Paint()
         ..color = const Color(0xFFFF9B8E).withValues(alpha: 0.6)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx - r * 0.5, headY + r * 0.35), width: r * 0.45, height: r * 0.28),
+        Rect.fromCenter(center: Offset(cx - r * 0.55, headY + r * 0.4), width: r * 0.45, height: r * 0.25),
         blushPaint,
       );
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx + r * 0.5, headY + r * 0.35), width: r * 0.45, height: r * 0.28),
+        Rect.fromCenter(center: Offset(cx + r * 0.55, headY + r * 0.4), width: r * 0.45, height: r * 0.25),
         blushPaint,
       );
     }
@@ -698,11 +825,30 @@ class _ChibiPainter extends CustomPainter {
 
   // Round eyes - classic anime style (default)
   void _drawRoundEyes(Canvas canvas, double cx, double eyeY, double r, double spacing, Color eyeColor) {
-    final eyeW = r * 0.38;
-    final eyeH = r * 0.45 * blinkValue;
+    final eyeW = r * 0.42; // Slightly wider for kawaii look
+    final eyeH = r * 0.48 * blinkValue;
 
     for (final side in [-1.0, 1.0]) {
       final ex = cx + spacing * side;
+
+      // Eyelashes (top thick line)
+      if (blinkValue > 0.2) {
+        final lashPath = Path();
+        lashPath.moveTo(ex - eyeW * 0.6, eyeY - eyeH * 0.4);
+        lashPath.quadraticBezierTo(ex, eyeY - eyeH * 0.6, ex + eyeW * 0.6, eyeY - eyeH * 0.3);
+        canvas.drawPath(lashPath, Paint()
+          ..color = const Color(0xFF333333)
+          ..strokeWidth = 3.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+        );
+        // Small eyelash flick
+        canvas.drawLine(
+          Offset(ex + eyeW * 0.5 * side, eyeY - eyeH * 0.35), 
+          Offset(ex + eyeW * 0.7 * side, eyeY - eyeH * 0.45), 
+          Paint()..color = const Color(0xFF333333)..strokeWidth = 2.5..strokeCap = StrokeCap.round
+        );
+      }
 
       // White of eye
       final whitePath = Path();
@@ -712,38 +858,45 @@ class _ChibiPainter extends CustomPainter {
 
       if (blinkValue > 0.2) {
         // Iris (large, like anime)
-        final irisR = eyeW * 0.42;
+        final irisR = eyeW * 0.44;
         final irisPaint = Paint()
           ..shader = RadialGradient(
             colors: [
-              Color.lerp(eyeColor, Colors.white, 0.15)!,
+              Color.lerp(eyeColor, Colors.white, 0.4)!,
               eyeColor,
-              Color.lerp(eyeColor, Colors.black, 0.35)!,
+              Color.lerp(eyeColor, Colors.black, 0.4)!,
             ],
             stops: const [0.0, 0.5, 1.0],
           ).createShader(Rect.fromCircle(center: Offset(ex, eyeY + eyeH * 0.08), radius: irisR));
         canvas.drawCircle(Offset(ex, eyeY + eyeH * 0.08), irisR * blinkValue, irisPaint);
 
         // Pupil
-        canvas.drawCircle(
-          Offset(ex, eyeY + eyeH * 0.08),
-          irisR * 0.45 * blinkValue,
-          Paint()..color = Colors.black,
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(ex, eyeY + eyeH * 0.08), width: irisR * 0.6, height: irisR * 0.8 * blinkValue),
+          Paint()..color = const Color(0xFF1A1A1A),
         );
 
-        // Highlights
+        // Kawaii Highlights (Catchlights)
         final shinePaint = Paint()..color = Colors.white;
+        // Big primary catchlight (top left)
         canvas.drawOval(
           Rect.fromCenter(
-            center: Offset(ex - eyeW * 0.12, eyeY - eyeH * 0.12),
-            width: eyeW * 0.25,
-            height: eyeH * 0.2,
+            center: Offset(ex - eyeW * 0.15, eyeY - eyeH * 0.18),
+            width: eyeW * 0.3,
+            height: eyeH * 0.28,
           ),
           shinePaint,
         );
+        // Secondary catchlight (bottom right)
         canvas.drawCircle(
-          Offset(ex + eyeW * 0.12, eyeY + eyeH * 0.15),
+          Offset(ex + eyeW * 0.15, eyeY + eyeH * 0.2),
           eyeW * 0.08,
+          shinePaint,
+        );
+        // Tiny extra sparkle
+        canvas.drawCircle(
+          Offset(ex - eyeW * 0.25, eyeY + eyeH * 0.05),
+          eyeW * 0.04,
           shinePaint,
         );
       }
@@ -752,11 +905,24 @@ class _ChibiPainter extends CustomPainter {
 
   // Sparkle eyes - big shiny anime eyes with extra highlights
   void _drawSparkleEyes(Canvas canvas, double cx, double eyeY, double r, double spacing, Color eyeColor) {
-    final eyeW = r * 0.42; // Bigger
-    final eyeH = r * 0.52 * blinkValue;
+    final eyeW = r * 0.45; // Huge
+    final eyeH = r * 0.55 * blinkValue;
 
     for (final side in [-1.0, 1.0]) {
       final ex = cx + spacing * side;
+
+      // Eyelashes
+      if (blinkValue > 0.2) {
+        final lashPath = Path();
+        lashPath.moveTo(ex - eyeW * 0.55, eyeY - eyeH * 0.45);
+        lashPath.quadraticBezierTo(ex, eyeY - eyeH * 0.65, ex + eyeW * 0.55, eyeY - eyeH * 0.35);
+        canvas.drawPath(lashPath, Paint()
+          ..color = const Color(0xFF333333)
+          ..strokeWidth = 3.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+        );
+      }
 
       // White of eye (bigger, more rounded)
       final whitePath = Path();
@@ -768,21 +934,23 @@ class _ChibiPainter extends CustomPainter {
         // Large colorful iris
         final irisR = eyeW * 0.48;
         final irisPaint = Paint()
-          ..shader = RadialGradient(
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Color.lerp(eyeColor, Colors.white, 0.3)!,
+              Color.lerp(eyeColor, Colors.black, 0.4)!,
               eyeColor,
-              Color.lerp(eyeColor, Colors.black, 0.2)!,
+              Color.lerp(eyeColor, Colors.white, 0.6)!,
             ],
-            stops: const [0.0, 0.6, 1.0],
           ).createShader(Rect.fromCircle(center: Offset(ex, eyeY + eyeH * 0.05), radius: irisR));
+        
         canvas.drawCircle(Offset(ex, eyeY + eyeH * 0.05), irisR * blinkValue, irisPaint);
 
-        // Pupil (smaller for more sparkle)
+        // Pupil (star shape or just small dot for sparkle effect)
         canvas.drawCircle(
-          Offset(ex, eyeY + eyeH * 0.05),
-          irisR * 0.35 * blinkValue,
-          Paint()..color = Colors.black,
+          Offset(ex, eyeY),
+          irisR * 0.3 * blinkValue,
+          Paint()..color = Color.lerp(eyeColor, Colors.black, 0.8)!,
         );
 
         // Multiple sparkle highlights
@@ -792,22 +960,22 @@ class _ChibiPainter extends CustomPainter {
           Rect.fromCenter(
             center: Offset(ex - eyeW * 0.15, eyeY - eyeH * 0.15),
             width: eyeW * 0.35,
-            height: eyeH * 0.28,
+            height: eyeH * 0.32,
           ),
           shinePaint,
         );
         // Medium sparkle
         canvas.drawOval(
           Rect.fromCenter(
-            center: Offset(ex + eyeW * 0.12, eyeY + eyeH * 0.12),
-            width: eyeW * 0.18,
+            center: Offset(ex + eyeW * 0.18, eyeY + eyeH * 0.18),
+            width: eyeW * 0.2,
             height: eyeH * 0.15,
           ),
           shinePaint,
         );
-        // Small sparkles
-        canvas.drawCircle(Offset(ex - eyeW * 0.05, eyeY + eyeH * 0.2), eyeW * 0.06, shinePaint);
-        canvas.drawCircle(Offset(ex + eyeW * 0.2, eyeY - eyeH * 0.05), eyeW * 0.04, shinePaint);
+        // Tiny stars / sparkles
+        canvas.drawCircle(Offset(ex - eyeW * 0.1, eyeY + eyeH * 0.25), eyeW * 0.07, shinePaint);
+        canvas.drawCircle(Offset(ex + eyeW * 0.25, eyeY - eyeH * 0.1), eyeW * 0.05, shinePaint);
       }
     }
   }
@@ -914,45 +1082,65 @@ class _ChibiPainter extends CustomPainter {
   }
 
   void _drawMouth(Canvas canvas, double cx, double headY, double r) {
-    final mouthY = headY + r * 0.52;
+    final mouthY = headY + r * 0.55;
     final expr = config.expression;
     
     final mouthPaint = Paint()
-      ..color = const Color(0xFF6B5344)
-      ..strokeWidth = r * 0.03
+      ..color = const Color(0xFF5D4037) // Softer brown outline
+      ..strokeWidth = r * 0.035
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
     if (expr == Expression.happy || expr == Expression.excited) {
-      // Happy smile
-      final smilePath = Path();
-      smilePath.moveTo(cx - r * 0.15, mouthY);
-      smilePath.quadraticBezierTo(cx, mouthY + r * 0.12, cx + r * 0.15, mouthY);
-      canvas.drawPath(smilePath, mouthPaint);
+      // Kawaii cat mouth :3
+      final catMouth = Path();
+      catMouth.moveTo(cx - r * 0.15, mouthY);
+      catMouth.quadraticBezierTo(cx - r * 0.07, mouthY + r * 0.15, cx, mouthY + r * 0.02);
+      catMouth.quadraticBezierTo(cx + r * 0.07, mouthY + r * 0.15, cx + r * 0.15, mouthY);
+      canvas.drawPath(catMouth, mouthPaint);
       
       if (expr == Expression.excited) {
-        // Open mouth
-        canvas.drawOval(
-          Rect.fromCenter(center: Offset(cx, mouthY + r * 0.05), width: r * 0.18, height: r * 0.12),
-          Paint()..color = const Color(0xFF5D4037),
-        );
+        // Open mouth with little tongue
+        final openMouth = Path();
+        openMouth.moveTo(cx - r * 0.1, mouthY + r * 0.08);
+        openMouth.quadraticBezierTo(cx, mouthY + r * 0.25, cx + r * 0.1, mouthY + r * 0.08);
+        openMouth.close();
+        
+        // Dark inside
+        canvas.drawPath(openMouth, Paint()..color = const Color(0xFF8B4513));
+        
+        // Cute pink tongue
+        final tongue = Path();
+        tongue.moveTo(cx - r * 0.06, mouthY + r * 0.15);
+        tongue.quadraticBezierTo(cx, mouthY + r * 0.25, cx + r * 0.06, mouthY + r * 0.15);
+        tongue.close();
+        canvas.drawPath(tongue, Paint()..color = const Color(0xFFFF8599));
+        
+        // Outline the mouth
+        canvas.drawPath(openMouth, mouthPaint..strokeWidth = r * 0.02);
       }
     } else if (expr == Expression.neutral) {
-      // Small neutral line (like reference)
-      canvas.drawLine(Offset(cx - r * 0.08, mouthY), Offset(cx + r * 0.08, mouthY), mouthPaint);
+      // Very tiny dot/line for neutral kawaii mouth
+      canvas.drawLine(Offset(cx - r * 0.04, mouthY), Offset(cx + r * 0.04, mouthY), mouthPaint);
     } else if (expr == Expression.smirk) {
+      // Cute smirk (w shape but lopsided)
       final smirkPath = Path();
-      smirkPath.moveTo(cx - r * 0.06, mouthY + r * 0.02);
-      smirkPath.quadraticBezierTo(cx + r * 0.05, mouthY - r * 0.02, cx + r * 0.12, mouthY - r * 0.04);
+      smirkPath.moveTo(cx - r * 0.08, mouthY + r * 0.02);
+      smirkPath.quadraticBezierTo(cx + r * 0.02, mouthY - r * 0.02, cx + r * 0.1, mouthY - r * 0.06);
       canvas.drawPath(smirkPath, mouthPaint);
     } else if (expr == Expression.sad) {
+      // Sad wobbly mouth
       final sadPath = Path();
-      sadPath.moveTo(cx - r * 0.1, mouthY);
-      sadPath.quadraticBezierTo(cx, mouthY - r * 0.06, cx + r * 0.1, mouthY);
+      sadPath.moveTo(cx - r * 0.1, mouthY + r * 0.05);
+      sadPath.quadraticBezierTo(cx, mouthY - r * 0.05, cx + r * 0.1, mouthY + r * 0.05);
       canvas.drawPath(sadPath, mouthPaint);
     } else {
-      // Angry - tight line
-      canvas.drawLine(Offset(cx - r * 0.12, mouthY), Offset(cx + r * 0.12, mouthY), mouthPaint..strokeWidth = r * 0.04);
+      // Angry - tiny inverted V
+      final angryPath = Path();
+      angryPath.moveTo(cx - r * 0.08, mouthY + r * 0.05);
+      angryPath.lineTo(cx, mouthY);
+      angryPath.lineTo(cx + r * 0.08, mouthY + r * 0.05);
+      canvas.drawPath(angryPath, mouthPaint..strokeJoin = StrokeJoin.round);
     }
   }
 
@@ -993,14 +1181,22 @@ class _ChibiPainter extends CustomPainter {
       _drawCurlyHair(canvas, cx, headY, r, paint);
     }
 
-    // Hair shine highlight
+    // Anime Hair Gloss (Halo highlight)
+    final glossPath = Path();
+    glossPath.moveTo(cx - r * 0.6, headY - r * 0.45);
+    glossPath.quadraticBezierTo(cx, headY - r * 0.65, cx + r * 0.6, headY - r * 0.45);
+    glossPath.quadraticBezierTo(cx + r * 0.6, headY - r * 0.35, cx + r * 0.5, headY - r * 0.35);
+    glossPath.quadraticBezierTo(cx, headY - r * 0.55, cx - r * 0.5, headY - r * 0.35);
+    glossPath.close();
+
     final shinePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - r * 0.2, headY - r * 0.5), width: r * 0.5, height: r * 0.25),
-      shinePaint,
-    );
+      ..color = Colors.white.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      
+    canvas.drawPath(glossPath, shinePaint);
+    
+    // Extra specular dot
+    canvas.drawCircle(Offset(cx - r * 0.6, headY - r * 0.4), r * 0.08, shinePaint);
   }
 
   // Messy hair like reference image - multiple random strands
@@ -1329,7 +1525,7 @@ class _ChibiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ChibiPainter oldDelegate) {
-    return oldDelegate.config != config || oldDelegate.blinkValue != blinkValue;
+    return oldDelegate.config != config || oldDelegate.blinkValue != blinkValue || oldDelegate.pose != pose;
   }
 }
 
@@ -1352,6 +1548,7 @@ class ChibiConfig {
   final Accessory accessory;
   final Color? accessoryColor;
   final bool showBlush;
+  final FaceShape faceShape;
 
   const ChibiConfig({
     this.skinColor = const Color(0xFFFFE4C9),
@@ -1367,6 +1564,7 @@ class ChibiConfig {
     this.accessory = Accessory.none,
     this.accessoryColor,
     this.showBlush = true,
+    this.faceShape = FaceShape.round,
   });
 
   ChibiConfig copyWith({
@@ -1383,6 +1581,7 @@ class ChibiConfig {
     Accessory? accessory,
     Color? accessoryColor,
     bool? showBlush,
+    FaceShape? faceShape,
   }) {
     return ChibiConfig(
       skinColor: skinColor ?? this.skinColor,
@@ -1398,6 +1597,7 @@ class ChibiConfig {
       accessory: accessory ?? this.accessory,
       accessoryColor: accessoryColor ?? this.accessoryColor,
       showBlush: showBlush ?? this.showBlush,
+      faceShape: faceShape ?? this.faceShape,
     );
   }
 
@@ -1417,13 +1617,14 @@ class ChibiConfig {
           pantsStyle == other.pantsStyle &&
           accessory == other.accessory &&
           accessoryColor == other.accessoryColor &&
-          showBlush == other.showBlush;
+          showBlush == other.showBlush &&
+          faceShape == other.faceShape;
 
   @override
   int get hashCode => Object.hash(
         skinColor, hairColor, eyeColor, shirtColor, pantsColor,
         hairStyle, eyeStyle, expression, shirtStyle, pantsStyle,
-        accessory, accessoryColor, showBlush,
+        accessory, accessoryColor, showBlush, faceShape,
       );
 }
 
@@ -1433,6 +1634,7 @@ enum Expression { happy, excited, neutral, smirk, sad, angry }
 enum ShirtStyle { tshirt, hoodie, formal, dress }
 enum PantsStyle { shorts, jeans, joggers, skirt }
 enum Accessory { none, glasses, sunglasses, hat, headband, earrings, bow, crown }
+enum FaceShape { round, oval, square, heart, slim }
 
 
 // ═══════════════════════════════════════════════════════════════

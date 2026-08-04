@@ -9,7 +9,7 @@ set -euo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-/backups/ggs}"
 DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5433}"
+DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-postgres}"
 DB_NAME="${DB_NAME:-ggs_werewolf}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"

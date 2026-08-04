@@ -429,6 +429,10 @@ class _SkinTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const _SectionTitle('Bentuk Muka'),
+          const SizedBox(height: 10),
+          _FaceShapeSelector(selected: config.faceShape, onSelect: notifier.setFaceShape),
+          const SizedBox(height: 16),
           const _SectionTitle('Warna Kulit'),
           const SizedBox(height: 10),
           _ColorGrid(colors: ChibiPresets.skinColors, selected: config.skinColor, onSelect: notifier.setSkinColor),
@@ -1670,6 +1674,60 @@ class _ToggleOption extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+class _FaceShapeSelector extends StatelessWidget {
+  final FaceShape selected;
+  final ValueChanged<FaceShape> onSelect;
+
+  const _FaceShapeSelector({required this.selected, required this.onSelect});
+
+  static const _labels = {
+    FaceShape.round: 'Bulat',
+    FaceShape.oval: 'Oval',
+    FaceShape.square: 'Kotak',
+    FaceShape.heart: 'Hati',
+    FaceShape.slim: 'Ramping',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: FaceShape.values.map((shape) {
+        final isActive = shape == selected;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onSelect(shape);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: isActive
+                  ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                color: isActive ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
+                width: isActive ? 2 : 1,
+              ),
+            ),
+            child: Text(
+              _labels[shape] ?? shape.name,
+              style: TextStyle(
+                color: isActive ? const Color(0xFFDAA520) : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

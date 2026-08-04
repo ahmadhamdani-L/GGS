@@ -18,7 +18,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: testpassword
         ports:
-          - 5432:5433
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -42,7 +42,7 @@ jobs:
 
       - name: Test (with race detector)
         env:
-          DATABASE_URL: postgres://postgres:testpassword@localhost:5433/ggs_werewolf_test?sslmode=disable
+          DATABASE_URL: postgres://postgres:testpassword@localhost:5432/ggs_werewolf_test?sslmode=disable
           JWT_SECRET: ci-test-secret-key-32chars-minimum
           APP_ENV: test
         run: cd backend/go-server && go test -race -count=1 -coverprofile=coverage.out ./...

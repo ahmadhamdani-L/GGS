@@ -209,6 +209,12 @@ class ChibiNotifier extends StateNotifier<ChibiConfig> {
     _syncToBackend();
   }
 
+  void setFaceShape(FaceShape v) {
+    state = state.copyWith(faceShape: v);
+    _saveToPrefs();
+    _syncToBackend();
+  }
+
   /// Batch update multiple properties at once
   void update({
     Color? skinColor,
@@ -272,6 +278,7 @@ class ChibiNotifier extends StateNotifier<ChibiConfig> {
         'accessory': c.accessory.index,
         'accessoryColor': c.accessoryColor?.toARGB32(),
         'showBlush': c.showBlush,
+        'faceShape': c.faceShape.index,
       };
 
   ChibiConfig _configFromJson(Map<String, dynamic> j) {
@@ -297,6 +304,7 @@ class ChibiNotifier extends StateNotifier<ChibiConfig> {
       accessory: Accessory.values[accIdx],
       accessoryColor: j['accessoryColor'] != null ? Color(j['accessoryColor'] as int) : null,
       showBlush: j['showBlush'] as bool? ?? true,
+      faceShape: FaceShape.values[(j['faceShape'] as int? ?? 0).clamp(0, FaceShape.values.length - 1)],
     );
   }
 

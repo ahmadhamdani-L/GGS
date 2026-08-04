@@ -147,11 +147,8 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                             // Error
                             if (auth.error != null) _buildError(auth.error!),
                             // Forms
-                            ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight: MediaQuery.of(context).size.height * 0.28,
-                                minHeight: 200,
-                              ),
+                            SizedBox(
+                              height: 380, // Fixed height to accommodate both login and register forms
                               child: TabBarView(
                                 controller: _tabController,
                                 children: [_loginForm(auth), _registerForm(auth)],
@@ -320,7 +317,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w600)),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Golden Login button
         GestureDetector(
           onTap: auth.isLoading ? null : _login,
@@ -337,43 +334,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 : const Text('Login', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
           ),
         ),
-        const SizedBox(height: 12),
-        // Social login (coming soon)
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('atau lanjut dengan', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 10)),
-        ]),
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _socialButton('G', 'Google'),
-          const SizedBox(width: 10),
-          _socialButton('f', 'Facebook'),
-          const SizedBox(width: 10),
-          _socialButton('', 'Apple'),
-        ]),
       ],
-    );
-  }
-
-  Widget _socialButton(String icon, String label) {
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Segera hadir!'), backgroundColor: AppColors.warning, behavior: SnackBarBehavior.floating, duration: Duration(seconds: 1)),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.white.withValues(alpha: 0.06),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
-          const SizedBox(width: 4),
-          Text('🔜', style: const TextStyle(fontSize: 8)),
-        ]),
-      ),
     );
   }
 

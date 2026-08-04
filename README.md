@@ -59,13 +59,13 @@ Server Go membutuhkan database PostgreSQL untuk menyimpan data profil, riwayat p
    ```bash
    docker compose up -d db
    ```
-   *Catatan: Ini akan menjalankan PostgreSQL di port `5433` sesuai file `docker-compose.yml`.*
+   *Catatan: Ini akan menjalankan PostgreSQL di port `5432` sesuai file `docker-compose.yml`.*
 
 2. **Jalankan Server Go:**
    Masuk ke direktori backend, pasang `DATABASE_URL` di env, lalu jalankan server:
    ```bash
    cd backend/go-server
-   export DATABASE_URL="postgres://postgres:postgres@localhost:5433/ggs_werewolf?sslmode=disable"
+   export DATABASE_URL="postgres://postgres:postgres@localhost:5432/ggs_werewolf?sslmode=disable"
    go run cmd/server/main.go
    ```
 

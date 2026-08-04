@@ -29,7 +29,7 @@ setup:
 dev-db:
 	@echo "▶ Starting PostgreSQL..."
 	docker-compose up db -d
-	@echo "  ✅ PostgreSQL running on localhost:5433"
+	@echo "  ✅ PostgreSQL running on localhost:5432"
 
 dev-backend:
 	@if [ ! -f .env ]; then echo "❌ .env not found — run 'make setup' first"; exit 1; fi

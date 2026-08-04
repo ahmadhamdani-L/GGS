@@ -5,9 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
 import '../../models/room_v2.dart';
+import '../../models/ws_message.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/emote_provider.dart';
+import '../../providers/room_provider.dart';
 import '../../providers/room_provider_v2.dart';
 import '../../widgets/chibi_avatar.dart';
+import '../../widgets/chibi_emotes.dart';
 import '../../widgets/game_avatar.dart';
 
 /// Room V2 Page — seat selection, ready, host controls
@@ -301,7 +305,7 @@ class _SeatsGrid extends ConsumerWidget {
 
 // ─── Seat Card ───────────────────────────────────────────────
 
-class _SeatCard extends StatelessWidget {
+class _SeatCard extends ConsumerWidget {
   final SeatV2 seat;
   final RoomPlayerV2? player;
   final int index;
@@ -321,7 +325,7 @@ class _SeatCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isOccupied = seat.isOccupied;
     final isReady = player?.isReady ?? false;
     final isDisconnected = player?.isDisconnected ?? false;
@@ -345,12 +349,12 @@ class _SeatCard extends StatelessWidget {
               ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)]
               : null,
         ),
-        child: isOccupied ? _occupiedContent() : _emptyContent(),
+        child: isOccupied ? _occupiedContent(ref) : _emptyContent(),
       ),
     );
   }
 
-  Widget _occupiedContent() {
+  Widget _occupiedContent(WidgetRef ref) {
     final isBot = seat.isBot;
     final name = player?.displayName ?? seat.displayName;
     final isReady = player?.isReady ?? false;
@@ -368,6 +372,7 @@ class _SeatCard extends StatelessWidget {
                   size: 50,
                   animate: isMe,
                   showShadow: false,
+                  emote: ref.watch(playerEmoteProvider(seat.playerId)),
                 ),
               ),
             ),
@@ -554,31 +559,51 @@ class _BottomBar extends ConsumerWidget {
               ),
             ),
           // Main action button
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: buttonEnabled
-                    ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
-                    : null,
-                color: buttonEnabled ? null : const Color(0xFF374151),
-                border: Border.all(color: const Color(0xFFDAA520), width: buttonEnabled ? 2 : 1),
+          Row(
+            children: [
+              // Emote button
+              GestureDetector(
+                onTap: () => _showEmotePicker(context, ref),
+                child: Container(
+                  width: 44, height: 44,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFDAA520).withValues(alpha: 0.15),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                  ),
+                  child: const Icon(Icons.emoji_emotions_rounded, color: Color(0xFFDAA520), size: 22),
+                ),
               ),
-              child: Center(
-                child: Text(
-                  buttonLabel,
-                  style: TextStyle(
-                    color: buttonEnabled ? Colors.white : AppColors.textMuted,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
+              // Main button
+              Expanded(
+                child: GestureDetector(
+                  onTap: onTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: buttonEnabled
+                          ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
+                          : null,
+                      color: buttonEnabled ? null : const Color(0xFF374151),
+                      border: Border.all(color: const Color(0xFFDAA520), width: buttonEnabled ? 2 : 1),
+                    ),
+                    child: Center(
+                      child: Text(
+                        buttonLabel,
+                        style: TextStyle(
+                          color: buttonEnabled ? Colors.white : AppColors.textMuted,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -588,6 +613,67 @@ class _BottomBar extends ConsumerWidget {
 
 // Minimum 8 players (humans + bots) required to start
 const minPlayersToStart = 8;
+
+void _showEmotePicker(BuildContext context, WidgetRef ref) {
+  final emotes = ChibiEmote.values.where((e) => e != ChibiEmote.none).toList();
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: const Color(0xFF1A1D2E),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 12),
+          const Text('Emote', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          const Text('Pilih gerakan untuk karaktermu!', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: emotes.map((emote) => GestureDetector(
+              onTap: () {
+                Navigator.pop(ctx);
+                HapticFeedback.mediumImpact();
+                final userId = ref.read(authProvider).userId;
+                if (userId == null) return;
+                // Play locally
+                ref.read(emoteProvider.notifier).playLocal(userId, emote);
+                // Send to others via WS
+                ref.read(webSocketProvider).send(WsMessage(
+                  type: 'send_emote',
+                  payload: {'playerId': userId, 'emoteId': emote.name},
+                ));
+              },
+              child: Container(
+                width: 64, height: 72,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(emote.emoji, style: const TextStyle(fontSize: 24)),
+                    const SizedBox(height: 4),
+                    Text(emote.label, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            )).toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    ),
+  );
+}
 
 // ─── Settings Sheet ──────────────────────────────────────────
 

@@ -12,9 +12,11 @@ import '../../models/room.dart';
 import '../../models/ws_message.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chibi_provider.dart';
+import '../../providers/emote_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../widgets/chibi_avatar.dart';
+import '../../widgets/chibi_emotes.dart';
 import '../../widgets/connection_indicator.dart';
 import '../../widgets/game_avatar.dart';
 import '../../services/audio_service.dart';
@@ -756,12 +758,14 @@ class _SeatCard extends ConsumerWidget {
                                   size: 58,
                                   animate: true,
                                   showShadow: false,
+                                  emote: ref.watch(playerEmoteProvider(player!.userId)),
                                 )
                               : ChibiAvatar(
                                   config: parseChibiConfig(player!.chibiConfig) ?? generateChibiFromId(player!.userId),
                                   size: 58,
                                   animate: false,
                                   showShadow: false,
+                                  emote: ref.watch(playerEmoteProvider(player!.userId)),
                                 ),
                         ),
                       ),
@@ -1033,6 +1037,75 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
     });
   }
 
+  void _showEmotePicker(BuildContext context) {
+    final emotes = ChibiEmote.values.where((e) => e != ChibiEmote.none).toList();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1D2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 12),
+            const Text('Emote', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            const Text('Pilih gerakan untuk karaktermu!', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: emotes.map((emote) => GestureDetector(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  HapticFeedback.mediumImpact();
+                  _sendEmote(emote);
+                },
+                child: Container(
+                  width: 64, height: 72,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(emote.emoji, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(height: 4),
+                      Text(emote.label, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              )).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _sendEmote(ChibiEmote emote) {
+    if (widget.auth.userId == null) return;
+
+    // Play emote locally immediately (don't wait for server echo)
+    ref.read(emoteProvider.notifier).playLocal(widget.auth.userId!, emote);
+
+    // Send emote via WebSocket (backend expects 'send_emote' with playerId + emoteId)
+    ref.read(webSocketProvider).send(WsMessage(
+      type: 'send_emote',
+      payload: {
+        'playerId': widget.auth.userId!,
+        'emoteId': emote.name,
+      },
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1151,6 +1224,19 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                     gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
                   ),
                   child: const Icon(Icons.send_rounded, color: Colors.white, size: 15),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Emote button
+              GestureDetector(
+                onTap: () => _showEmotePicker(context),
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                  child: const Icon(Icons.emoji_emotions_rounded, color: Color(0xFFDAA520), size: 16),
                 ),
               ),
               const SizedBox(width: 8),

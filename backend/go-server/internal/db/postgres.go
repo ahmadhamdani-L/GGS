@@ -27,8 +27,20 @@ const (
 func Connect() error {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
+		dbUser := os.Getenv("DB_USER")
+		if dbUser == "" {
+			dbUser = "postgres"
+		}
+		dbPass := os.Getenv("DB_PASSWORD")
+		if dbPass == "" {
+			dbPass = "postgres"
+		}
+		dbPort := os.Getenv("DB_PORT")
+		if dbPort == "" {
+			dbPort = "5432" // Using standard postgres port instead of 5432
+		}
 		// Default for local dev
-		dsn = "postgres://postgres:postgres@localhost:5433/ggs_werewolf?sslmode=disable"
+		dsn = fmt.Sprintf("postgres://%s:%s@localhost:%s/ggs_werewolf?sslmode=disable", dbUser, dbPass, dbPort)
 	}
 
 	var err error
