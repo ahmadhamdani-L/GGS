@@ -369,17 +369,36 @@ func (h *Hub) handlePlayAgainV2(client *Client, payload json.RawMessage) {
 		return
 	}
 
+	// Try V2 room manager first
 	room := h.roomMgr.GetRoom(req.RoomID)
-	if room == nil {
+	if room != nil {
+		h.roomMgr.SetPlayAgain(room, req.UserID)
+		h.roomMgr.BroadcastEvent(room, "play_again", map[string]interface{}{
+			"userId": req.UserID,
+		})
+		h.roomMgr.BroadcastRoomState(room)
 		return
 	}
 
-	h.roomMgr.SetPlayAgain(room, req.UserID)
+	// Fallback: V1 room — clear game state and reset players to not-ready
+	h.mu.RLock()
+	v1Room, ok := h.rooms[req.RoomID]
+	h.mu.RUnlock()
+	if !ok {
+		return
+	}
 
-	h.roomMgr.BroadcastEvent(room, "play_again", map[string]interface{}{
-		"userId": req.UserID,
-	})
-	h.roomMgr.BroadcastRoomState(room)
+	v1Room.mu.Lock()
+	v1Room.Game = nil
+	v1Room.Status = RoomWaiting
+	// Reset all players to not-ready (they need to click ready again or host starts)
+	for _, p := range v1Room.Players {
+		p.IsReady = false
+	}
+	v1Room.mu.Unlock()
+
+	// Broadcast updated room state to all clients
+	h.broadcastRoomUpdate(req.RoomID)
 }
 
 // handleGetLobbyV2 — client requests the lobby room list
