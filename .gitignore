@@ -60,5 +60,5 @@ nginx/certs/*.pem
 **/firebase-service-account.json
 **/family-manager-*.json
 
-# Backend log files (daily rotation)
-backend/go-server/logs/
+# Backend log files (daily rotation) — ignore contents, keep folder
+backend/go-server/logs/*.log
