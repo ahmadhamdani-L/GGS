@@ -11,6 +11,7 @@ import (
 
 	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/ggs/werewolf-server/internal/logger"
+	"github.com/ggs/werewolf-server/internal/push"
 )
 
 func getEnvSafe(key string) string { return os.Getenv(key) }
@@ -406,6 +407,10 @@ func (s *Server) sendGiftNotification(receiverID string, gift *db.GiftCatalogIte
 			"giftId": gift.ID, "senderId": result.Transaction.SenderID,
 			"senderName": senderName, "message": message,
 		})
+
+	// Send push notification
+	isCurse := gift.Type == "curse"
+	go push.SendGiftPushNotification(receiverID, senderName, gift.Name, gift.Emoji, isCurse)
 }
 
 // ─── Task #4: Achievement Checker ────────────────────────────
@@ -452,6 +457,7 @@ func (s *Server) checkGiftAchievements(senderID, receiverID string,
 	for _, ch := range checks {
 		if ch.condition() {
 			db.UnlockAchievement(senderID, ch.id)
+			go push.SendAchievementPushNotification(senderID, ch.id)
 		}
 	}
 }

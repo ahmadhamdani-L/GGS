@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/analytics_service.dart';
+import '../services/push_notification_service.dart';
 import '../pages/auth/auth_page.dart';
 import '../pages/profile/profile_setup_page.dart';
 import '../pages/profile/profile_page.dart';
@@ -39,8 +41,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authProvider);
 
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: '/splash',
-    observers: [_NavigationLogger()],
+    observers: [_NavigationLogger(), ref.read(analyticsProvider).observer],
     redirect: (context, state) {
       final isLoggedIn = auth.isAuthenticated;
       final isOnAuth = state.matchedLocation == '/auth';

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/ggs/werewolf-server/internal/logger"
+	"github.com/ggs/werewolf-server/internal/push"
 )
 
 // ─── Midtrans Payment Integration ─────────────────────────────
@@ -225,7 +226,7 @@ func (s *Server) HandlePaymentWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Notify user (push + WS)
-		go SendPushNotification(userID, "💎 Diamond Diterima!",
+		go push.SendPushNotification(userID, "💎 Diamond Diterima!",
 			fmt.Sprintf("Kamu mendapat %d Diamond! Saldo: %d", pkg.Diamonds, newBalance),
 			map[string]interface{}{"type": "diamond_topup", "diamonds": pkg.Diamonds, "balance": newBalance})
 

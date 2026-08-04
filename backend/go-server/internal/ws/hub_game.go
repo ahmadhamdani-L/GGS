@@ -7,6 +7,7 @@ import (
 	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/ggs/werewolf-server/internal/game"
 	"github.com/ggs/werewolf-server/internal/logger"
+	"github.com/ggs/werewolf-server/internal/push"
 )
 
 func (h *Hub) handleStartGame(client *Client, payload json.RawMessage) {
@@ -380,7 +381,12 @@ func (h *Hub) recordGameResultsAsync(players []game.PlayerState, gameID string, 
 		playerTeam := game.GetRoleTeam(p.Role)
 		won := playerTeam == winnerTeam
 		survived := p.IsAlive
-		db.RecordMatchWithXP(p.ID, gameID, string(p.Role), string(playerTeam), won, survived, round, 0, playerCount)
+		_, _, newLevel, leveledUp, _ := db.RecordMatchWithXP(p.ID, gameID, string(p.Role), string(playerTeam), won, survived, round, 0, playerCount)
+
+		// Send push notification on level up
+		if leveledUp {
+			go push.SendLevelUpPushNotification(p.ID, newLevel)
+		}
 	}
 }
 

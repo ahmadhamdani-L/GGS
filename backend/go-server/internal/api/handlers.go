@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/ggs/werewolf-server/internal/auth"
 	"github.com/ggs/werewolf-server/internal/db"
 	"github.com/ggs/werewolf-server/internal/security"
+	"github.com/ggs/werewolf-server/internal/push"
 	"github.com/ggs/werewolf-server/internal/ws"
 )
 
@@ -956,8 +958,28 @@ func (s *Server) HandleFriends(w http.ResponseWriter, r *http.Request) {
 		switch req.Action {
 		case "add":
 			err = db.SendFriendRequest(userID, req.FriendID)
+			if err == nil {
+				// Send push notification to the friend
+				senderProfile, _ := db.GetProfile(userID)
+				senderName := "Seseorang"
+				if senderProfile != nil {
+					senderName = senderProfile.DisplayName
+				}
+				go push.SendFriendRequestPushNotification(req.FriendID, senderName)
+			}
 		case "accept":
 			err = db.AcceptFriendRequest(userID, req.FriendID)
+			if err == nil {
+				// Notify the original requester that their request was accepted
+				accepterProfile, _ := db.GetProfile(userID)
+				accepterName := "Seseorang"
+				if accepterProfile != nil {
+					accepterName = accepterProfile.DisplayName
+				}
+				go push.SendPushNotification(req.FriendID, "Pertemanan Diterima! 🎉",
+					fmt.Sprintf("%s menerima permintaan pertemananmu!", accepterName),
+					map[string]interface{}{"type": "friend_accepted", "friendName": accepterName})
+			}
 		case "block":
 			err = db.BlockUser(userID, req.FriendID)
 		case "remove":

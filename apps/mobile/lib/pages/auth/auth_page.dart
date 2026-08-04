@@ -297,44 +297,46 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   }
 
   Widget _loginForm(AuthState auth) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Selamat datang kembali,\nWolves! 🐺', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
-        const SizedBox(height: 14),
-        _input(_emailController, 'Email / Username', Icons.person_outline,
-            keyboard: TextInputType.emailAddress),
-        const SizedBox(height: 12),
-        _inputObscure(_passwordController, 'Password', Icons.lock_outline,
-            obscure: _obscureLogin,
-            onToggle: () => setState(() => _obscureLogin = !_obscureLogin)),
-        const SizedBox(height: 4),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () => _showForgotPasswordDialog(context),
-            child: const Text('Lupa password?',
-                style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w600)),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Golden Login button
-        GestureDetector(
-          onTap: auth.isLoading ? null : _login,
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
-              border: Border.all(color: const Color(0xFFDAA520)),
-              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Selamat datang kembali,\nWolves! 🐺', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
+          const SizedBox(height: 14),
+          _input(_emailController, 'Email / Username', Icons.person_outline,
+              keyboard: TextInputType.emailAddress),
+          const SizedBox(height: 12),
+          _inputObscure(_passwordController, 'Password', Icons.lock_outline,
+              obscure: _obscureLogin,
+              onToggle: () => setState(() => _obscureLogin = !_obscureLogin)),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => _showForgotPasswordDialog(context),
+              child: const Text('Lupa password?',
+                  style: TextStyle(color: Color(0xFFDAA520), fontSize: 11, fontWeight: FontWeight.w600)),
             ),
-            child: Center(child: auth.isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Login', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          // Golden Login button
+          GestureDetector(
+            onTap: auth.isLoading ? null : _login,
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+                border: Border.all(color: const Color(0xFFDAA520)),
+                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+              ),
+              child: Center(child: auth.isLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Login', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -540,43 +542,45 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   }
 
   Widget _registerForm(AuthState auth) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Buat akun baru,\nBergabunglah dengan Wolves!', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        _input(_nameController, 'Username', Icons.person_outline),
-        const SizedBox(height: 10),
-        _input(_emailController, 'Email', Icons.email_outlined,
-            keyboard: TextInputType.emailAddress),
-        const SizedBox(height: 10),
-        _inputObscure(
-            _passwordController,
-            'Password',
-            Icons.lock_outline,
-            obscure: _obscureRegister,
-            onToggle: () => setState(() => _obscureRegister = !_obscureRegister)),
-        const SizedBox(height: 14),
-        // Golden Daftar button
-        GestureDetector(
-          onTap: auth.isLoading ? null : _register,
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
-              border: Border.all(color: const Color(0xFFDAA520)),
-              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Buat akun baru,\nBergabunglah dengan Wolves!', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          _input(_nameController, 'Username', Icons.person_outline),
+          const SizedBox(height: 10),
+          _input(_emailController, 'Email', Icons.email_outlined,
+              keyboard: TextInputType.emailAddress),
+          const SizedBox(height: 10),
+          _inputObscure(
+              _passwordController,
+              'Password',
+              Icons.lock_outline,
+              obscure: _obscureRegister,
+              onToggle: () => setState(() => _obscureRegister = !_obscureRegister)),
+          const SizedBox(height: 14),
+          // Golden Daftar button
+          GestureDetector(
+            onTap: auth.isLoading ? null : _register,
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+                border: Border.all(color: const Color(0xFFDAA520)),
+                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+              ),
+              child: Center(child: auth.isLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Daftar', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
             ),
-            child: Center(child: auth.isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Daftar', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800))),
           ),
-        ),
-        const SizedBox(height: 8),
-        Center(child: Text('Dengan mendaftar, kamu setuju dengan\nSyarat & Ketentuan dan Kebijakan Privasi',
-          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 9), textAlign: TextAlign.center)),
-      ],
+          const SizedBox(height: 8),
+          Center(child: Text('Dengan mendaftar, kamu setuju dengan\nSyarat & Ketentuan dan Kebijakan Privasi',
+            style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 9), textAlign: TextAlign.center)),
+        ],
+      ),
     );
   }
 
