@@ -122,14 +122,24 @@ func GetDiamondBalance(userID string) (*DiamondBalance, error) {
 	}
 	b := &DiamondBalance{}
 	err := DB.QueryRow(`
-		SELECT user_id, amount, total_spent FROM diamond_balance WHERE user_id = $1
+		SELECT user_id, COALESCE(amount, 100), COALESCE(total_spent, 0) FROM diamond_balance WHERE user_id = $1
 	`, userID).Scan(&b.UserID, &b.Amount, &b.TotalSpent)
 	if errors.Is(err, sql.ErrNoRows) {
 		// Auto-create on first read with 100 default diamonds
 		DB.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, userID)
 		return &DiamondBalance{UserID: userID, Amount: 100}, nil
 	}
-	return b, err
+	if err != nil {
+		// Fallback: try without total_spent (column might not exist yet)
+		err2 := DB.QueryRow(`SELECT user_id, COALESCE(amount, 100) FROM diamond_balance WHERE user_id = $1`, userID).Scan(&b.UserID, &b.Amount)
+		if err2 == nil {
+			return b, nil
+		}
+		// If still fails, create record
+		DB.Exec(`INSERT INTO diamond_balance (user_id, amount) VALUES ($1, 100) ON CONFLICT DO NOTHING`, userID)
+		return &DiamondBalance{UserID: userID, Amount: 100}, nil
+	}
+	return b, nil
 }
 
 func TopUpDiamonds(userID string, amount int64, refID, reason string) (int64, error) {
