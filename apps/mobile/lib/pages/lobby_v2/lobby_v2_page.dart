@@ -23,9 +23,11 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
   void initState() {
     super.initState();
     // Request lobby list on mount + ensure WS is connected
-    Future.microtask(() {
-      _ensureWsConnected();
-      ref.read(lobbyListProvider.notifier).refresh();
+    Future.microtask(() async {
+      await _ensureWsConnected();
+      if (mounted) {
+        ref.read(lobbyListProvider.notifier).refresh();
+      }
     });
   }
 
@@ -190,10 +192,34 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
           // Room list
           Expanded(
             child: rooms.isEmpty
-                ? const Center(
-                    child: Text('Memuat room...',
-                        style: TextStyle(
-                            color: AppColors.textMuted, fontSize: 13)))
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🏠', style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
+                        const Text('Belum ada room',
+                            style: TextStyle(
+                                color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        const Text('Buat room baru atau join dengan kode',
+                            style: TextStyle(
+                                color: AppColors.textMuted, fontSize: 12)),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () => ref.read(lobbyListProvider.notifier).refresh(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white.withValues(alpha: 0.05),
+                            ),
+                            child: const Text('Refresh', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: rooms.length,
