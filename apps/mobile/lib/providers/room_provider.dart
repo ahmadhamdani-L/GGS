@@ -145,6 +145,9 @@ class RoomNotifier extends StateNotifier<RoomState> {
     
     switch (msg.type) {
       case 'room_created':
+        // V2 guard: If no V1 operation is pending (no timeout timer), ignore
+        // this event — it was triggered by V2 room system.
+        if (_timeoutTimer == null && !state.isLoading) return;
         _cancelTimeout();
         final roomId = msg.payload['roomId'] as String? ?? '';
         final roomCode = msg.payload['roomCode'] as String? ?? '';
@@ -186,6 +189,8 @@ class RoomNotifier extends StateNotifier<RoomState> {
         );
         break;
       case 'room_joined':
+        // V2 guard: If no V1 operation is pending, ignore — event is from V2 system.
+        if (_timeoutTimer == null && !state.isLoading) return;
         _cancelTimeout();
         final roomId = msg.payload['roomId'] as String? ?? '';
         final roomCode = msg.payload['roomCode'] as String? ?? '';
