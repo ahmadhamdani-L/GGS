@@ -20,6 +20,7 @@ type MemStore struct {
 	chibiConfigs map[string]map[string]interface{}
 	stats       map[string]*PlayerStats
 	history     map[string][]MatchHistoryEntry
+	diamonds    map[string]int64
 	mu          sync.RWMutex
 }
 
@@ -33,6 +34,7 @@ func InitMemoryStore() {
 		chibiConfigs: make(map[string]map[string]interface{}),
 		stats:        make(map[string]*PlayerStats),
 		history:      make(map[string][]MatchHistoryEntry),
+		diamonds:     make(map[string]int64),
 	}
 }
 
@@ -299,3 +301,49 @@ func (m *MemStore) UpdateCharmPopularity(userID string, charmDelta, popDelta int
 	}
 }
 
+
+// ─── Diamond Balance (Memory) ────────────────────────────────
+
+func (m *MemStore) GetDiamondBalance(userID string) *DiamondBalance {
+	m.mu.RLock()
+	amount, ok := m.diamonds[userID]
+	m.mu.RUnlock()
+
+	if !ok {
+		// First access: give default 100 diamonds (matches migration default)
+		m.mu.Lock()
+		m.diamonds[userID] = 100
+		m.mu.Unlock()
+		return &DiamondBalance{UserID: userID, Amount: 100}
+	}
+	return &DiamondBalance{UserID: userID, Amount: amount}
+}
+
+func (m *MemStore) TopUpDiamonds(userID string, amount int64) int64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	current, ok := m.diamonds[userID]
+	if !ok {
+		current = 100 // default
+	}
+	current += amount
+	m.diamonds[userID] = current
+	return current
+}
+
+func (m *MemStore) SpendDiamonds(userID string, amount int64) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	current, ok := m.diamonds[userID]
+	if !ok {
+		current = 100
+	}
+	if current < amount {
+		return current, errors.New("diamond tidak cukup")
+	}
+	current -= amount
+	m.diamonds[userID] = current
+	return current, nil
+}

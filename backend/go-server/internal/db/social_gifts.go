@@ -114,7 +114,11 @@ type SendGiftResult struct {
 
 func GetDiamondBalance(userID string) (*DiamondBalance, error) {
 	if DB == nil {
-		return &DiamondBalance{UserID: userID, Amount: 0}, nil
+		// Memory fallback: every user starts with 100 diamonds (matches migration default)
+		if Mem != nil {
+			return Mem.GetDiamondBalance(userID), nil
+		}
+		return &DiamondBalance{UserID: userID, Amount: 100}, nil
 	}
 	b := &DiamondBalance{}
 	err := DB.QueryRow(`
@@ -130,6 +134,9 @@ func GetDiamondBalance(userID string) (*DiamondBalance, error) {
 
 func TopUpDiamonds(userID string, amount int64, refID, reason string) (int64, error) {
 	if DB == nil {
+		if Mem != nil {
+			return Mem.TopUpDiamonds(userID, amount), nil
+		}
 		return 0, nil
 	}
 	tx, err := DB.Begin()
