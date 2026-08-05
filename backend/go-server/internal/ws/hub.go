@@ -225,7 +225,11 @@ func (h *Hub) handleUnregister(client *Client) {
 		if h.userIndex[client.UserID] == client {
 			delete(h.userIndex, client.UserID)
 		}
-		close(client.Send)
+		// Safe close — avoid panic if channel already closed by writePump
+		func() {
+			defer func() { recover() }()
+			close(client.Send)
+		}()
 	} else {
 		// Client was already removed (e.g. by session eviction in handleRegister).
 		// Don't close Send again.

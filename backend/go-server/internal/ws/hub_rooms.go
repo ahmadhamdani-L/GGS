@@ -214,7 +214,31 @@ func (h *Hub) handleLeaveRoom(client *Client, payload json.RawMessage) {
 	hasGame := room.Game != nil
 
 	if isHost {
-		// Notify all remaining players before destroying
+		if hasGame {
+			// Game is running — migrate host instead of destroying room
+			var newHostID string
+			for uid := range room.Clients {
+				if uid != req.UserID {
+					newHostID = uid
+					break
+				}
+			}
+			if newHostID != "" {
+				room.HostID = newHostID
+				room.Game = game.MarkPlayerDisconnected(room.Game, req.UserID)
+				room.mu.Unlock()
+				logger.Info(logger.CatRoom, "Host left during game — migrated", map[string]interface{}{
+					"roomId": req.RoomID, "newHost": newHostID,
+				})
+				resp, _ := json.Marshal(map[string]interface{}{"newHostId": newHostID, "reason": "Host keluar, host baru ditunjuk"})
+				h.broadcastToRoom(req.RoomID, &Message{Type: "host_changed", Payload: resp}, nil)
+				h.broadcastRoomUpdate(req.RoomID)
+				return
+			}
+			// No other players — destroy
+		}
+
+		// No game or no other players — kick all and destroy
 		kickMsg, _ := json.Marshal(map[string]string{"reason": "Host left the room"})
 		for _, c := range room.Clients {
 			safeSend(c, &Message{Type: "kicked", Payload: kickMsg})

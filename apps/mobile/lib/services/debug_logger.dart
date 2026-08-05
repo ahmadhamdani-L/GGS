@@ -102,10 +102,10 @@ class DebugLogger {
   LogLevel minLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
 
   /// Whether to print to console
-  bool printToConsole = kDebugMode;
+  bool printToConsole = false;
 
-  /// Whether to write to file (enabled in debug mode)
-  bool writeToFile = kDebugMode;
+  /// Whether to write to file (always enabled)
+  bool writeToFile = true;
 
   /// File log path — written to app's documents directory
   /// On iOS simulator: ~/Library/Developer/CoreSimulator/Devices/.../Documents/ggs_debug.log

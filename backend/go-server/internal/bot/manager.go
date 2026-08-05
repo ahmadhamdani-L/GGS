@@ -159,8 +159,7 @@ func processBotNightSequential(state *game.GameState, diff Difficulty) *game.Gam
 		case game.RoleWitch:
 			useHeal, poisonTarget := DecideWitchAction(state, p.ID, diff)
 			state.NightActions.WitchAction = &game.WitchAction{UseHeal: useHeal, PoisonTarget: poisonTarget}
-			if useHeal { state.WitchHealUsed = true }
-			if poisonTarget != nil { state.WitchPoisonUsed = true }
+			// Don't set WitchHealUsed/WitchPoisonUsed here — let ResolveNightActions handle it
 			state.NightActions.SubmittedPlayers[p.ID] = true
 		default:
 			state.NightActions.SubmittedPlayers[p.ID] = true

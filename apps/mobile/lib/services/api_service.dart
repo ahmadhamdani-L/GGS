@@ -453,11 +453,12 @@ class ApiService {
 
   /// POST /api/friends — add friend
   Future<ApiResponse<Map<String, dynamic>>> addFriend(String targetId) =>
-      _post('/api/friends', {'action': 'add', 'targetId': targetId});
+      _post('/api/friends', {'action': 'add', 'friendId': targetId});
 
-  /// POST /api/blocked
+  /// POST /api/friends — block player
+  /// POST /api/friends — block player
   Future<ApiResponse<Map<String, dynamic>>> blockPlayer(String targetId) =>
-      _post('/api/blocked', {'action': 'block', 'targetId': targetId});
+      _post('/api/friends', {'action': 'block', 'friendId': targetId});
 
   /// DELETE /api/account — permanently delete user account
   Future<ApiResponse<Map<String, dynamic>>> deleteAccount({String? password}) async {

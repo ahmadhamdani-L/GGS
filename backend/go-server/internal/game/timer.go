@@ -73,9 +73,26 @@ func AutoAdvanceOnTimeout(state *GameState) *GameState {
 		state = ResolveNightActions(state)
 
 	case PhaseDayStart:
-		// Advance to discussion
-		state.Phase = PhaseDiscussion
-		state = SetTimerDeadline(state)
+		// If round was already incremented (e.g., after double-tie skip), go to night
+		// Otherwise advance to discussion normally
+		if state.Votes.Round == state.Round && len(state.Votes.Votes) == 0 && state.RetryVoteCount == 0 {
+			// Fresh DayStart after night — go to discussion
+			state.Phase = PhaseDiscussion
+			state = SetTimerDeadline(state)
+		} else if len(state.EliminationHistory) > 0 {
+			lastElim := state.EliminationHistory[len(state.EliminationHistory)-1]
+			if lastElim.Round == state.Round && lastElim.Phase == "night" {
+				// DayStart after night kill → discussion
+				state.Phase = PhaseDiscussion
+				state = SetTimerDeadline(state)
+			} else {
+				// DayStart after double-tie announcement → night
+				state = StartNightPhase(state)
+			}
+		} else {
+			state.Phase = PhaseDiscussion
+			state = SetTimerDeadline(state)
+		}
 
 	case PhaseDiscussion:
 		// Move to voting

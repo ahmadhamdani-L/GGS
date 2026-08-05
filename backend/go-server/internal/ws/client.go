@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/ggs/werewolf-server/internal/auth"
@@ -63,8 +64,8 @@ type Client struct {
 	RoomID      string
 	DisplayName string
 	lastGlobalChat time.Time
-	// P3-46: Anti-cheat — track last action time to prevent spam
-	lastAction time.Time
+	// P3-46: Anti-cheat — track last action time to prevent spam (atomic for thread safety)
+	lastActionMs atomic.Int64
 }
 
 // HandleWebSocket upgrades HTTP to WebSocket

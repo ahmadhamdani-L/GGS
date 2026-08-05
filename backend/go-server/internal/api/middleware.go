@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggs/werewolf-server/internal/auth"
@@ -151,6 +152,9 @@ func TimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer cancel()
 
+			// Use sync.Once to ensure only one path writes to ResponseWriter
+			var writeOnce sync.Once
+
 			done := make(chan struct{})
 			go func() {
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -161,17 +165,19 @@ func TimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 			case <-done:
 				// Request completed normally
 			case <-ctx.Done():
-				requestID, _ := r.Context().Value(ContextKeyRequestID).(string)
-				logger.Warn(logger.CatAPI, "Request timeout", map[string]interface{}{
-					"requestId": requestID,
-					"path":      r.URL.Path,
-					"timeout":   timeout.String(),
-				})
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusGatewayTimeout)
-				json.NewEncoder(w).Encode(map[string]interface{}{
-					"error":     "Request timeout",
-					"requestId": requestID,
+				writeOnce.Do(func() {
+					requestID, _ := r.Context().Value(ContextKeyRequestID).(string)
+					logger.Warn(logger.CatAPI, "Request timeout", map[string]interface{}{
+						"requestId": requestID,
+						"path":      r.URL.Path,
+						"timeout":   timeout.String(),
+					})
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusGatewayTimeout)
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"error":     "Request timeout",
+						"requestId": requestID,
+					})
 				})
 			}
 		})

@@ -333,7 +333,16 @@ func main() {
 	fmt.Printf("   WS:      /ws\n")
 	fmt.Printf("   CORS:    %v\n", originList)
 	addr := "0.0.0.0:" + port
-	log.Fatal(http.ListenAndServe(addr, handler))
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB
+	}
+	log.Fatal(srv.ListenAndServe())
 }
 
 func rateLimitMiddleware(tb *tokenBucket, next http.HandlerFunc) http.HandlerFunc {

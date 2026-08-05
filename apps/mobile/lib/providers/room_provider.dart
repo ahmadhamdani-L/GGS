@@ -290,6 +290,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
         state = state.copyWith(error: abortReason);
         // Full reset after brief delay so UI can show the message
         Future.delayed(const Duration(seconds: 3), () {
+          if (!mounted) return;
           if (state.error == abortReason) state = const RoomState();
         });
         break;

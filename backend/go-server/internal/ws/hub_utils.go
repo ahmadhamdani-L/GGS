@@ -28,13 +28,14 @@ func safeSend(c *Client, msg *Message) {
 const minActionInterval = 500 * time.Millisecond
 
 // checkActionThrottle returns true if action is allowed (not too fast).
-// Updates client.lastAction timestamp.
+// Updates client.lastAction timestamp. Uses atomic int64 to avoid data races.
 func checkActionThrottle(client *Client) bool {
-	now := time.Now()
-	if now.Sub(client.lastAction) < minActionInterval {
+	now := time.Now().UnixMilli()
+	last := client.lastActionMs.Load()
+	if now-last < int64(minActionInterval/time.Millisecond) {
 		return false
 	}
-	client.lastAction = now
+	client.lastActionMs.Store(now)
 	return true
 }
 
