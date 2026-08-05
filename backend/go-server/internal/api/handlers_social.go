@@ -403,21 +403,20 @@ func (s *Server) sendGiftNotification(receiverID string, gift *db.GiftCatalogIte
 
 	// Room-wide animation broadcast: if sender is in a room, broadcast animation
 	// to ALL players in that room so everyone sees the gift/curse fly from sender to receiver.
-	if gift.BroadcastType == "room" || gift.BroadcastType == "global" {
-		s.Hub.BroadcastToUserRoom(result.Transaction.SenderID, "gift_animation_broadcast", map[string]interface{}{
-			"senderId":      result.Transaction.SenderID,
-			"receiverId":    receiverID,
-			"senderName":    senderName,
-			"receiverName":  getDisplayNameSafe(receiverID),
-			"giftId":        gift.ID,
-			"giftName":      gift.Name,
-			"giftEmoji":     gift.Emoji,
-			"giftType":      gift.Type,
-			"animationKey":  gift.AnimationKey,
-			"rarity":        gift.Rarity,
-			"broadcastType": gift.BroadcastType,
-		})
-	}
+	// Always broadcast to room regardless of broadcastType (even "none" gifts get room animation).
+	s.Hub.BroadcastToUserRoom(result.Transaction.SenderID, "gift_animation_broadcast", map[string]interface{}{
+		"senderId":      result.Transaction.SenderID,
+		"receiverId":    receiverID,
+		"senderName":    senderName,
+		"receiverName":  getDisplayNameSafe(receiverID),
+		"giftId":        gift.ID,
+		"giftName":      gift.Name,
+		"giftEmoji":     gift.Emoji,
+		"giftType":      gift.Type,
+		"animationKey":  gift.AnimationKey,
+		"rarity":        gift.Rarity,
+		"broadcastType": gift.BroadcastType,
+	})
 
 	// Persist notification in DB
 	db.CreateNotification(receiverID, "gift_received", gift.Emoji+" "+gift.Name, notifMsg,
