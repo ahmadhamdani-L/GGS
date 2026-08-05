@@ -46,18 +46,32 @@ func sendError(client *Client, msg string) {
 }
 
 func (h *Hub) broadcastToRoom(roomID string, msg *Message, exclude *Client) {
+	// Try V1 room first
 	h.mu.RLock()
 	room, ok := h.rooms[roomID]
 	h.mu.RUnlock()
-	if !ok {
+	if ok {
+		room.mu.RLock()
+		defer room.mu.RUnlock()
+		for _, c := range room.Clients {
+			if c != exclude {
+				safeSend(c, msg)
+			}
+		}
 		return
 	}
 
-	room.mu.RLock()
-	defer room.mu.RUnlock()
-
-	for _, c := range room.Clients {
-		if c != exclude {
+	// Fallback: try V2 managed room
+	if managedRoom := h.roomMgr.GetRoom(roomID); managedRoom != nil {
+		managedRoom.mu.Lock()
+		clients := make([]*Client, 0, len(managedRoom.Clients))
+		for _, c := range managedRoom.Clients {
+			if c != exclude {
+				clients = append(clients, c)
+			}
+		}
+		managedRoom.mu.Unlock()
+		for _, c := range clients {
 			safeSend(c, msg)
 		}
 	}
@@ -130,6 +144,19 @@ func (h *Hub) getPlayerList(room *Room) []map[string]interface{} {
 }
 
 // ─── Social Gift Helpers ──────────────────────────────────────
+
+// BroadcastToUserRoom sends a typed message to ALL clients in the same room as the given user.
+// Used for room-wide gift/curse animation broadcasts visible to all players.
+func (h *Hub) BroadcastToUserRoom(userID string, msgType string, payload interface{}) {
+	h.mu.RLock()
+	client, ok := h.userIndex[userID]
+	h.mu.RUnlock()
+	if !ok || client.RoomID == "" {
+		return
+	}
+	payloadBytes, _ := json.Marshal(payload)
+	h.broadcastToRoom(client.RoomID, &Message{Type: msgType, Payload: payloadBytes}, nil)
+}
 
 // SendToUser sends a typed message to a specific user by ID (O(1) via userIndex).
 func (h *Hub) SendToUser(userID string, msgType string, payload interface{}) {

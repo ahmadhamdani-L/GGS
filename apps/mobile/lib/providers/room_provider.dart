@@ -146,8 +146,8 @@ class RoomNotifier extends StateNotifier<RoomState> {
     switch (msg.type) {
       case 'room_created':
         _cancelTimeout();
-        final roomId = msg.payload['roomId'] as String;
-        final roomCode = msg.payload['roomCode'] as String;
+        final roomId = msg.payload['roomId'] as String? ?? '';
+        final roomCode = msg.payload['roomCode'] as String? ?? '';
         final userId = msg.payload['userId'] as String? ?? _creatorId ?? '';
         logger.roomCreated(roomId, roomCode);
 
@@ -187,8 +187,8 @@ class RoomNotifier extends StateNotifier<RoomState> {
         break;
       case 'room_joined':
         _cancelTimeout();
-        final roomId = msg.payload['roomId'] as String;
-        final roomCode = msg.payload['roomCode'] as String;
+        final roomId = msg.payload['roomId'] as String? ?? '';
+        final roomCode = msg.payload['roomCode'] as String? ?? '';
         final hostId = msg.payload['hostId'] as String? ?? '';
         logger.roomJoined(roomId, roomCode);
         

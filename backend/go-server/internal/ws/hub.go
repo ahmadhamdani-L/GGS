@@ -366,6 +366,8 @@ func (h *Hub) handleMessage(cm *ClientMessage) {
 		h.handlePlayerReady(client, msg.Payload)
 	case "send_emote":
 		h.handleEmote(client, msg.Payload)
+	case "send_gift_animation":
+		h.handleGiftAnimation(client, msg.Payload)
 	case "typing":
 		h.handleTyping(client)
 	case "invite_to_room":

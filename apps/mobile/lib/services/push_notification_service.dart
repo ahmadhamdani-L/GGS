@@ -37,9 +37,14 @@ class PushNotificationService {
     }
 
     // Get the FCM token and register with backend
-    final token = await messaging.getToken();
-    if (token != null) {
-      await _registerToken(token);
+    try {
+      final token = await messaging.getToken();
+      if (token != null) {
+        await _registerToken(token);
+      }
+    } catch (e) {
+      // iOS simulator doesn't support APNS — skip token registration
+      debugPrint('[FCM] Token unavailable (simulator?): $e');
     }
 
     // Listen for token refresh

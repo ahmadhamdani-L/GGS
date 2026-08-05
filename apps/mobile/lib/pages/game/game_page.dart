@@ -15,6 +15,8 @@ import '../../widgets/connection_indicator.dart';
 import '../../widgets/game_avatar.dart';
 import '../../widgets/narrator_overlay.dart';
 import '../../widgets/reconnect_overlay.dart';
+import '../../widgets/gift_flying_animation_overlay.dart';
+import '../../providers/gift_animation_provider.dart';
 
 import 'screens/screens.dart';
 import 'widgets/game_top_bar.dart';
@@ -276,6 +278,15 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
                 if (mounted) setState(() => _showNarrator = false);
               },
             ),
+          // Gift/Curse flying animation overlay (shown to ALL players in room)
+          Consumer(builder: (context, ref, _) {
+            final animState = ref.watch(giftAnimationProvider);
+            if (!animState.hasAnimation) return const SizedBox.shrink();
+            return GiftFlyingAnimationOverlay(
+              event: animState.current!,
+              onComplete: () => ref.read(giftAnimationProvider.notifier).dismiss(),
+            );
+          }),
         ],
       ),
     );

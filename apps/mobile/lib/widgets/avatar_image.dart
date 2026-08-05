@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../core/config.dart';
-import '../core/theme.dart';
 
 /// Universal avatar widget — upload-only system.
 ///

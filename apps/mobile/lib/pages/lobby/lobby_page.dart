@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../models/room.dart';
 import '../../models/ws_message.dart';
@@ -14,11 +13,13 @@ import '../../providers/auth_provider.dart';
 import '../../providers/chibi_provider.dart';
 import '../../providers/emote_provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/gift_animation_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/chibi_emotes.dart';
 import '../../widgets/connection_indicator.dart';
 import '../../widgets/game_avatar.dart';
+import '../../widgets/gift_flying_animation_overlay.dart';
 import '../../services/audio_service.dart';
 
 /// Seat card colors — each seat gets a unique color tint (like Wowgame)
@@ -167,6 +168,15 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
               ],
             ),
           ),
+          // Gift/Curse flying animation overlay (shown to ALL players in room)
+          Consumer(builder: (context, ref, _) {
+            final animState = ref.watch(giftAnimationProvider);
+            if (!animState.hasAnimation) return const SizedBox.shrink();
+            return GiftFlyingAnimationOverlay(
+              event: animState.current!,
+              onComplete: () => ref.read(giftAnimationProvider.notifier).dismiss(),
+            );
+          }),
           // Countdown overlay
           if (roomState.countdown != null && roomState.countdown! > 0)
             Container(

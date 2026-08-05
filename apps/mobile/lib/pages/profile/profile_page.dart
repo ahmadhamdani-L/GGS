@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chibi_provider.dart';
-import '../../providers/social_provider.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/gift_gallery.dart';
 // GiftShopPage imported lazily via Navigator.push to avoid circular deps

@@ -261,8 +261,30 @@ class _SeatsGrid extends ConsumerWidget {
       // Release own seat
       HapticFeedback.lightImpact();
       ref.read(roomV2Provider.notifier).releaseSeat(myId, room.roomId);
+    } else {
+      // Tap on another player — show profile card
+      final player = room.players.where((p) => p.userId == seat.playerId).firstOrNull;
+      if (player != null && !player.isBot) {
+        HapticFeedback.lightImpact();
+        _showPlayerProfileCard(ref.context, ref, seat, player);
+      }
     }
-    // If occupied by someone else — do nothing (or show profile)
+  }
+
+  void _showPlayerProfileCard(BuildContext context, WidgetRef ref, SeatV2 seat, RoomPlayerV2 player) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1D2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _PlayerProfileSheet(
+        playerId: player.userId,
+        displayName: player.displayName,
+        chibiConfig: seat.chibiConfig,
+        myId: myId,
+      ),
+    );
   }
 
   void _handleHostAction(BuildContext context, WidgetRef ref, SeatV2 seat, RoomPlayerV2? player) {
@@ -922,6 +944,142 @@ class _ChatSheetState extends ConsumerState<_ChatSheet> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─── Player Profile Card (tap on other player's seat) ────────
+
+class _PlayerProfileSheet extends ConsumerWidget {
+  final String playerId;
+  final String displayName;
+  final Map<String, dynamic>? chibiConfig;
+  final String myId;
+
+  const _PlayerProfileSheet({
+    required this.playerId,
+    required this.displayName,
+    this.chibiConfig,
+    required this.myId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          // Character preview
+          SizedBox(
+            height: 100,
+            child: ChibiAvatar(
+              config: parseChibiConfig(chibiConfig) ?? generateChibiFromId(playerId),
+              size: 70,
+              animate: true,
+              showShadow: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Name
+          Text(displayName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 16),
+          // Stats row (Charm + Popularity + Rank)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _statItem('✨', 'Charm', '—'),
+              _statItem('👥', 'Popularity', '—'),
+              _statItem('🏆', 'Rank', '—'),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Action buttons
+          Row(
+            children: [
+              // Add Friend
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.person_add_rounded,
+                  label: 'Tambah Teman',
+                  color: const Color(0xFF4ADE80),
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.mediumImpact();
+                    ref.read(apiServiceProvider).addFriend(playerId);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Permintaan pertemanan dikirim!'), backgroundColor: AppColors.success, behavior: SnackBarBehavior.floating),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Send Gift
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.card_giftcard_rounded,
+                  label: 'Gift',
+                  color: const Color(0xFFDAA520),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/social/gift/$playerId/$displayName');
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              // View Profile
+              Expanded(
+                child: _actionButton(
+                  icon: Icons.account_circle_rounded,
+                  label: 'Profil',
+                  color: const Color(0xFF60A5FA),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/player/$playerId');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _statItem(String emoji, String label, String value) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+        Text(label, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _actionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w700)),
           ],
         ),
       ),

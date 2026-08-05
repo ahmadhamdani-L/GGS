@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +8,6 @@ import '../../../models/game_state.dart';
 import '../../../models/player.dart';
 import '../../../models/ws_message.dart';
 import '../../../providers/room_provider.dart';
-import '../../../widgets/chibi_avatar.dart';
-import '../../../widgets/game_avatar.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/player_profile_dialog.dart';
 

@@ -163,6 +163,72 @@ func (h *Hub) handleEmote(client *Client, payload json.RawMessage) {
 	h.broadcastToRoom(client.RoomID, &Message{Type: "emote_received", Payload: respBytes}, nil)
 }
 
+// handleGiftAnimation broadcasts a gift/curse flying animation to all players in the sender's room.
+// Triggered client-side after a successful gift send (REST API), so that the animation
+// is shown to ALL room members (flying from sender avatar to receiver avatar).
+func (h *Hub) handleGiftAnimation(client *Client, payload json.RawMessage) {
+	if client.RoomID == "" {
+		return
+	}
+
+	// Anti-spam: throttle gift animations
+	if !checkActionThrottle(client) {
+		return
+	}
+
+	var req struct {
+		ReceiverID    string `json:"receiverId"`
+		GiftID        string `json:"giftId"`
+		GiftName      string `json:"giftName"`
+		GiftEmoji     string `json:"giftEmoji"`
+		GiftType      string `json:"giftType"`      // "gift" | "curse"
+		AnimationKey  string `json:"animationKey"`
+		Rarity        string `json:"rarity"`        // common|rare|epic|legendary
+		BroadcastType string `json:"broadcastType"` // room|global
+	}
+	if err := json.Unmarshal(payload, &req); err != nil {
+		return
+	}
+	if req.ReceiverID == "" || req.GiftID == "" {
+		return
+	}
+
+	// Get sender display name from profile cache
+	senderName, _, _, _ := h.getPlayerProfile(client.UserID)
+	receiverName, _, _, _ := h.getPlayerProfile(req.ReceiverID)
+
+	broadcastPayload := map[string]interface{}{
+		"senderId":      client.UserID,
+		"receiverId":    req.ReceiverID,
+		"senderName":    senderName,
+		"receiverName":  receiverName,
+		"giftId":        req.GiftID,
+		"giftName":      req.GiftName,
+		"giftEmoji":     req.GiftEmoji,
+		"giftType":      req.GiftType,
+		"animationKey":  req.AnimationKey,
+		"rarity":        req.Rarity,
+		"broadcastType": req.BroadcastType,
+	}
+	respBytes, _ := json.Marshal(broadcastPayload)
+
+	// Broadcast to room (all players see the animation)
+	h.broadcastToRoom(client.RoomID, &Message{Type: "gift_animation_broadcast", Payload: respBytes}, nil)
+
+	// If global broadcast (legendary), also send to ALL connected clients
+	if req.BroadcastType == "global" {
+		h.BroadcastAll("gift_animation_broadcast", broadcastPayload)
+	}
+
+	logger.Debug(logger.CatWebSocket, "Gift animation broadcast", map[string]interface{}{
+		"senderId":   client.UserID,
+		"receiverId": req.ReceiverID,
+		"giftId":     req.GiftID,
+		"rarity":     req.Rarity,
+		"roomId":     client.RoomID,
+	})
+}
+
 func (h *Hub) handleTyping(client *Client) {
 	resp := map[string]interface{}{"playerId": client.UserID}
 	respBytes, _ := json.Marshal(resp)
