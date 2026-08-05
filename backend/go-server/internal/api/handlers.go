@@ -793,6 +793,8 @@ func (s *Server) HandleLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 // ─── Middleware ──────────────────────────────────────────
 
+// NOTE: ctxKey kept for backward compat with handlers in this file.
+// New handlers should use ContextKeyUserID from middleware.go.
 type ctxKey string
 
 const userIDKey ctxKey = "userId"
@@ -814,7 +816,9 @@ func (s *Server) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			errorResponse(w, 401, "invalid token")
 			return
 		}
+		// Set BOTH keys so handlers using either type can read the user ID
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
+		ctx = context.WithValue(ctx, ContextKeyUserID, userID)
 		next(w, r.WithContext(ctx))
 	}
 }
