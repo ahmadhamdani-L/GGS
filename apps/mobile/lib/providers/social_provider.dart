@@ -77,13 +77,21 @@ class SocialState {
 class SocialNotifier extends StateNotifier<SocialState> {
   SocialNotifier(this._ref) : super(const SocialState());
   final Ref _ref;
+  bool _diamondRefreshInFlight = false;
 
   Future<void> refreshDiamonds() async {
-    final api = _ref.read(apiServiceProvider);
-    final res = await api.getDiamonds();
-    if (res.isSuccess && res.data != null) {
-      _ref.read(diamondBalanceProvider.notifier).state =
-          DiamondBalance.fromJson(res.data!);
+    // Deduplicate: skip if already fetching
+    if (_diamondRefreshInFlight) return;
+    _diamondRefreshInFlight = true;
+    try {
+      final api = _ref.read(apiServiceProvider);
+      final res = await api.getDiamonds();
+      if (res.isSuccess && res.data != null) {
+        _ref.read(diamondBalanceProvider.notifier).state =
+            DiamondBalance.fromJson(res.data!);
+      }
+    } finally {
+      _diamondRefreshInFlight = false;
     }
   }
 

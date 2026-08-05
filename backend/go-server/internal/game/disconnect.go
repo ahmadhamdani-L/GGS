@@ -111,26 +111,22 @@ func CountDisconnectedPlayers(state *GameState) int {
 }
 
 // ShouldAbortGame returns true if too many players disconnected (>50% alive).
+// Does NOT abort if at least 1 human is still connected and alive.
 func ShouldAbortGame(state *GameState) bool {
-	alive := 0
-	disconnected := 0
+	humanAlive := 0
+	humanConnected := 0
 	for _, p := range state.Players {
-		if p.IsAlive {
-			alive++
-			if !p.IsConnected && !p.IsBot {
-				disconnected++
+		if p.IsAlive && !p.IsBot {
+			humanAlive++
+			if p.IsConnected {
+				humanConnected++
 			}
 		}
 	}
-	// Abort if more than half of alive human players are disconnected
-	humanAlive := alive
-	for _, p := range state.Players {
-		if p.IsAlive && p.IsBot {
-			humanAlive--
-		}
+	// If at least 1 human is connected, don't abort (bots keep game going)
+	if humanConnected >= 1 {
+		return false
 	}
-	if humanAlive <= 0 {
-		return true // all humans left
-	}
-	return disconnected > humanAlive/2
+	// All humans disconnected or dead
+	return humanAlive == 0 || humanConnected == 0
 }

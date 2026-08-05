@@ -30,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.ggs.ggs_werewolf"
+        applicationId = "com.ggs.ggsWerewolf"
         minSdk = flutter.minSdkVersion  // Firebase Messaging requires API 21+
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

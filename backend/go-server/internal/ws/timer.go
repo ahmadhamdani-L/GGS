@@ -148,6 +148,8 @@ func (h *Hub) checkExpiredTimers() {
 			for _, c := range room.Clients {
 				refs = append(refs, clientRef{c: c})
 			}
+			// Clear game state immediately to prevent repeated abort messages
+			room.Game = nil
 			room.mu.Unlock()
 			for _, ref := range refs {
 				safeSend(ref.c, &Message{Type: "game_aborted", Payload: abortMsg})
