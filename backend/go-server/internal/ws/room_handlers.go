@@ -25,12 +25,34 @@ import (
 
 // handleCreateRoomV2 creates a new private room
 func (h *Hub) handleCreateRoomV2(client *Client, payload json.RawMessage) {
+	// Rate limit: prevent spam
+	if !checkActionThrottle(client) {
+		sendErrorV2(client, "RATE_LIMITED", "Terlalu cepat, tunggu sebentar")
+		return
+	}
+
 	var req struct {
 		UserID string `json:"userId"`
 	}
 	if err := json.Unmarshal(payload, &req); err != nil {
 		sendErrorV2(client, "INVALID_PAYLOAD", "Invalid create_room payload")
 		return
+	}
+
+	// Max 3 private rooms per user
+	ownedCount := h.roomMgr.CountRoomsByHost(req.UserID)
+	if ownedCount >= 3 {
+		sendErrorV2(client, "MAX_ROOMS", "Maksimal 3 room per user")
+		return
+	}
+
+	// Auto-leave current room
+	if client.RoomID != "" {
+		if oldRoom := h.roomMgr.GetRoom(client.RoomID); oldRoom != nil {
+			h.roomMgr.LeaveRoom(oldRoom, req.UserID)
+			h.roomMgr.BroadcastRoomState(oldRoom)
+		}
+		client.RoomID = ""
 	}
 
 	displayName, avatarID, _, chibi := h.getPlayerProfile(req.UserID)
@@ -63,6 +85,10 @@ func (h *Hub) handleCreateRoomV2(client *Client, payload json.RawMessage) {
 
 // handleJoinRoomV2 joins a player to an existing room by code
 func (h *Hub) handleJoinRoomV2(client *Client, payload json.RawMessage) {
+	if !checkActionThrottle(client) {
+		return
+	}
+
 	var req struct {
 		UserID   string `json:"userId"`
 		RoomCode string `json:"roomCode"`
@@ -76,6 +102,23 @@ func (h *Hub) handleJoinRoomV2(client *Client, payload json.RawMessage) {
 	if room == nil {
 		sendErrorV2(client, "ROOM_NOT_FOUND", "Room tidak ditemukan")
 		return
+	}
+
+	// Already in this room? skip
+	if client.RoomID == room.ID {
+		return
+	}
+
+	// Auto-leave current room before joining new
+	if client.RoomID != "" {
+		if oldRoom := h.roomMgr.GetRoom(client.RoomID); oldRoom != nil {
+			h.roomMgr.LeaveRoom(oldRoom, req.UserID)
+			h.roomMgr.BroadcastEvent(oldRoom, "player_leave", map[string]interface{}{
+				"userId": req.UserID, "reason": "joined_other_room",
+			})
+			h.roomMgr.BroadcastRoomState(oldRoom)
+		}
+		client.RoomID = ""
 	}
 
 	displayName, avatarID, _, chibi := h.getPlayerProfile(req.UserID)

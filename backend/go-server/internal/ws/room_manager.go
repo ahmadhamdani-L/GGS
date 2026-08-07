@@ -278,6 +278,19 @@ func (rm *RoomManager) GetRoomByCode(code string) *ManagedRoom {
 	return rm.rooms[roomID]
 }
 
+// CountRoomsByHost counts how many private rooms a user currently hosts
+func (rm *RoomManager) CountRoomsByHost(userID string) int {
+	rm.mu.RLock()
+	defer rm.mu.RUnlock()
+	count := 0
+	for _, room := range rm.rooms {
+		if room.Type == RoomTypePrivate && room.HostID == userID {
+			count++
+		}
+	}
+	return count
+}
+
 // DestroyRoom removes a private room (public rooms are never destroyed)
 func (rm *RoomManager) DestroyRoom(roomID string) {
 	rm.mu.Lock()

@@ -250,6 +250,30 @@ func (h *Hub) handleUnregister(client *Client) {
 // handleClientDisconnect handles cleanup when a client disconnects from a room
 func (h *Hub) handleClientDisconnect(client *Client) {
 	roomID := client.RoomID
+
+	// Try V2 room manager first
+	if managedRoom := h.roomMgr.GetRoom(roomID); managedRoom != nil {
+		managedRoom.mu.Lock()
+		hasGame := managedRoom.Game != nil
+		managedRoom.mu.Unlock()
+
+		if hasGame {
+			// During game: mark disconnected, keep seat (can reconnect within 30s)
+			h.roomMgr.PlayerDisconnect(managedRoom, client.UserID)
+		} else {
+			// No game: fully remove player (like leaving)
+			h.roomMgr.LeaveRoom(managedRoom, client.UserID)
+			h.roomMgr.BroadcastEvent(managedRoom, "player_leave", map[string]interface{}{
+				"userId": client.UserID,
+				"reason": "disconnected",
+			})
+		}
+		h.roomMgr.BroadcastRoomState(managedRoom)
+		h.broadcastLobbyListV2()
+		return
+	}
+
+	// Fallback: V1 room
 	h.mu.RLock()
 	room, roomOk := h.rooms[roomID]
 	h.mu.RUnlock()
