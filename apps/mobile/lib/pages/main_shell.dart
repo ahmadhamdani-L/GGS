@@ -844,6 +844,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
   final List<Map<String, String>> _messages = [];
   StreamSubscription? _sub;
   bool _expanded = true;
+  int _onlineCount = 0;
 
   @override
   void initState() {
@@ -856,10 +857,15 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
       _sub = ws.messages.listen((msg) {
         if (!mounted) return;
         if (msg.type == 'global_chat_message') {
-          setState(() => _messages.add({
-            'name': msg.payload['displayName'] as String? ?? 'Player',
-            'content': msg.payload['message'] as String? ?? '',
-          }));
+          setState(() {
+            _messages.add({
+              'name': msg.payload['displayName'] as String? ?? 'Player',
+              'content': msg.payload['message'] as String? ?? '',
+            });
+            if (msg.payload['onlineCount'] != null) {
+              _onlineCount = (msg.payload['onlineCount'] as num).toInt();
+            }
+          });
         } else if (msg.type == 'global_chat_history') {
           final msgs = msg.payload['messages'] as List<dynamic>? ?? [];
           setState(() {
@@ -869,6 +875,9 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
                 'name': (m as Map<String, dynamic>)['displayName'] as String? ?? 'Player',
                 'content': m['message'] as String? ?? '',
               });
+            }
+            if (msg.payload['onlineCount'] != null) {
+              _onlineCount = (msg.payload['onlineCount'] as num).toInt();
             }
           });
         }
@@ -924,7 +933,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${_messages.length > 0 ? _messages.length : 0} Online',
+                    '$_onlineCount Online',
                     style: TextStyle(color: const Color(0xFF4ADE80).withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),

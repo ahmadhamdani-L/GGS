@@ -157,6 +157,8 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
                     config: widget.config,
                     blinkValue: _blinkAnimation.value,
                     pose: pose,
+                    activeEmote: _activeEmote,
+                    emoteProgress: _activeEmote != ChibiEmote.none ? _emoteController.value : 0,
                   ),
                 ),
               ),
@@ -174,8 +176,16 @@ class _ChibiPainter extends CustomPainter {
   final ChibiConfig config;
   final double blinkValue;
   final EmotePose pose;
+  final ChibiEmote activeEmote;
+  final double emoteProgress;
 
-  _ChibiPainter({required this.config, this.blinkValue = 1.0, this.pose = const EmotePose()});
+  _ChibiPainter({
+    required this.config,
+    this.blinkValue = 1.0,
+    this.pose = const EmotePose(),
+    this.activeEmote = ChibiEmote.none,
+    this.emoteProgress = 0,
+  });
 
   // Outline paint helper
   Paint get _outline => Paint()
@@ -415,34 +425,48 @@ class _ChibiPainter extends CustomPainter {
   void _drawShoe(Canvas canvas, double cx, double top, double w, double h) {
     final shoeColor = const Color(0xFF4A6FA5);
     final soleColor = const Color(0xFFF5F5F5);
+    final toeCapColor = Color.lerp(shoeColor, Colors.white, 0.15)!;
 
-    // Shoe body
+    // Shoe body (rounded sneaker shape)
     final shoePath = Path();
-    shoePath.moveTo(cx - w / 2, top);
-    shoePath.lineTo(cx - w / 2, top + h * 0.7);
-    shoePath.quadraticBezierTo(cx - w / 2, top + h, cx, top + h);
-    shoePath.quadraticBezierTo(cx + w / 2, top + h, cx + w / 2, top + h * 0.7);
-    shoePath.lineTo(cx + w / 2, top);
+    shoePath.moveTo(cx - w * 0.4, top);
+    shoePath.lineTo(cx - w * 0.45, top + h * 0.5);
+    shoePath.quadraticBezierTo(cx - w * 0.45, top + h * 0.85, cx - w * 0.2, top + h * 0.9);
+    shoePath.lineTo(cx + w * 0.3, top + h * 0.9);
+    shoePath.quadraticBezierTo(cx + w * 0.5, top + h * 0.85, cx + w * 0.5, top + h * 0.6);
+    shoePath.quadraticBezierTo(cx + w * 0.48, top + h * 0.2, cx + w * 0.35, top);
     shoePath.close();
     canvas.drawPath(shoePath, Paint()..color = shoeColor);
-    canvas.drawPath(shoePath, _outline);
+    canvas.drawPath(shoePath, _outline..strokeWidth = 1.5);
 
-    // Sole
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - w / 2 - 1, top + h * 0.8, w + 2, h * 0.2),
-        const Radius.circular(3),
-      ),
-      Paint()..color = soleColor,
-    );
+    // Toe cap (lighter front area)
+    final toePath = Path();
+    toePath.moveTo(cx + w * 0.1, top + h * 0.3);
+    toePath.quadraticBezierTo(cx + w * 0.5, top + h * 0.3, cx + w * 0.48, top + h * 0.6);
+    toePath.quadraticBezierTo(cx + w * 0.45, top + h * 0.85, cx + w * 0.2, top + h * 0.85);
+    toePath.lineTo(cx + w * 0.1, top + h * 0.85);
+    toePath.close();
+    canvas.drawPath(toePath, Paint()..color = toeCapColor);
 
-    // Laces detail
+    // Sole (white rubber sole)
+    final solePath = Path();
+    solePath.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(cx - w * 0.47, top + h * 0.82, w * 0.97, h * 0.2),
+      const Radius.circular(4),
+    ));
+    canvas.drawPath(solePath, Paint()..color = soleColor);
+    canvas.drawPath(solePath, _outline..strokeWidth = 1.0);
+
+    // Lace detail (X pattern)
     final lacePaint = Paint()
       ..color = Colors.white
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(cx - w * 0.15, top + h * 0.3), Offset(cx + w * 0.15, top + h * 0.3), lacePaint);
-    canvas.drawLine(Offset(cx - w * 0.12, top + h * 0.5), Offset(cx + w * 0.12, top + h * 0.5), lacePaint);
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx - w * 0.1, top + h * 0.25), Offset(cx + w * 0.05, top + h * 0.4), lacePaint);
+    canvas.drawLine(Offset(cx + w * 0.05, top + h * 0.25), Offset(cx - w * 0.1, top + h * 0.4), lacePaint);
+    canvas.drawLine(Offset(cx - w * 0.1, top + h * 0.45), Offset(cx + w * 0.05, top + h * 0.6), lacePaint);
+    canvas.drawLine(Offset(cx + w * 0.05, top + h * 0.45), Offset(cx - w * 0.1, top + h * 0.6), lacePaint);
   }
 
 
@@ -684,10 +708,30 @@ class _ChibiPainter extends CustomPainter {
       canvas.drawPath(armPath, Paint()..color = skinColor);
       canvas.drawPath(armPath, _outline);
 
-      // Hand (small circle)
+      // Hand (palm with finger bumps)
       final handY = shoulderY + sleeveLen + skinLen - armW * 0.3;
-      canvas.drawCircle(Offset(shoulderX, handY), armW * 0.55, Paint()..color = skinColor);
-      canvas.drawCircle(Offset(shoulderX, handY), armW * 0.55, _outline);
+      final handR = armW * 0.55;
+      // Palm
+      canvas.drawCircle(Offset(shoulderX, handY), handR, Paint()..color = skinColor);
+      // Finger bumps (3 small circles along bottom of palm)
+      final fingerR = handR * 0.32;
+      for (int f = -1; f <= 1; f++) {
+        canvas.drawCircle(
+          Offset(shoulderX + f * fingerR * 1.1, handY + handR * 0.65),
+          fingerR,
+          Paint()..color = skinColor,
+        );
+      }
+      // Thumb (side bump)
+      canvas.drawCircle(
+        Offset(shoulderX + handR * 0.7 * side, handY - handR * 0.2),
+        fingerR * 0.9,
+        Paint()..color = skinColor,
+      );
+      // Outline the whole hand area
+      final handPath = Path();
+      handPath.addOval(Rect.fromCircle(center: Offset(shoulderX, handY), radius: handR));
+      canvas.drawPath(handPath, _outline..strokeWidth = 1.2);
 
       canvas.restore();
     }
@@ -1091,6 +1135,61 @@ class _ChibiPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
+    // Emote-based mouth override
+    if (activeEmote == ChibiEmote.laugh) {
+      // Wide open laughing mouth — big D-shape smile
+      final openW = r * 0.35;
+      final openH = r * 0.28;
+      final mouthPath = Path();
+      mouthPath.moveTo(cx - openW, mouthY - openH * 0.1);
+      mouthPath.quadraticBezierTo(cx, mouthY - openH * 0.3, cx + openW, mouthY - openH * 0.1);
+      mouthPath.quadraticBezierTo(cx, mouthY + openH, cx - openW, mouthY - openH * 0.1);
+      mouthPath.close();
+      // Dark mouth interior
+      canvas.drawPath(mouthPath, Paint()..color = const Color(0xFF4A2020));
+      // Teeth (white arc at top)
+      final teethPath = Path();
+      teethPath.moveTo(cx - openW * 0.7, mouthY - openH * 0.05);
+      teethPath.quadraticBezierTo(cx, mouthY - openH * 0.2, cx + openW * 0.7, mouthY - openH * 0.05);
+      teethPath.lineTo(cx + openW * 0.7, mouthY + openH * 0.1);
+      teethPath.quadraticBezierTo(cx, mouthY, cx - openW * 0.7, mouthY + openH * 0.1);
+      teethPath.close();
+      canvas.drawPath(teethPath, Paint()..color = Colors.white);
+      // Outline
+      canvas.drawPath(mouthPath, mouthPaint..strokeWidth = r * 0.03);
+      return;
+    }
+
+    if (activeEmote == ChibiEmote.cry) {
+      // Wavy sad open mouth
+      final sadPath = Path();
+      sadPath.moveTo(cx - r * 0.15, mouthY + r * 0.05);
+      sadPath.quadraticBezierTo(cx - r * 0.05, mouthY + r * 0.15, cx, mouthY + r * 0.08);
+      sadPath.quadraticBezierTo(cx + r * 0.05, mouthY + r * 0.15, cx + r * 0.15, mouthY + r * 0.05);
+      canvas.drawPath(sadPath, mouthPaint..strokeWidth = r * 0.04);
+      return;
+    }
+
+    if (activeEmote == ChibiEmote.angry) {
+      // Gritting teeth
+      final angryPath = Path();
+      angryPath.moveTo(cx - r * 0.12, mouthY);
+      angryPath.lineTo(cx - r * 0.12, mouthY + r * 0.1);
+      angryPath.lineTo(cx + r * 0.12, mouthY + r * 0.1);
+      angryPath.lineTo(cx + r * 0.12, mouthY);
+      angryPath.close();
+      canvas.drawPath(angryPath, Paint()..color = const Color(0xFF4A2020));
+      // Teeth line
+      canvas.drawLine(
+        Offset(cx - r * 0.1, mouthY + r * 0.05),
+        Offset(cx + r * 0.1, mouthY + r * 0.05),
+        Paint()..color = Colors.white..strokeWidth = r * 0.03,
+      );
+      canvas.drawPath(angryPath, mouthPaint..strokeWidth = r * 0.025);
+      return;
+    }
+
+    // Default expression-based mouth
     if (expr == Expression.happy || expr == Expression.excited) {
       // Kawaii cat mouth :3
       final catMouth = Path();
@@ -1150,13 +1249,12 @@ class _ChibiPainter extends CustomPainter {
     final style = config.hairStyle;
     final paint = Paint()..color = color;
 
-    // Hair cap (base for all styles)
+    // Hair cap (base for all styles — smooth anime volume)
     final capPath = Path();
-    capPath.moveTo(cx - r * 0.98, headY + r * 0.2);
-    capPath.quadraticBezierTo(cx - r * 0.95, headY - r * 0.75, cx, headY - r * 0.9);
-    capPath.quadraticBezierTo(cx + r * 0.95, headY - r * 0.75, cx + r * 0.98, headY + r * 0.2);
-    capPath.quadraticBezierTo(cx + r * 0.5, headY - r * 0.4, cx, headY - r * 0.35);
-    capPath.quadraticBezierTo(cx - r * 0.5, headY - r * 0.4, cx - r * 0.98, headY + r * 0.2);
+    capPath.moveTo(cx - r * 0.98, headY + r * 0.15);
+    capPath.cubicTo(cx - r * 1.0, headY - r * 0.5, cx - r * 0.6, headY - r * 0.95, cx, headY - r * 0.98);
+    capPath.cubicTo(cx + r * 0.6, headY - r * 0.95, cx + r * 1.0, headY - r * 0.5, cx + r * 0.98, headY + r * 0.15);
+    capPath.cubicTo(cx + r * 0.5, headY - r * 0.35, cx - r * 0.5, headY - r * 0.35, cx - r * 0.98, headY + r * 0.15);
     canvas.drawPath(capPath, paint);
     canvas.drawPath(capPath, _outline..strokeWidth = 1.8);
 
@@ -1199,66 +1297,96 @@ class _ChibiPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx - r * 0.6, headY - r * 0.4), r * 0.08, shinePaint);
   }
 
-  // Messy hair like reference image - multiple random strands
+  // Messy hair - anime protagonist style with layered spiky strands
   void _drawMessyHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    final rng = math.Random(config.hairColor.toARGB32()); // Deterministic random
+    final darkPaint = Paint()..color = Color.lerp(config.hairColor, Colors.black, 0.15)!;
     
-    // Draw many messy strands
-    for (int i = 0; i < 12; i++) {
-      final angle = -math.pi * 0.7 + (i / 11) * math.pi * 1.4;
-      final len = r * (0.35 + rng.nextDouble() * 0.25);
-      final baseX = cx + math.cos(angle) * r * 0.5;
-      final baseY = headY - r * 0.4 + math.sin(angle).abs() * r * 0.2;
-      final tipX = baseX + math.cos(angle - math.pi * 0.1 + rng.nextDouble() * 0.2) * len;
-      final tipY = baseY - len * 0.7 - rng.nextDouble() * r * 0.15;
+    // Large swept strands across forehead (anime protagonist look)
+    final strands = <List<double>>[
+      // [startAngle, length, curveBias] — each strand sweeps from top
+      [-0.9, 0.55, -0.2],
+      [-0.6, 0.50, -0.15],
+      [-0.3, 0.60, -0.1],
+      [0.0, 0.55, 0.05],
+      [0.3, 0.50, 0.1],
+      [0.6, 0.48, 0.15],
+      [0.9, 0.45, 0.2],
+    ];
+
+    for (final s in strands) {
+      final angle = s[0];
+      final len = r * s[1];
+      final bias = s[2];
+      final baseX = cx + angle * r * 0.55;
+      final baseY = headY - r * 0.55;
+      final tipX = baseX + bias * r * 0.4;
+      final tipY = baseY + len;
 
       final strandPath = Path();
-      strandPath.moveTo(baseX - r * 0.08, baseY);
-      strandPath.quadraticBezierTo(
-        tipX + (rng.nextDouble() - 0.5) * r * 0.1,
-        tipY,
-        baseX + r * 0.08,
-        baseY,
+      strandPath.moveTo(baseX - r * 0.12, baseY);
+      strandPath.cubicTo(
+        baseX - r * 0.08 + bias * r * 0.2, baseY + len * 0.4,
+        tipX - r * 0.04, tipY - len * 0.2,
+        tipX, tipY,
+      );
+      strandPath.cubicTo(
+        tipX + r * 0.04, tipY - len * 0.2,
+        baseX + r * 0.08 + bias * r * 0.2, baseY + len * 0.4,
+        baseX + r * 0.12, baseY,
       );
       strandPath.close();
       canvas.drawPath(strandPath, paint);
       canvas.drawPath(strandPath, _outline..strokeWidth = 1.2);
     }
 
-    // Side strands (covering ears slightly)
+    // Side bangs framing face
     for (final side in [-1.0, 1.0]) {
-      for (int i = 0; i < 3; i++) {
-        final strandPath = Path();
-        final sx = cx + r * (0.75 + i * 0.1) * side;
-        final sy = headY - r * 0.15 + i * r * 0.18;
-        strandPath.moveTo(sx, sy);
-        strandPath.quadraticBezierTo(
-          sx + r * 0.15 * side,
-          sy + r * 0.25,
-          sx + r * 0.05 * side,
-          sy + r * 0.4,
-        );
-        strandPath.quadraticBezierTo(
-          sx - r * 0.05 * side,
-          sy + r * 0.2,
-          sx,
-          sy,
-        );
-        canvas.drawPath(strandPath, paint);
-        canvas.drawPath(strandPath, _outline..strokeWidth = 1.0);
-      }
+      final sidePath = Path();
+      final sx = cx + r * 0.8 * side;
+      sidePath.moveTo(sx, headY - r * 0.3);
+      sidePath.cubicTo(
+        sx + r * 0.15 * side, headY + r * 0.1,
+        sx + r * 0.08 * side, headY + r * 0.4,
+        sx + r * 0.02 * side, headY + r * 0.55,
+      );
+      sidePath.cubicTo(
+        sx - r * 0.1 * side, headY + r * 0.35,
+        sx - r * 0.08 * side, headY + r * 0.05,
+        sx - r * 0.05 * side, headY - r * 0.25,
+      );
+      sidePath.close();
+      canvas.drawPath(sidePath, paint);
+      canvas.drawPath(sidePath, _outline..strokeWidth = 1.0);
     }
   }
 
   void _drawShortHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    // Simple short spikes
-    for (int i = -3; i <= 3; i++) {
+    // Clean anime short hair — layered triangular tufts
+    final tufts = <List<double>>[
+      [-0.45, 0.22, -0.08],
+      [-0.25, 0.28, -0.04],
+      [-0.05, 0.30, 0.0],
+      [0.15, 0.26, 0.03],
+      [0.35, 0.20, 0.06],
+    ];
+    for (final t in tufts) {
+      final bx = cx + t[0] * r;
+      final by = headY - r * 0.45;
+      final tipLen = r * t[1];
+      final bias = t[2] * r;
+
       final strandPath = Path();
-      final bx = cx + i * r * 0.18;
-      final by = headY - r * 0.4;
-      strandPath.moveTo(bx - r * 0.1, by + r * 0.1);
-      strandPath.lineTo(bx, by - r * 0.15 - (3 - i.abs()) * r * 0.05);
-      strandPath.lineTo(bx + r * 0.1, by + r * 0.1);
+      strandPath.moveTo(bx - r * 0.12, by + r * 0.1);
+      strandPath.cubicTo(
+        bx - r * 0.06 + bias, by - tipLen * 0.3,
+        bx + bias, by - tipLen,
+        bx + bias * 0.5, by - tipLen * 0.9,
+      );
+      strandPath.cubicTo(
+        bx + bias, by - tipLen * 0.6,
+        bx + r * 0.06 + bias, by - tipLen * 0.2,
+        bx + r * 0.12, by + r * 0.1,
+      );
       strandPath.close();
       canvas.drawPath(strandPath, paint);
       canvas.drawPath(strandPath, _outline..strokeWidth = 1.2);
@@ -1266,39 +1394,73 @@ class _ChibiPainter extends CustomPainter {
   }
 
   void _drawBangsHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    // Straight bangs
+    // Anime straight bangs — clean curtain with individual strand separations
     final bangsPath = Path();
-    bangsPath.moveTo(cx - r * 0.7, headY - r * 0.35);
-    bangsPath.lineTo(cx - r * 0.7, headY - r * 0.08);
-    bangsPath.quadraticBezierTo(cx, headY + r * 0.05, cx + r * 0.7, headY - r * 0.08);
-    bangsPath.lineTo(cx + r * 0.7, headY - r * 0.35);
+    final bangsTop = headY - r * 0.4;
+    final bangsBot = headY + r * 0.02;
+    bangsPath.moveTo(cx - r * 0.72, bangsTop);
+    bangsPath.lineTo(cx - r * 0.72, bangsBot);
+    // Slight wave at bottom
+    bangsPath.cubicTo(
+      cx - r * 0.35, bangsBot + r * 0.08,
+      cx + r * 0.35, bangsBot + r * 0.08,
+      cx + r * 0.72, bangsBot,
+    );
+    bangsPath.lineTo(cx + r * 0.72, bangsTop);
     bangsPath.close();
     canvas.drawPath(bangsPath, paint);
-    canvas.drawPath(bangsPath, _outline);
+    canvas.drawPath(bangsPath, _outline..strokeWidth = 1.5);
 
-    // Bang splits
-    final splitPaint = Paint()
-      ..color = Color.lerp(config.hairColor, Colors.black, 0.15)!
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    for (int i = -2; i <= 2; i++) {
-      canvas.drawLine(
-        Offset(cx + i * r * 0.2, headY - r * 0.3),
-        Offset(cx + i * r * 0.18, headY - r * 0.05),
-        splitPaint,
+    // Strand separation lines (subtle dark lines)
+    final strandPaint = Paint()
+      ..color = Color.lerp(config.hairColor, Colors.black, 0.18)!
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final strandPositions = [-0.45, -0.2, 0.05, 0.3, 0.55];
+    for (final pos in strandPositions) {
+      final sx = cx + pos * r;
+      final path = Path();
+      path.moveTo(sx, bangsTop + r * 0.05);
+      path.cubicTo(
+        sx + r * 0.02, bangsTop + (bangsBot - bangsTop) * 0.4,
+        sx - r * 0.01, bangsTop + (bangsBot - bangsTop) * 0.7,
+        sx + r * 0.01, bangsBot,
       );
+      canvas.drawPath(path, strandPaint);
     }
   }
 
   void _drawSideHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    // Side swept bangs
+    // Anime side-swept bangs — sweeps left to right with layered strands
     final sidePath = Path();
-    sidePath.moveTo(cx - r * 0.8, headY - r * 0.35);
-    sidePath.quadraticBezierTo(cx - r * 0.4, headY + r * 0.08, cx + r * 0.2, headY - r * 0.1);
-    sidePath.lineTo(cx + r * 0.6, headY - r * 0.35);
+    sidePath.moveTo(cx - r * 0.82, headY - r * 0.38);
+    sidePath.cubicTo(
+      cx - r * 0.6, headY - r * 0.1,
+      cx - r * 0.2, headY + r * 0.05,
+      cx + r * 0.3, headY - r * 0.05,
+    );
+    sidePath.lineTo(cx + r * 0.65, headY - r * 0.35);
     sidePath.close();
     canvas.drawPath(sidePath, paint);
-    canvas.drawPath(sidePath, _outline);
+    canvas.drawPath(sidePath, _outline..strokeWidth = 1.5);
+
+    // Accent strand that sweeps further
+    final accentPath = Path();
+    accentPath.moveTo(cx - r * 0.75, headY - r * 0.3);
+    accentPath.cubicTo(
+      cx - r * 0.5, headY + r * 0.1,
+      cx - r * 0.15, headY + r * 0.2,
+      cx - r * 0.05, headY + r * 0.35,
+    );
+    accentPath.cubicTo(
+      cx - r * 0.1, headY + r * 0.15,
+      cx - r * 0.4, headY + r * 0.0,
+      cx - r * 0.65, headY - r * 0.2,
+    );
+    accentPath.close();
+    canvas.drawPath(accentPath, paint);
+    canvas.drawPath(accentPath, _outline..strokeWidth = 1.0);
   }
 
   void _drawLongHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
@@ -1322,14 +1484,62 @@ class _ChibiPainter extends CustomPainter {
   }
 
   void _drawCurlyHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    // Curly puffs
-    for (int i = 0; i < 8; i++) {
-      final angle = -math.pi * 0.6 + (i / 7) * math.pi * 1.2;
-      final puffX = cx + math.cos(angle) * r * 0.65;
-      final puffY = headY - r * 0.4 + math.sin(angle).abs() * r * 0.15;
-      final puffR = r * 0.2;
-      canvas.drawCircle(Offset(puffX, puffY), puffR, paint);
-      canvas.drawCircle(Offset(puffX, puffY), puffR, _outline);
+    // Bouncy curls — overlapping round tufts with depth
+    final darkPaint = Paint()..color = Color.lerp(config.hairColor, Colors.black, 0.12)!;
+    
+    // Back layer (slightly darker, larger)
+    final backCurls = [
+      [-0.55, -0.25, 0.22],
+      [-0.25, -0.35, 0.2],
+      [0.05, -0.4, 0.22],
+      [0.35, -0.35, 0.2],
+      [0.6, -0.25, 0.18],
+    ];
+    for (final c in backCurls) {
+      canvas.drawCircle(
+        Offset(cx + c[0] * r, headY + c[1] * r),
+        r * c[2],
+        darkPaint,
+      );
+    }
+
+    // Front layer (main color, smaller)
+    final frontCurls = [
+      [-0.45, -0.35, 0.18],
+      [-0.15, -0.45, 0.17],
+      [0.15, -0.45, 0.18],
+      [0.45, -0.35, 0.17],
+      [-0.35, -0.15, 0.16],
+      [0.0, -0.3, 0.16],
+      [0.35, -0.15, 0.16],
+    ];
+    for (final c in frontCurls) {
+      canvas.drawCircle(
+        Offset(cx + c[0] * r, headY + c[1] * r),
+        r * c[2],
+        paint,
+      );
+      canvas.drawCircle(
+        Offset(cx + c[0] * r, headY + c[1] * r),
+        r * c[2],
+        _outline..strokeWidth = 1.0,
+      );
+    }
+
+    // Side curls framing face
+    for (final side in [-1.0, 1.0]) {
+      for (int i = 0; i < 2; i++) {
+        canvas.drawCircle(
+          Offset(cx + r * (0.7 + i * 0.05) * side, headY + r * (0.1 + i * 0.2)),
+          r * 0.14,
+          paint,
+        );
+        canvas.drawCircle(
+          Offset(cx + r * (0.7 + i * 0.05) * side, headY + r * (0.1 + i * 0.2)),
+          r * 0.14,
+          _outline..strokeWidth = 1.0,
+        );
+      }
     }
   }
 
@@ -1525,7 +1735,9 @@ class _ChibiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ChibiPainter oldDelegate) {
-    return oldDelegate.config != config || oldDelegate.blinkValue != blinkValue || oldDelegate.pose != pose;
+    return oldDelegate.config != config || oldDelegate.blinkValue != blinkValue || 
+           oldDelegate.pose != pose || oldDelegate.activeEmote != activeEmote ||
+           oldDelegate.emoteProgress != emoteProgress;
   }
 }
 
@@ -1549,6 +1761,7 @@ class ChibiConfig {
   final Color? accessoryColor;
   final bool showBlush;
   final FaceShape faceShape;
+  final Gender gender;
 
   const ChibiConfig({
     this.skinColor = const Color(0xFFFFE4C9),
@@ -1565,6 +1778,7 @@ class ChibiConfig {
     this.accessoryColor,
     this.showBlush = true,
     this.faceShape = FaceShape.round,
+    this.gender = Gender.neutral,
   });
 
   ChibiConfig copyWith({
@@ -1582,6 +1796,7 @@ class ChibiConfig {
     Color? accessoryColor,
     bool? showBlush,
     FaceShape? faceShape,
+    Gender? gender,
   }) {
     return ChibiConfig(
       skinColor: skinColor ?? this.skinColor,
@@ -1598,6 +1813,7 @@ class ChibiConfig {
       accessoryColor: accessoryColor ?? this.accessoryColor,
       showBlush: showBlush ?? this.showBlush,
       faceShape: faceShape ?? this.faceShape,
+      gender: gender ?? this.gender,
     );
   }
 
@@ -1618,13 +1834,14 @@ class ChibiConfig {
           accessory == other.accessory &&
           accessoryColor == other.accessoryColor &&
           showBlush == other.showBlush &&
-          faceShape == other.faceShape;
+          faceShape == other.faceShape &&
+          gender == other.gender;
 
   @override
   int get hashCode => Object.hash(
         skinColor, hairColor, eyeColor, shirtColor, pantsColor,
         hairStyle, eyeStyle, expression, shirtStyle, pantsStyle,
-        accessory, accessoryColor, showBlush, faceShape,
+        accessory, accessoryColor, showBlush, faceShape, gender,
       );
 }
 
@@ -1635,6 +1852,7 @@ enum ShirtStyle { tshirt, hoodie, formal, dress }
 enum PantsStyle { shorts, jeans, joggers, skirt }
 enum Accessory { none, glasses, sunglasses, hat, headband, earrings, bow, crown }
 enum FaceShape { round, oval, square, heart, slim }
+enum Gender { male, female, neutral }
 
 
 // ═══════════════════════════════════════════════════════════════

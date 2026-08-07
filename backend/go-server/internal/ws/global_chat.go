@@ -68,6 +68,12 @@ func (h *Hub) handleGlobalChat(client *Client, payload json.RawMessage) {
 		chatMsg["id"] = savedMsg.ID
 	}
 
+	// Include online count
+	h.mu.RLock()
+	onlineCount := len(h.clients)
+	h.mu.RUnlock()
+	chatMsg["onlineCount"] = onlineCount
+
 	broadcast := &Message{
 		Type:    "global_chat_message",
 		Payload: mustMarshal(chatMsg),
@@ -92,9 +98,16 @@ func (h *Hub) handleGetGlobalChat(client *Client) {
 		messages = []db.GlobalChatMessage{}
 	}
 
+	h.mu.RLock()
+	onlineCount := len(h.clients)
+	h.mu.RUnlock()
+
 	client.Send <- &Message{
-		Type:    "global_chat_history",
-		Payload: mustMarshal(map[string]interface{}{"messages": messages}),
+		Type: "global_chat_history",
+		Payload: mustMarshal(map[string]interface{}{
+			"messages":    messages,
+			"onlineCount": onlineCount,
+		}),
 	}
 }
 

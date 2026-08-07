@@ -103,7 +103,7 @@ class DebugLogger {
   LogLevel minLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
 
   /// Whether to print to console
-  bool printToConsole = false;
+  bool printToConsole = true;
 
   /// Whether to write to file (always enabled)
   bool writeToFile = true;

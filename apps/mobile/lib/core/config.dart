@@ -22,6 +22,10 @@ class AppConfig {
     defaultValue: 'ws://103.157.97.158:8080/ws',
   );
 
+  // Local dev override — uncomment for local testing:
+  // static const String apiUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8080');
+  // static const String wsUrl = String.fromEnvironment('WS_URL', defaultValue: 'ws://localhost:8080/ws');
+
   /// True when running a production build (API_URL points to https)
   static bool get isProduction => apiUrl.startsWith('https://');
 }

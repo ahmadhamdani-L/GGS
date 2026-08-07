@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/social.dart';
 import '../providers/auth_provider.dart';
+import '../services/debug_logger.dart';
 import '../widgets/gift_gallery.dart';
 
 // ─── Providers ──────────────────────────────────────────────
@@ -84,11 +85,16 @@ class SocialNotifier extends StateNotifier<SocialState> {
     _diamondRefreshInFlight = true;
     try {
       final api = _ref.read(apiServiceProvider);
+      logger.info(LogCategory.api, 'refreshDiamonds: calling GET /api/diamonds (token=${api.token != null})');
       final res = await api.getDiamonds();
+      logger.info(LogCategory.api, 'refreshDiamonds: status=${res.statusCode} success=${res.isSuccess} data=${res.data} error=${res.error}');
       if (res.isSuccess && res.data != null) {
-        _ref.read(diamondBalanceProvider.notifier).state =
-            DiamondBalance.fromJson(res.data!);
+        final balance = DiamondBalance.fromJson(res.data!);
+        logger.info(LogCategory.api, 'refreshDiamonds: parsed amount=${balance.amount}');
+        _ref.read(diamondBalanceProvider.notifier).state = balance;
       }
+    } catch (e, st) {
+      logger.error(LogCategory.api, 'refreshDiamonds exception', error: e, stack: st);
     } finally {
       _diamondRefreshInFlight = false;
     }

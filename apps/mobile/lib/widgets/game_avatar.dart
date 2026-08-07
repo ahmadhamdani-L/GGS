@@ -53,6 +53,7 @@ ChibiConfig? parseChibiConfig(Map<String, dynamic>? json) {
       accessory: Accessory.values[accIdx],
       accessoryColor: json['accessoryColor'] != null ? Color(json['accessoryColor'] as int) : null,
       showBlush: json['showBlush'] as bool? ?? true,
+      gender: Gender.values[(json['gender'] as int? ?? 2).clamp(0, Gender.values.length - 1)],
     );
   } catch (_) {
     return null;

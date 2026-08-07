@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/gift_animation_event.dart';
 import '../models/ws_message.dart';
+import '../providers/auth_provider.dart';
+import '../providers/social_provider.dart';
 import '../services/websocket_service.dart';
 import 'room_provider.dart';
 
@@ -21,6 +23,7 @@ class GiftAnimationState {
 
 class GiftAnimationNotifier extends StateNotifier<GiftAnimationState> {
   final WebSocketService _ws;
+  final Ref _ref;
   StreamSubscription? _sub;
   Timer? _autoAdvanceTimer;
   final Queue<GiftAnimationEvent> _queue = Queue();
@@ -28,7 +31,7 @@ class GiftAnimationNotifier extends StateNotifier<GiftAnimationState> {
   /// Maximum queued animations to prevent memory growth from spam
   static const int _maxQueueSize = 8;
 
-  GiftAnimationNotifier(this._ws) : super(const GiftAnimationState()) {
+  GiftAnimationNotifier(this._ws, this._ref) : super(const GiftAnimationState()) {
     _sub = _ws.messages.listen(_onMessage);
   }
 
@@ -38,6 +41,28 @@ class GiftAnimationNotifier extends StateNotifier<GiftAnimationState> {
       if (event.senderId.isEmpty || event.receiverId.isEmpty) return;
 
       _enqueue(event);
+
+      // Auto-refresh stats if we are the sender or receiver
+      _refreshStatsIfInvolved(event);
+    }
+
+    // Handle direct gift_notification (receiver only) and diamond_credited (sender)
+    if (msg.type == 'gift_notification' || msg.type == 'diamond_credited') {
+      _ref.read(socialProvider.notifier).refreshDiamonds();
+    }
+  }
+
+  /// Refresh diamond balance when the current user is involved in a gift/curse.
+  void _refreshStatsIfInvolved(GiftAnimationEvent event) {
+    final myId = _ref.read(authProvider).userId;
+    if (myId == null) return;
+    if (event.senderId == myId || event.receiverId == myId) {
+      // Debounce: small delay to let backend finish DB writes
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _ref.read(socialProvider.notifier).refreshDiamonds();
+        }
+      });
     }
   }
 
@@ -93,7 +118,7 @@ class GiftAnimationNotifier extends StateNotifier<GiftAnimationState> {
 
 final giftAnimationProvider =
     StateNotifierProvider<GiftAnimationNotifier, GiftAnimationState>((ref) {
-  return GiftAnimationNotifier(ref.watch(webSocketProvider));
+  return GiftAnimationNotifier(ref.watch(webSocketProvider), ref);
 });
 
 /// Convenience provider: whether an animation is currently playing

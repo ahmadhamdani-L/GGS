@@ -429,6 +429,10 @@ class _SkinTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const _SectionTitle('Gender'),
+          const SizedBox(height: 10),
+          _GenderSelector(selected: config.gender, onSelect: notifier.setGender),
+          const SizedBox(height: 16),
           const _SectionTitle('Bentuk Muka'),
           const SizedBox(height: 10),
           _FaceShapeSelector(selected: config.faceShape, onSelect: notifier.setFaceShape),
@@ -1678,6 +1682,62 @@ class _ToggleOption extends StatelessWidget {
   }
 }
 
+
+class _GenderSelector extends StatelessWidget {
+  final Gender selected;
+  final ValueChanged<Gender> onSelect;
+
+  const _GenderSelector({required this.selected, required this.onSelect});
+
+  static const _data = {
+    Gender.male: ('♂️', 'Laki-laki'),
+    Gender.female: ('♀️', 'Perempuan'),
+    Gender.neutral: ('⚪', 'Netral'),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: Gender.values.map((g) {
+        final isActive = g == selected;
+        final (emoji, label) = _data[g]!;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onSelect(g);
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: isActive
+                    ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.05),
+                border: Border.all(
+                  color: isActive ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
+                  width: isActive ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(height: 4),
+                  Text(label, style: TextStyle(
+                    color: isActive ? const Color(0xFFDAA520) : AppColors.textMuted,
+                    fontSize: 11,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  )),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
 
 class _FaceShapeSelector extends StatelessWidget {
   final FaceShape selected;

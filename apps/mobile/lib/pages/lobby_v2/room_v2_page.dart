@@ -4,15 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
+import '../../models/gift_animation_event.dart';
 import '../../models/room_v2.dart';
 import '../../models/ws_message.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/curse_provider.dart';
 import '../../providers/emote_provider.dart';
+import '../../providers/gift_animation_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../providers/room_provider_v2.dart';
+import '../../providers/social_provider.dart';
+import '../../models/social.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/chibi_emotes.dart';
 import '../../widgets/game_avatar.dart';
+import '../../widgets/gift_flying_animation_overlay.dart';
 
 /// Room V2 Page — seat selection, ready, host controls
 class RoomV2Page extends ConsumerWidget {
@@ -63,24 +69,77 @@ class RoomV2Page extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F14),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Header
-            _RoomHeader(room: room, isHost: isHost),
-            // Seats grid
-            Expanded(child: _SeatsGrid(room: room, myId: myId, isHost: isHost)),
-            // Bottom action bar
-            _BottomBar(
-              room: room,
-              myId: myId,
-              isHost: isHost,
-              isSeated: isSeated,
-              isReady: isReady,
+            Column(
+              children: [
+                // Header
+                _RoomHeader(room: room, isHost: isHost),
+                // Seats grid
+                Expanded(child: _SeatsGrid(room: room, myId: myId, isHost: isHost)),
+                // Bottom action bar
+                _BottomBar(
+                  room: room,
+                  myId: myId,
+                  isHost: isHost,
+                  isSeated: isSeated,
+                  isReady: isReady,
+                ),
+              ],
             ),
+            // Gift/Curse flying animation overlay (shown to ALL players in room)
+            Consumer(builder: (context, ref, _) {
+              final animState = ref.watch(giftAnimationProvider);
+              if (!animState.hasAnimation) return const SizedBox.shrink();
+              final event = animState.current!;
+              // Resolve sender/receiver seat positions for directed animation
+              final senderPos = _getSeatPosition(room, event.senderId);
+              final receiverPos = _getSeatPosition(room, event.receiverId);
+              return GiftFlyingAnimationOverlay(
+                event: event,
+                onComplete: () => ref.read(giftAnimationProvider.notifier).dismiss(),
+                senderPosition: senderPos,
+                receiverPosition: receiverPos,
+              );
+            }),
+            // Curse transformation overlay on target avatar
+            Consumer(builder: (context, ref, _) {
+              final animState = ref.watch(giftAnimationProvider);
+              if (!animState.hasAnimation) return const SizedBox.shrink();
+              final event = animState.current!;
+              if (!event.isCurse) return const SizedBox.shrink();
+              final receiverPos = _getSeatPosition(room, event.receiverId);
+              if (receiverPos == null) return const SizedBox.shrink();
+              return _CurseTransformOverlay(
+                event: event,
+                receiverPosition: receiverPos,
+              );
+            }),
           ],
         ),
       ),
     );
+  }
+
+  /// Get normalized seat position (0.0–1.0) for a player by userId.
+  /// Based on the 4-column grid layout.
+  static Offset? _getSeatPosition(RoomStateV2 room, String userId) {
+    // Find the seat occupied by this player and use its .index (the actual seat number)
+    final seat = room.seats.where((s) => s.playerId == userId).firstOrNull;
+    if (seat == null) return null;
+    final seatIndex = seat.index;
+    final cols = 4;
+    final col = seatIndex % cols;
+    final row = seatIndex ~/ cols;
+    final totalRows = (room.settings.maxPlayers / cols).ceil();
+    // Normalize: add offset for header and center within cell
+    final x = (col + 0.5) / cols;
+    // Y: account for header (~0.12) and bottom bar (~0.15), grid takes the rest
+    final yStart = 0.14;
+    final yEnd = 0.82;
+    final yRange = yEnd - yStart;
+    final y = yStart + (row + 0.5) / totalRows * yRange;
+    return Offset(x.clamp(0.05, 0.95), y.clamp(0.1, 0.9));
   }
 }
 
@@ -225,13 +284,15 @@ class _SeatsGrid extends ConsumerWidget {
       physics: const BouncingScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 0.7,
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        childAspectRatio: 0.6,
       ),
       itemCount: seatCount,
       itemBuilder: (_, i) {
-        final seat = i < room.seats.length ? room.seats[i] : const SeatV2(index: 0);
+        // Find seat by its actual index (not list position) to prevent shifting
+        final seat = room.seats.where((s) => s.index == i).firstOrNull
+            ?? SeatV2(index: i);
         final player = seat.isOccupied
             ? room.players.where((p) => p.userId == seat.playerId).firstOrNull
             : null;
@@ -380,22 +441,25 @@ class _SeatCard extends ConsumerWidget {
     final isBot = seat.isBot;
     final name = player?.displayName ?? seat.displayName;
     final isReady = player?.isReady ?? false;
+    final curseEffect = ref.watch(cursedPlayersProvider)[seat.playerId];
 
     return Stack(
       children: [
         Column(
           children: [
-            // Avatar
+            // Avatar (or curse emoji if cursed)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 8, 4, 2),
-                child: ChibiAvatar(
-                  config: parseChibiConfig(seat.chibiConfig) ?? generateChibiFromId(seat.playerId),
-                  size: 50,
-                  animate: isMe,
-                  showShadow: false,
-                  emote: ref.watch(playerEmoteProvider(seat.playerId)),
-                ),
+                child: curseEffect != null
+                    ? _CursedAvatar(emoji: curseEffect.emoji)
+                    : ChibiAvatar(
+                        config: parseChibiConfig(seat.chibiConfig) ?? generateChibiFromId(seat.playerId),
+                        size: 62,
+                        animate: isMe,
+                        showShadow: false,
+                        emote: ref.watch(playerEmoteProvider(seat.playerId)),
+                      ),
               ),
             ),
             // Name
@@ -660,7 +724,6 @@ void _showEmotePicker(BuildContext context, WidgetRef ref) {
             runSpacing: 10,
             children: emotes.map((emote) => GestureDetector(
               onTap: () {
-                Navigator.pop(ctx);
                 HapticFeedback.mediumImpact();
                 final userId = ref.read(authProvider).userId;
                 if (userId == null) return;
@@ -969,6 +1032,8 @@ class _PlayerProfileSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(socialStatsProvider(playerId));
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -992,13 +1057,36 @@ class _PlayerProfileSheet extends ConsumerWidget {
           Text(displayName, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           // Stats row (Charm + Popularity + Rank)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _statItem('✨', 'Charm', '—'),
-              _statItem('👥', 'Popularity', '—'),
-              _statItem('🏆', 'Rank', '—'),
-            ],
+          statsAsync.when(
+            data: (data) {
+              final stats = data['stats'];
+              final charm = stats is SocialStats ? stats.charm : 0;
+              final popularity = stats is SocialStats ? stats.popularity : 0;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _statItem('✨', 'Charm', '$charm'),
+                  _statItem('👥', 'Popularity', '$popularity'),
+                  _statItem('🏆', 'Rank', '—'),
+                ],
+              );
+            },
+            loading: () => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _statItem('✨', 'Charm', '...'),
+                _statItem('👥', 'Popularity', '...'),
+                _statItem('🏆', 'Rank', '...'),
+              ],
+            ),
+            error: (_, __) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _statItem('✨', 'Charm', '—'),
+                _statItem('👥', 'Popularity', '—'),
+                _statItem('🏆', 'Rank', '—'),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           // Action buttons
@@ -1083,6 +1171,180 @@ class _PlayerProfileSheet extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+// ─── Curse Transform Overlay ─────────────────────────────────
+// Shows the curse emoji pulsing over the target player's seat position
+// for a few seconds after a curse is applied.
+
+class _CurseTransformOverlay extends StatefulWidget {
+  final GiftAnimationEvent event;
+  final Offset receiverPosition;
+  const _CurseTransformOverlay({required this.event, required this.receiverPosition});
+
+  @override
+  State<_CurseTransformOverlay> createState() => _CurseTransformOverlayState();
+}
+
+class _CurseTransformOverlayState extends State<_CurseTransformOverlay>
+    with TickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+  late final AnimationController _fadeCtrl;
+  late final Animation<double> _pulse;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 1.0, end: 1.4).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+
+    // Fade out after delay
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn),
+    );
+
+    // Start fade after the main animation plays
+    final delay = widget.event.animationDuration - const Duration(milliseconds: 800);
+    Future.delayed(delay.isNegative ? Duration.zero : delay, () {
+      if (mounted) _fadeCtrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final x = widget.receiverPosition.dx * size.width;
+    final y = widget.receiverPosition.dy * size.height;
+
+    return Positioned(
+      left: x - 36,
+      top: y - 36,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_pulse, _fade]),
+          builder: (_, __) => Opacity(
+            opacity: _fade.value,
+            child: Transform.scale(
+              scale: _pulse.value,
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF6B21A8).withValues(alpha: 0.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF9B59B6).withValues(alpha: 0.6),
+                      blurRadius: 20,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    widget.event.giftEmoji,
+                    style: const TextStyle(fontSize: 36),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─── Cursed Avatar Widget ────────────────────────────────────
+// Replaces the chibi avatar when a player is cursed.
+// Shows the curse emoji with a subtle wobble animation and purple tint.
+
+class _CursedAvatar extends StatefulWidget {
+  final String emoji;
+  const _CursedAvatar({required this.emoji});
+
+  @override
+  State<_CursedAvatar> createState() => _CursedAvatarState();
+}
+
+class _CursedAvatarState extends State<_CursedAvatar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final wobble = (_ctrl.value - 0.5) * 0.15;
+        final scale = 0.95 + _ctrl.value * 0.1;
+        return Transform.scale(
+          scale: scale,
+          child: Transform.rotate(
+            angle: wobble,
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF6B21A8).withValues(alpha: 0.2),
+                border: Border.all(
+                  color: const Color(0xFF9B59B6).withValues(alpha: 0.5),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF9B59B6).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  widget.emoji,
+                  style: const TextStyle(fontSize: 42),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
