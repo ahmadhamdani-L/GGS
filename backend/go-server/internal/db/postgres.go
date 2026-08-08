@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -65,7 +66,23 @@ func Connect() error {
 	defer cancel()
 
 	if err := DB.PingContext(ctx); err != nil {
-		return fmt.Errorf("failed to ping db: %w", err)
+		// If database doesn't exist, try to create it automatically
+		if isDBNotExistError(err) {
+			log.Println("⚠ Database ggs_werewolf not found, creating automatically...")
+			if createErr := ensureDatabase(dsn); createErr != nil {
+				return fmt.Errorf("failed to auto-create database: %w", createErr)
+			}
+			// Retry ping after creating DB
+			ctx2, cancel2 := context.WithTimeout(context.Background(), defaultPingTimeout)
+			defer cancel2()
+			if err2 := DB.PingContext(ctx2); err2 != nil {
+				return fmt.Errorf("failed to ping db after create: %w", err2)
+			}
+			log.Println("✓ Database ggs_werewolf created, running migrations...")
+			runMigrations()
+		} else {
+			return fmt.Errorf("failed to ping db: %w", err)
+		}
 	}
 
 	// P2-37: Set default statement timeout to prevent runaway queries
@@ -132,4 +149,79 @@ func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 		}
 	}
 	return defaultVal
+}
+
+// ─── Auto-create database if not exists ──────────────────────
+
+// isDBNotExistError checks if the error is because database doesn't exist
+func isDBNotExistError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "does not exist") ||
+		strings.Contains(msg, "database") && strings.Contains(msg, "not exist")
+}
+
+// ensureDatabase connects to the default "postgres" database and creates ggs_werewolf
+func ensureDatabase(originalDSN string) error {
+	// Replace database name in DSN with "postgres" (default DB that always exists)
+	adminDSN := strings.Replace(originalDSN, "/ggs_werewolf", "/postgres", 1)
+
+	adminDB, err := sql.Open("postgres", adminDSN)
+	if err != nil {
+		return fmt.Errorf("cannot connect to postgres db: %w", err)
+	}
+	defer adminDB.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := adminDB.PingContext(ctx); err != nil {
+		return fmt.Errorf("cannot ping postgres db: %w", err)
+	}
+
+	// Check if database exists
+	var exists bool
+	adminDB.QueryRow("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = 'ggs_werewolf')").Scan(&exists)
+	if exists {
+		return nil // Already exists
+	}
+
+	// Create database
+	_, err = adminDB.Exec("CREATE DATABASE ggs_werewolf")
+	if err != nil {
+		return fmt.Errorf("CREATE DATABASE failed: %w", err)
+	}
+	log.Println("✓ Created database ggs_werewolf")
+	return nil
+}
+
+// runMigrations executes the SQL migration files
+func runMigrations() {
+	if DB == nil {
+		return
+	}
+
+	// Try to read migration file from common locations
+	migrationPaths := []string{
+		"./migrations/001_init.sql",
+		"/app/migrations/001_init.sql",
+		"../migrations/001_init.sql",
+	}
+
+	for _, path := range migrationPaths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		_, execErr := DB.Exec(string(data))
+		if execErr != nil {
+			log.Printf("⚠ Migration warning (non-fatal): %v", execErr)
+		} else {
+			log.Printf("✓ Migration applied from %s", path)
+		}
+		return
+	}
+	log.Println("⚠ No migration files found — database tables may be missing")
 }
