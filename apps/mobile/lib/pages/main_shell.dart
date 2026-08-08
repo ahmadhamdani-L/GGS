@@ -119,9 +119,9 @@ class _MainShellState extends ConsumerState<MainShell> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, 'Home'),
-              _navItem(1, Icons.checkroom_rounded, 'Wardrobe'),
-              _navItem(2, Icons.people_alt_rounded, 'Social'),
-              _navItem(3, Icons.storefront_rounded, 'Shop'),
+              _navItem(1, Icons.backpack_rounded, 'Wardrobe'),
+              _navItem(2, Icons.groups_rounded, 'Social'),
+              _navItem(3, Icons.shopping_bag_rounded, 'Shop'),
               _moreNavItem(),
             ],
           ),

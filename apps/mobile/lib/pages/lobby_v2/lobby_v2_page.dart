@@ -9,7 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../providers/room_provider_v2.dart';
 
-/// Modern Lobby Page — shows public + private rooms, join/create flow
+/// Modern Lobby Page — styled like Werewolf reference game
 class LobbyV2Page extends ConsumerStatefulWidget {
   const LobbyV2Page({super.key});
   @override
@@ -18,16 +18,25 @@ class LobbyV2Page extends ConsumerStatefulWidget {
 
 class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
   final _codeCtrl = TextEditingController();
+  bool _actionInProgress = false;
 
   @override
   void initState() {
     super.initState();
-    // Request lobby list on mount + ensure WS is connected
     Future.microtask(() async {
       await _ensureWsConnected();
-      if (mounted) {
-        ref.read(lobbyListProvider.notifier).refresh();
+      if (!mounted) return;
+
+      // If user is still in a room (came back from room page), auto-leave
+      final currentRoom = ref.read(roomV2Provider);
+      if (currentRoom != null) {
+        final userId = ref.read(authProvider).userId;
+        if (userId != null) {
+          ref.read(roomV2Provider.notifier).leaveRoom(userId, currentRoom.roomId);
+        }
       }
+
+      ref.read(lobbyListProvider.notifier).refresh();
     });
   }
 
@@ -35,9 +44,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
     final ws = ref.read(webSocketProvider);
     final api = ref.read(apiServiceProvider);
     if (api.token != null && !ws.isConnected) {
-      try {
-        await ws.connect(api.token!);
-      } catch (_) {}
+      try { await ws.connect(api.token!); } catch (_) {}
     }
   }
 
@@ -51,7 +58,6 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
   Widget build(BuildContext context) {
     final rooms = ref.watch(lobbyListProvider);
 
-    // If we're in a room, navigate to room view
     ref.listen<RoomStateV2?>(roomV2Provider, (prev, next) {
       if (prev == null && next != null && mounted) {
         context.push('/room-v2/${next.roomId}');
@@ -59,195 +65,265 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F14),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0F14),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () => context.pop(),
+      backgroundColor: const Color(0xFF0A0E1A),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(context),
+            // Room list
+            Expanded(child: _buildRoomList(rooms)),
+            // Bottom action bar
+            _buildBottomBar(context),
+          ],
         ),
-        title: const Text('Lobby',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w800)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: AppColors.primary, size: 22),
-            onPressed: () =>
-                ref.read(lobbyListProvider.notifier).refresh(),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+      ),
+      child: Row(
+        children: [
+          // Back
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          // Title
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('GAME ROOMS', style: TextStyle(color: Color(0xFFDAA520), fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                Text('Pilih room atau buat baru', style: TextStyle(color: Colors.white38, fontSize: 10)),
+              ],
+            ),
+          ),
+          // Refresh
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              ref.read(lobbyListProvider.notifier).refresh();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+              child: const Icon(Icons.refresh_rounded, color: Color(0xFFDAA520), size: 18),
+            ),
           ),
         ],
       ),
-      body: SafeArea(
+    );
+  }
+
+  Widget _buildRoomList(List<LobbyRoomInfo> rooms) {
+    if (rooms.isEmpty) {
+      return Center(
         child: Column(
-        children: [
-          // Create / Join private room bar
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: const Color(0xFF1A1D2E),
-              border: Border.all(
-                  color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🐺', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            const Text('Belum ada room', style: TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            const Text('Buat room baru atau join dengan kode', style: TextStyle(color: Colors.white30, fontSize: 12)),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => ref.read(lobbyListProvider.notifier).refresh(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFDAA520).withValues(alpha: 0.15),
+                ),
+                child: const Text('Refresh', style: TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w700)),
+              ),
             ),
-            child: Row(
-              children: [
-                // Join by code
-                Expanded(
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      itemCount: rooms.length,
+      itemBuilder: (_, i) => _LobbyRoomCard(room: rooms[i], index: i + 1),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Join by code row
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withValues(alpha: 0.06),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
                   child: TextField(
                     controller: _codeCtrl,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2),
+                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 2),
                     textCapitalization: TextCapitalization.characters,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'KODE ROOM',
-                      hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          fontSize: 12),
+                      hintStyle: TextStyle(color: Colors.white24, fontSize: 12),
+                      border: InputBorder.none,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Join button
-                GestureDetector(
-                  onTap: () {
-                    final code = _codeCtrl.text.trim();
-                    if (code.isEmpty) return;
-                    HapticFeedback.mediumImpact();
-                    final userId = ref.read(authProvider).userId;
-                    if (userId != null) {
-                      ref
-                          .read(roomV2Provider.notifier)
-                          .joinRoom(userId, code);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: AppColors.primary,
-                    ),
-                    child: const Text('JOIN',
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900)),
+              ),
+              const SizedBox(width: 8),
+              // Search/Join button
+              GestureDetector(
+                onTap: () {
+                  final code = _codeCtrl.text.trim();
+                  if (code.isEmpty) return;
+                  HapticFeedback.mediumImpact();
+                  final userId = ref.read(authProvider).userId;
+                  if (userId != null) {
+                    ref.read(roomV2Provider.notifier).joinRoom(userId, code);
+                  }
+                },
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFDAA520),
+                  ),
+                  child: const Center(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.search_rounded, color: Colors.black, size: 16),
+                      SizedBox(width: 4),
+                      Text('JOIN', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900)),
+                    ]),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Create private room
-                GestureDetector(
-                  onTap: () {
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Create + Quickly Join buttons
+          Row(
+            children: [
+              // Create Room
+              Expanded(
+                child: GestureDetector(
+                  onTap: _actionInProgress ? null : () {
                     HapticFeedback.heavyImpact();
+                    setState(() => _actionInProgress = true);
                     final userId = ref.read(authProvider).userId;
                     if (userId != null) {
                       ref.read(roomV2Provider.notifier).createRoom(userId);
                     }
+                    // Re-enable after 2 seconds
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) setState(() => _actionInProgress = false);
+                    });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
+                    height: 42,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      gradient: const LinearGradient(colors: [
-                        Color(0xFFB8860B),
-                        Color(0xFFDAA520)
-                      ]),
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
+                      boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_rounded,
-                            color: Colors.black, size: 14),
-                        SizedBox(width: 2),
-                        Text('BUAT',
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900)),
-                      ],
+                    child: const Center(
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.add_circle_rounded, color: Colors.black, size: 16),
+                        SizedBox(width: 6),
+                        Text('CREATE', style: TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900)),
+                      ]),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          // Room list
-          Expanded(
-            child: rooms.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('🏠', style: TextStyle(fontSize: 48)),
-                        const SizedBox(height: 12),
-                        const Text('Belum ada room',
-                            style: TextStyle(
-                                color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        const Text('Buat room baru atau join dengan kode',
-                            style: TextStyle(
-                                color: AppColors.textMuted, fontSize: 12)),
-                        const SizedBox(height: 16),
-                        GestureDetector(
-                          onTap: () => ref.read(lobbyListProvider.notifier).refresh(),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white.withValues(alpha: 0.05),
-                            ),
-                            child: const Text('Refresh', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ],
+              ),
+              const SizedBox(width: 10),
+              // Quickly Join (join random waiting room)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    final userId = ref.read(authProvider).userId;
+                    if (userId == null) return;
+                    // Find first joinable room and join
+                    final rooms = ref.read(lobbyListProvider);
+                    final joinable = rooms.where((r) => r.isJoinable && r.totalOccupants < r.maxSeats).firstOrNull;
+                    if (joinable != null) {
+                      ref.read(roomV2Provider.notifier).joinRoom(userId, joinable.code);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tidak ada room tersedia'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
+                      );
+                    }
+                  },
+                  child: Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFF1E293B),
+                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: rooms.length,
-                    itemBuilder: (_, i) => _RoomCard(room: rooms[i]),
+                    child: const Center(
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.bolt_rounded, color: Color(0xFFDAA520), size: 16),
+                        SizedBox(width: 6),
+                        Text('QUICK JOIN', style: TextStyle(color: Color(0xFFDAA520), fontSize: 13, fontWeight: FontWeight.w900)),
+                      ]),
+                    ),
                   ),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
       ),
     );
   }
 }
 
-// ─── Room Card ───────────────────────────────────────────────
+// ─── Room Card (like Werewolf reference) ─────────────────────
 
-class _RoomCard extends ConsumerWidget {
+class _LobbyRoomCard extends ConsumerWidget {
   final LobbyRoomInfo room;
-  const _RoomCard({required this.room});
+  final int index;
+  const _LobbyRoomCard({required this.room, required this.index});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPublic = room.isPublic;
-    final canJoin = room.isJoinable;
-    final stateColor = switch (room.state) {
-      'WAITING' => AppColors.success,
-      'PLAYING' => const Color(0xFFEF4444),
-      'RESULT' => const Color(0xFFF59E0B),
-      _ => AppColors.textMuted,
+    final canJoin = room.isJoinable && room.totalOccupants < room.maxSeats;
+    final isFull = room.totalOccupants >= room.maxSeats;
+
+    // Status config
+    final (statusText, statusColor) = switch (room.state) {
+      'WAITING' => ('Waiting', const Color(0xFF4ADE80)),
+      'PLAYING' => ('Started', const Color(0xFFEF4444)),
+      'RESULT' => ('Finished', const Color(0xFFF59E0B)),
+      _ => ('...', Colors.white38),
     };
 
     return GestureDetector(
@@ -261,49 +337,68 @@ class _RoomCard extends ConsumerWidget {
             }
           : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFF1A1D2E),
+          gradient: canJoin
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1A1D2E),
+                    const Color(0xFF1E2338),
+                  ],
+                )
+              : null,
+          color: canJoin ? null : const Color(0xFF12151F),
           border: Border.all(
             color: canJoin
-                ? const Color(0xFFDAA520).withValues(alpha: 0.3)
+                ? const Color(0xFFDAA520).withValues(alpha: 0.35)
                 : Colors.white.withValues(alpha: 0.05),
+            width: canJoin ? 1.5 : 1,
           ),
+          boxShadow: canJoin
+              ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.08), blurRadius: 12)]
+              : null,
         ),
         child: Row(
           children: [
-            // Room icon
+            // Room number badge
             Container(
-              width: 42,
-              height: 42,
+              width: 36, height: 36,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: isPublic
-                    ? AppColors.primary.withValues(alpha: 0.15)
-                    : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
+                gradient: canJoin
+                    ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)])
+                    : null,
+                color: canJoin ? null : Colors.white.withValues(alpha: 0.06),
               ),
               child: Center(
                 child: Text(
-                  isPublic ? '🏠' : '🔒',
-                  style: const TextStyle(fontSize: 20),
+                  '$index',
+                  style: TextStyle(
+                    color: canJoin ? Colors.black : Colors.white38,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            // Info
+            // Room info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Name + host
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           room.name,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: canJoin ? Colors.white : Colors.white38,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -311,59 +406,48 @@ class _RoomCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: stateColor.withValues(alpha: 0.15),
-                        ),
-                        child: Text(
-                          room.state,
-                          style: TextStyle(
-                            color: stateColor,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
+                  // Player count + host
                   Row(
                     children: [
-                      Icon(Icons.person_rounded,
-                          color: AppColors.textMuted, size: 12),
+                      Icon(Icons.people_rounded, color: Colors.white.withValues(alpha: 0.4), size: 12),
                       const SizedBox(width: 3),
                       Text(
-                        '${room.playerCount}/${room.maxSeats}',
-                        style: const TextStyle(
-                            color: AppColors.textMuted, fontSize: 11),
+                        '${room.totalOccupants}/${room.maxSeats}',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
                       ),
-                      if (room.botCount > 0) ...[
-                        const SizedBox(width: 8),
-                        Icon(Icons.smart_toy_outlined,
-                            color: AppColors.textMuted, size: 12),
-                        const SizedBox(width: 2),
-                        Text('${room.botCount}',
-                            style: const TextStyle(
-                                color: AppColors.textMuted, fontSize: 11)),
-                      ],
                       if (room.hostName.isNotEmpty) ...[
-                        const Spacer(),
-                        Text('Host: ${room.hostName}',
-                            style: const TextStyle(
-                                color: AppColors.textMuted, fontSize: 10)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.star_rounded, color: const Color(0xFFDAA520).withValues(alpha: 0.5), size: 11),
+                        const SizedBox(width: 2),
+                        Text(room.hostName, style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10)),
                       ],
                     ],
                   ),
                 ],
               ),
             ),
-            // Join arrow
-            if (canJoin)
-              const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.primary, size: 22),
+            // Status badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                color: isFull
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : statusColor.withValues(alpha: 0.15),
+                border: Border.all(color: isFull ? Colors.white.withValues(alpha: 0.1) : statusColor.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                isFull ? 'FULL' : statusText,
+                style: TextStyle(
+                  color: isFull ? Colors.white38 : statusColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
           ],
         ),
       ),

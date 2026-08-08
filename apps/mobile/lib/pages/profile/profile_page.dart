@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -251,87 +250,114 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final played = (_stats?['gamesPlayed'] as num?)?.toInt() ?? 0;
     final won = (_stats?['gamesWon'] as num?)?.toInt() ?? 0;
     final level = profile?.level ?? 1;
+    final charm = (_stats?['charm'] as num?)?.toInt() ?? 0;
+    final popularity = (_stats?['popularity'] as num?)?.toInt() ?? 0;
+    final userId = ref.read(authProvider).userId ?? '';
+    final shortId = userId.length > 8 ? userId.substring(0, 8).toUpperCase() : userId.toUpperCase();
 
-    // #9 FIX: Use real charm/popularity from API (stats endpoint returns these).
-    // Fallback to 0 if API hasn't returned them yet (not available in all endpoints).
-    final charm = (_stats?['charm'] as num?)?.toInt() ?? 300;
-    final popularity = (_stats?['popularity'] as num?)?.toInt() ?? 150;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1F2E),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            children: [
-              Row(children: [
-                // Chibi Avatar — tap to edit
-                GestureDetector(
-                  onTap: () => context.push('/profile/setup'),
-                  child: Container(
-                    width: 65, height: 85,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFDAA520), width: 3),
-                      boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 16)],
-                      color: Colors.black.withValues(alpha: 0.2),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: ChibiAvatar(
-                        config: ref.watch(chibiProvider),
-                        size: 55,
-                        animate: true,
-                        showShadow: false,
-                      ),
-                    ),
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1E2433), Color(0xFF151A28)],
+        ),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.1), blurRadius: 20)],
+      ),
+      child: Column(
+        children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Avatar frame
+            GestureDetector(
+              onTap: () => context.push('/profile/setup'),
+              child: Container(
+                width: 70, height: 90,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFDAA520), width: 2.5),
+                  color: Colors.white,
+                  boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.25), blurRadius: 12)],
                 ),
-                const SizedBox(width: 16),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(profile?.displayName ?? 'Player', style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])),
-                      child: Text('Lv.$level', style: const TextStyle(color: AppColors.background, fontSize: 11, fontWeight: FontWeight.w700)),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('${profile?.coins ?? 0} 🪙', style: const TextStyle(color: AppColors.warning, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ]),
-                ])),
-              ]),
-              const SizedBox(height: 14),
-              const Divider(color: Colors.white10, height: 1),
-              const SizedBox(height: 12),
-              // Charm & Popularity Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Row(children: [
-                    const Text('✨ Charm:', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text('$charm', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 13, fontWeight: FontWeight.w700)),
-                  ]),
-                  Container(width: 1, height: 16, color: Colors.white10),
-                  Row(children: [
-                    const Text('❤️ Popularity:', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text('$popularity', style: const TextStyle(color: AppColors.error, fontSize: 13, fontWeight: FontWeight.w700)),
-                  ]),
-                ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: ChibiAvatar(config: ref.watch(chibiProvider), size: 58, animate: true, showShadow: false),
+                ),
               ),
+            ),
+            const SizedBox(width: 14),
+            // Info column
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              // Name
+              Text(profile?.displayName ?? 'Player', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              // ID badge
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Text('ID ', style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w600)),
+                    Text(shortId, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 8),
+              // Currency row
+              Row(children: [
+                // Level badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
+                  ),
+                  child: Text('Lv.$level', style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w800)),
+                ),
+                const SizedBox(width: 10),
+                // Gold
+                const Text('🪙', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 3),
+                Text('${profile?.coins ?? 0}', style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 12, fontWeight: FontWeight.w700)),
+                const SizedBox(width: 10),
+                // Diamond
+                const Text('💎', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 3),
+                Text('—', style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 12, fontWeight: FontWeight.w700)),
+              ]),
+            ])),
+          ]),
+          const SizedBox(height: 14),
+          // Divider
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
+          const SizedBox(height: 12),
+          // Stats row: Games, Won, Charm, Popularity
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _profileStat('🎮', 'Games', '$played'),
+              _profileStat('🏆', 'Won', '$won'),
+              _profileStat('✨', 'Charm', '$charm'),
+              _profileStat('❤️', 'Popular', '$popularity'),
             ],
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  Widget _profileStat(String emoji, String label, String value) {
+    return Column(children: [
+      Text(emoji, style: const TextStyle(fontSize: 16)),
+      const SizedBox(height: 2),
+      Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
+      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9)),
+    ]);
   }
 
   Widget _buildStatsRow() {

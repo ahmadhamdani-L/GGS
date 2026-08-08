@@ -209,12 +209,12 @@ class _ChibiPainter extends CustomPainter {
       canvas.translate(-cx, -h * 0.6);
     }
 
-    // Anime Kawaii Proportions: 1:1.5 Head to Body ratio
-    final headRadius = w * 0.45; // Bigger head
-    final headY = h * 0.35; // Head sits slightly lower
-    final bodyTop = headY + headRadius * 0.7; // Tighter neck joint
-    final bodyW = w * 0.35; // Thinner body
-    final bodyH = h * 0.22; // Shorter body
+    // Anime Kawaii Proportions: balanced head-to-body
+    final headRadius = w * 0.35; // Compact head
+    final headY = h * 0.32; // Head position
+    final bodyTop = headY + headRadius * 0.72; // Tighter neck joint
+    final bodyW = w * 0.37; // Body width
+    final bodyH = h * 0.25; // Taller body for better proportions
 
     // Draw order (back to front)
     _drawBackHair(canvas, cx, headY, headRadius);
@@ -488,13 +488,34 @@ class _ChibiPainter extends CustomPainter {
   }
 
   void _drawTshirtBody(Canvas canvas, double cx, double top, double w, double h, Color shirtColor) {
-    // T-shirt body shape (like reference - simple rounded rectangle)
+    // T-shirt body — shape varies by gender
+    final isFemale = config.gender == Gender.female;
+    final isMale = config.gender == Gender.male;
+    
     final bodyPath = Path();
-    bodyPath.moveTo(cx - w / 2, top + h * 0.15);
-    bodyPath.quadraticBezierTo(cx - w / 2 - w * 0.08, top + h * 0.5, cx - w / 2, top + h);
-    bodyPath.lineTo(cx + w / 2, top + h);
-    bodyPath.quadraticBezierTo(cx + w / 2 + w * 0.08, top + h * 0.5, cx + w / 2, top + h * 0.15);
-    bodyPath.quadraticBezierTo(cx, top - h * 0.05, cx - w / 2, top + h * 0.15);
+    if (isFemale) {
+      // Female: narrower shoulders, curvier waist
+      bodyPath.moveTo(cx - w * 0.36, top + h * 0.08);
+      bodyPath.cubicTo(cx - w * 0.42, top + h * 0.2, cx - w * 0.34, top + h * 0.45, cx - w * 0.38, top + h * 0.65);
+      bodyPath.cubicTo(cx - w * 0.42, top + h * 0.85, cx - w * 0.3, top + h, cx, top + h * 1.02);
+      bodyPath.cubicTo(cx + w * 0.3, top + h, cx + w * 0.42, top + h * 0.85, cx + w * 0.38, top + h * 0.65);
+      bodyPath.cubicTo(cx + w * 0.34, top + h * 0.45, cx + w * 0.42, top + h * 0.2, cx + w * 0.36, top + h * 0.08);
+      bodyPath.quadraticBezierTo(cx, top - h * 0.04, cx - w * 0.36, top + h * 0.08);
+    } else if (isMale) {
+      // Male: wider shoulders, straighter sides
+      bodyPath.moveTo(cx - w * 0.46, top + h * 0.08);
+      bodyPath.cubicTo(cx - w * 0.5, top + h * 0.25, cx - w * 0.44, top + h * 0.6, cx - w * 0.38, top + h * 0.95);
+      bodyPath.cubicTo(cx - w * 0.2, top + h * 1.04, cx + w * 0.2, top + h * 1.04, cx + w * 0.38, top + h * 0.95);
+      bodyPath.cubicTo(cx + w * 0.44, top + h * 0.6, cx + w * 0.5, top + h * 0.25, cx + w * 0.46, top + h * 0.08);
+      bodyPath.quadraticBezierTo(cx, top - h * 0.04, cx - w * 0.46, top + h * 0.08);
+    } else {
+      // Neutral: balanced soft torso
+      bodyPath.moveTo(cx - w * 0.42, top + h * 0.08);
+      bodyPath.cubicTo(cx - w * 0.48, top + h * 0.25, cx - w * 0.44, top + h * 0.65, cx - w * 0.34, top + h * 0.95);
+      bodyPath.cubicTo(cx - w * 0.15, top + h * 1.05, cx + w * 0.15, top + h * 1.05, cx + w * 0.34, top + h * 0.95);
+      bodyPath.cubicTo(cx + w * 0.44, top + h * 0.65, cx + w * 0.48, top + h * 0.25, cx + w * 0.42, top + h * 0.08);
+      bodyPath.quadraticBezierTo(cx, top - h * 0.04, cx - w * 0.42, top + h * 0.08);
+    }
     bodyPath.close();
 
     canvas.drawPath(bodyPath, Paint()..color = shirtColor);
@@ -503,7 +524,7 @@ class _ChibiPainter extends CustomPainter {
     // Round neck
     final neckPath = Path();
     neckPath.addArc(
-      Rect.fromCenter(center: Offset(cx, top + h * 0.08), width: w * 0.35, height: h * 0.18),
+      Rect.fromCenter(center: Offset(cx, top + h * 0.06), width: w * 0.34, height: h * 0.16),
       0, math.pi,
     );
     canvas.drawPath(neckPath, Paint()..color = config.skinColor);
@@ -818,21 +839,35 @@ class _ChibiPainter extends CustomPainter {
     final skinColor = config.skinColor;
 
     for (final side in [-1.0, 1.0]) {
-      final earX = cx + r * 0.92 * side;
-      final earY = headY + r * 0.1;
-      final earW = r * 0.18;
-      final earH = r * 0.28;
+      final earX = cx + r * 0.96 * side;
+      final earY = headY + r * 0.08;
+      final earW = r * 0.16;
+      final earH = r * 0.3;
 
+      // Teardrop/anime ear shape (wider at top, narrower at bottom)
       final earPath = Path();
-      earPath.addOval(Rect.fromCenter(center: Offset(earX, earY), width: earW, height: earH));
-      canvas.drawPath(earPath, Paint()..color = skinColor);
-      canvas.drawPath(earPath, _outline..strokeWidth = 1.5);
-
-      // Inner ear
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(earX, earY), width: earW * 0.5, height: earH * 0.5),
-        Paint()..color = Color.lerp(skinColor, const Color(0xFFFFB4A2), 0.4)!,
+      earPath.moveTo(earX, earY - earH * 0.5);
+      earPath.cubicTo(
+        earX + earW * side, earY - earH * 0.3,
+        earX + earW * 0.9 * side, earY + earH * 0.2,
+        earX + earW * 0.3 * side, earY + earH * 0.5,
       );
+      earPath.cubicTo(
+        earX - earW * 0.2 * side, earY + earH * 0.3,
+        earX - earW * 0.3 * side, earY - earH * 0.2,
+        earX, earY - earH * 0.5,
+      );
+      canvas.drawPath(earPath, Paint()..color = skinColor);
+      canvas.drawPath(earPath, _outline..strokeWidth = 1.3);
+
+      // Inner ear highlight
+      final innerPath = Path();
+      innerPath.addOval(Rect.fromCenter(
+        center: Offset(earX + earW * 0.2 * side, earY),
+        width: earW * 0.45,
+        height: earH * 0.4,
+      ));
+      canvas.drawPath(innerPath, Paint()..color = Color.lerp(skinColor, const Color(0xFFFFB4A2), 0.35)!);
     }
   }
 
@@ -1249,12 +1284,12 @@ class _ChibiPainter extends CustomPainter {
     final style = config.hairStyle;
     final paint = Paint()..color = color;
 
-    // Hair cap (base for all styles — smooth anime volume)
+    // Hair cap (base for all styles — smooth anime volume, sits above face)
     final capPath = Path();
-    capPath.moveTo(cx - r * 0.98, headY + r * 0.15);
-    capPath.cubicTo(cx - r * 1.0, headY - r * 0.5, cx - r * 0.6, headY - r * 0.95, cx, headY - r * 0.98);
-    capPath.cubicTo(cx + r * 0.6, headY - r * 0.95, cx + r * 1.0, headY - r * 0.5, cx + r * 0.98, headY + r * 0.15);
-    capPath.cubicTo(cx + r * 0.5, headY - r * 0.35, cx - r * 0.5, headY - r * 0.35, cx - r * 0.98, headY + r * 0.15);
+    capPath.moveTo(cx - r * 0.96, headY + r * 0.05);
+    capPath.cubicTo(cx - r * 0.98, headY - r * 0.55, cx - r * 0.6, headY - r * 0.95, cx, headY - r * 0.98);
+    capPath.cubicTo(cx + r * 0.6, headY - r * 0.95, cx + r * 0.98, headY - r * 0.55, cx + r * 0.96, headY + r * 0.05);
+    capPath.cubicTo(cx + r * 0.5, headY - r * 0.4, cx - r * 0.5, headY - r * 0.4, cx - r * 0.96, headY + r * 0.05);
     canvas.drawPath(capPath, paint);
     canvas.drawPath(capPath, _outline..strokeWidth = 1.8);
 
@@ -1394,19 +1429,19 @@ class _ChibiPainter extends CustomPainter {
   }
 
   void _drawBangsHair(Canvas canvas, double cx, double headY, double r, Paint paint) {
-    // Anime straight bangs — clean curtain with individual strand separations
+    // Anime straight bangs — sits above eyes, does not cover face
     final bangsPath = Path();
-    final bangsTop = headY - r * 0.4;
-    final bangsBot = headY + r * 0.02;
-    bangsPath.moveTo(cx - r * 0.72, bangsTop);
-    bangsPath.lineTo(cx - r * 0.72, bangsBot);
+    final bangsTop = headY - r * 0.5;
+    final bangsBot = headY - r * 0.15; // Stops well above eyes
+    bangsPath.moveTo(cx - r * 0.7, bangsTop);
+    bangsPath.lineTo(cx - r * 0.7, bangsBot);
     // Slight wave at bottom
     bangsPath.cubicTo(
-      cx - r * 0.35, bangsBot + r * 0.08,
-      cx + r * 0.35, bangsBot + r * 0.08,
-      cx + r * 0.72, bangsBot,
+      cx - r * 0.35, bangsBot + r * 0.06,
+      cx + r * 0.35, bangsBot + r * 0.06,
+      cx + r * 0.7, bangsBot,
     );
-    bangsPath.lineTo(cx + r * 0.72, bangsTop);
+    bangsPath.lineTo(cx + r * 0.7, bangsTop);
     bangsPath.close();
     canvas.drawPath(bangsPath, paint);
     canvas.drawPath(bangsPath, _outline..strokeWidth = 1.5);
@@ -1681,11 +1716,18 @@ class _ChibiPainter extends CustomPainter {
   void _drawEarrings(Canvas canvas, double cx, double headY, double r, Color color) {
     for (final side in [-1.0, 1.0]) {
       final ex = cx + r * 0.95 * side;
-      final ey = headY + r * 0.25;
-      canvas.drawCircle(Offset(ex, ey), r * 0.06, Paint()..color = color);
+      final ey = headY + r * 0.3;
+      // Stud
+      canvas.drawCircle(Offset(ex, ey), r * 0.07, Paint()..color = color);
+      canvas.drawCircle(Offset(ex, ey), r * 0.07, _outline..strokeWidth = 0.8);
+      // Dangling part
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(ex, ey + r * 0.12), width: r * 0.08, height: r * 0.14),
+        Rect.fromCenter(center: Offset(ex, ey + r * 0.15), width: r * 0.1, height: r * 0.18),
         Paint()..color = color,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(ex, ey + r * 0.15), width: r * 0.1, height: r * 0.18),
+        _outline..strokeWidth = 0.8,
       );
     }
   }

@@ -282,7 +282,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5), width: 2),
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Colors.white,
             boxShadow: [
               BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.15), blurRadius: 20),
             ],
