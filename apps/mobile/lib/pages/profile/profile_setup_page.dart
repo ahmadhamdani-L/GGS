@@ -160,7 +160,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     // Retry on timeout/network failures
     const maxAttempts = 3;
     int attempt = 0;
-    ApiResponse<Map<String, dynamic>>? resp;
+    var resp;
 
     while (attempt < maxAttempts) {
       attempt++;
