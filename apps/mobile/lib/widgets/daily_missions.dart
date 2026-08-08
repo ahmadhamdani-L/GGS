@@ -191,9 +191,9 @@ class _DailyMissionsCardState extends ConsumerState<DailyMissionsCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: Colors.white.withOpacity( 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withOpacity( 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +213,7 @@ class _DailyMissionsCardState extends ConsumerState<DailyMissionsCard> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  color: AppColors.success.withValues(alpha: 0.12),
+                  color: AppColors.success.withOpacity( 0.12),
                 ),
                 child: Text(
                   '${missionsState.completedCount}/${missionsState.missions.length}',
@@ -277,7 +277,7 @@ class _DailyMissionsCardState extends ConsumerState<DailyMissionsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: AppColors.success.withValues(alpha: 0.12),
+                color: AppColors.success.withOpacity( 0.12),
               ),
               child: const Text('✓', style: TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.w700)),
             )
@@ -298,7 +298,7 @@ class _DailyMissionsCardState extends ConsumerState<DailyMissionsCard> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: AppColors.warning.withValues(alpha: 0.12),
+                color: AppColors.warning.withOpacity( 0.12),
               ),
               child: Text(
                 '+${m.coinReward}🪙',

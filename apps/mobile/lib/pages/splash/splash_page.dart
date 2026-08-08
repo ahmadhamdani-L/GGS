@@ -77,7 +77,7 @@ class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProvid
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: AppColors.primaryGradient,
-                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 40, spreadRadius: 4)],
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity( 0.4), blurRadius: 40, spreadRadius: 4)],
                 ),
                 child: const Center(child: Text('🐺', style: TextStyle(fontSize: 48))),
               ),

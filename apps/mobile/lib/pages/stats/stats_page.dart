@@ -101,9 +101,9 @@ class _StatsPageState extends ConsumerState<StatsPage> {
           width: (MediaQuery.of(context).size.width - 52) / 2,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.06),
+            color: color.withOpacity( 0.06),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.15)),
+            border: Border.all(color: color.withOpacity( 0.15)),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Icon(icon, color: color, size: 22),
@@ -130,16 +130,16 @@ class _StatsPageState extends ConsumerState<StatsPage> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Colors.white.withOpacity( 0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(children: [
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: (isWin ? AppColors.success : AppColors.error).withValues(alpha: 0.12),
+            color: (isWin ? AppColors.success : AppColors.error).withOpacity( 0.12),
           ),
           child: Center(child: Icon(isWin ? Icons.check_rounded : Icons.close_rounded,
               color: isWin ? AppColors.success : AppColors.error, size: 20)),
@@ -155,7 +155,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity( 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(role, style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w600)),

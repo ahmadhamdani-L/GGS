@@ -45,7 +45,7 @@ class _GiftHistoryPageState extends ConsumerState<GiftHistoryPage>
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Colors.white.withOpacity( 0.05),
             borderRadius: BorderRadius.circular(10)),
           child: TabBar(
             controller: _tab,
@@ -124,16 +124,16 @@ class _HistoryTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Colors.white.withOpacity( 0.03),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Row(children: [
         // Gift emoji
         Container(
           width: 44, height: 44,
           decoration: BoxDecoration(
-            color: (_isCurse ? AppColors.error : AppColors.primary).withValues(alpha: 0.12),
+            color: (_isCurse ? AppColors.error : AppColors.primary).withOpacity( 0.12),
             shape: BoxShape.circle),
           child: Center(child: Text(tx.giftEmoji, style: const TextStyle(fontSize: 22))),
         ),

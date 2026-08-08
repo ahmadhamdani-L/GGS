@@ -143,7 +143,7 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(50),
                       gradient: RadialGradient(
-                        colors: [Colors.black.withValues(alpha: 0.2), Colors.transparent],
+                        colors: [Colors.black.withOpacity( 0.2), Colors.transparent],
                       ),
                     ),
                   ),
@@ -575,7 +575,7 @@ class _ChibiPainter extends CustomPainter {
 
     // Drawstrings
     final stringPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.8)
+      ..color = Colors.white.withOpacity( 0.8)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
     canvas.drawLine(Offset(cx - w * 0.08, top + h * 0.15), Offset(cx - w * 0.1, top + h * 0.4), stringPaint);
@@ -822,7 +822,7 @@ class _ChibiPainter extends CustomPainter {
     // Cheek blush (controlled by config.showBlush toggle)
     if (config.showBlush) {
       final blushPaint = Paint()
-        ..color = const Color(0xFFFF9B8E).withValues(alpha: 0.6)
+        ..color = const Color(0xFFFF9B8E).withOpacity( 0.6)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       canvas.drawOval(
         Rect.fromCenter(center: Offset(cx - r * 0.55, headY + r * 0.4), width: r * 0.45, height: r * 0.25),
@@ -1323,7 +1323,7 @@ class _ChibiPainter extends CustomPainter {
     glossPath.close();
 
     final shinePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
+      ..color = Colors.white.withOpacity( 0.35)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
       
     canvas.drawPath(glossPath, shinePaint);
@@ -1665,7 +1665,7 @@ class _ChibiPainter extends CustomPainter {
       );
       
       if (isSunglasses) {
-        canvas.drawRRect(lensRect, Paint()..color = const Color(0xFF212121).withValues(alpha: 0.85));
+        canvas.drawRRect(lensRect, Paint()..color = const Color(0xFF212121).withOpacity( 0.85));
       }
       canvas.drawRRect(lensRect, framePaint);
     }

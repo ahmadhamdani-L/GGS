@@ -100,7 +100,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.15),
+                  color: AppColors.error.withOpacity( 0.15),
                   borderRadius: BorderRadius.circular(12)),
                 child: Text('$unreadCount baru',
                   style: const TextStyle(color: AppColors.error, fontSize: 11, fontWeight: FontWeight.w700)),
@@ -151,20 +151,20 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isRead
-            ? Colors.white.withValues(alpha: 0.02)
-            : color.withValues(alpha: 0.06),
+            ? Colors.white.withOpacity( 0.02)
+            : color.withOpacity( 0.06),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isRead
-              ? Colors.white.withValues(alpha: 0.04)
-              : color.withValues(alpha: 0.2)),
+              ? Colors.white.withOpacity( 0.04)
+              : color.withOpacity( 0.2)),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Icon
         Container(
           width: 38, height: 38,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15), shape: BoxShape.circle),
+            color: color.withOpacity( 0.15), shape: BoxShape.circle),
           child: Icon(_iconFor(type), color: color, size: 18),
         ),
         const SizedBox(width: 12),

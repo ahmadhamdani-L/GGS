@@ -190,7 +190,7 @@ class _RoomBackground extends StatelessWidget {
                 color: isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568),
                 boxShadow: [
                   BoxShadow(
-                    color: (isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568)).withValues(alpha: 0.3),
+                    color: (isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568)).withOpacity( 0.3),
                     blurRadius: 16,
                     spreadRadius: 4,
                   ),
@@ -211,7 +211,7 @@ class _RoomBackground extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.4 + (i % 3) * 0.2),
+                  color: Colors.white.withOpacity( 0.4 + (i % 3) * 0.2),
                 ),
               ),
             );
@@ -253,8 +253,8 @@ class _RoomTopBar extends ConsumerWidget {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.red.withValues(alpha: 0.15),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                color: Colors.red.withOpacity( 0.15),
+                border: Border.all(color: Colors.red.withOpacity( 0.3)),
               ),
               child: const Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.exit_to_app_rounded, color: Colors.red, size: 14),
@@ -276,8 +276,8 @@ class _RoomTopBar extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                color: const Color(0xFFDAA520).withValues(alpha: 0.15),
-                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                color: const Color(0xFFDAA520).withOpacity( 0.15),
+                border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.vpn_key_rounded, color: Color(0xFFDAA520), size: 12),
@@ -292,7 +292,7 @@ class _RoomTopBar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
-              color: Colors.white.withValues(alpha: 0.08),
+              color: Colors.white.withOpacity( 0.08),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.people_alt_rounded, color: Colors.white70, size: 13),
@@ -318,7 +318,7 @@ class _RoomTopBar extends ConsumerWidget {
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withOpacity( 0.08),
                 ),
                 child: const Icon(Icons.settings_rounded, color: Color(0xFFDAA520), size: 16),
               ),
@@ -400,14 +400,14 @@ class _PermanentChatPanelState extends ConsumerState<_PermanentChatPanel> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.85),
+        color: Colors.black.withOpacity( 0.85),
       ),
       child: Column(
         children: [
           // Messages
           Expanded(
             child: messages.isEmpty
-                ? Center(child: Text('...', style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 12)))
+                ? Center(child: Text('...', style: TextStyle(color: Colors.white.withOpacity( 0.2), fontSize: 12)))
                 : ListView.builder(
                     controller: _scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
@@ -446,8 +446,8 @@ class _PermanentChatPanelState extends ConsumerState<_PermanentChatPanel> {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.95),
-              border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+              color: Colors.black.withOpacity( 0.95),
+              border: Border(top: BorderSide(color: Colors.white.withOpacity( 0.05))),
             ),
             child: room.isPlaying
                 ? const Center(
@@ -462,7 +462,7 @@ class _PermanentChatPanelState extends ConsumerState<_PermanentChatPanel> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(17),
-                            color: Colors.white.withValues(alpha: 0.06),
+                            color: Colors.white.withOpacity( 0.06),
                           ),
                           child: TextField(
                             controller: _msgCtrl,
@@ -755,7 +755,7 @@ class _SeatCard extends ConsumerWidget {
                     decoration: isMe ? BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+                        BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 12, spreadRadius: 2),
                       ],
                     ) : null,
                     child: curseEffect != null
@@ -776,8 +776,8 @@ class _SeatCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
-                  color: Colors.black.withValues(alpha: 0.8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 0.5),
+                  color: Colors.black.withOpacity( 0.8),
+                  border: Border.all(color: Colors.white.withOpacity( 0.2), width: 0.5),
                 ),
                 child: Text(
                   '${index + 1}',
@@ -799,7 +799,7 @@ class _SeatCard extends ConsumerWidget {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: Colors.black.withOpacity( 0.5),
                 ),
                 child: const Center(
                   child: Text('OFF', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w900)),
@@ -827,7 +827,7 @@ class _SeatCard extends ConsumerWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(3),
-                  color: Colors.blue.withValues(alpha: 0.3),
+                  color: Colors.blue.withOpacity( 0.3),
                 ),
                 child: const Text('BOT', style: TextStyle(color: Colors.blue, fontSize: 7, fontWeight: FontWeight.w800)),
               ),
@@ -843,18 +843,18 @@ class _SeatCard extends ConsumerWidget {
       children: [
         const Spacer(),
         // Subtle ghost silhouette
-        Icon(Icons.person_outline_rounded, color: Colors.white.withValues(alpha: 0.08), size: 30),
+        Icon(Icons.person_outline_rounded, color: Colors.white.withOpacity( 0.08), size: 30),
         const Spacer(),
         // Seat number badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(3),
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withOpacity( 0.5),
           ),
           child: Text(
             '${index + 1}',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 9, fontWeight: FontWeight.w700),
+            style: TextStyle(color: Colors.white.withOpacity( 0.3), fontSize: 9, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 2),
@@ -920,8 +920,8 @@ class _BottomBar extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+        color: Colors.black.withOpacity( 0.4),
+        border: Border(top: BorderSide(color: Colors.white.withOpacity( 0.06))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -943,8 +943,8 @@ class _BottomBar extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
-                    color: Colors.white.withValues(alpha: 0.05),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    color: Colors.white.withOpacity( 0.05),
+                    border: Border.all(color: Colors.white.withOpacity( 0.1)),
                   ),
                   child: const Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.smart_toy_outlined, color: Colors.white38, size: 12),
@@ -1009,7 +1009,7 @@ class _BottomBar extends ConsumerWidget {
                           : null,
                       color: buttonEnabled ? null : const Color(0xFF2D3748),
                       border: Border.all(
-                        color: buttonEnabled ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.15),
+                        color: buttonEnabled ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.15),
                         width: buttonEnabled ? 1.5 : 1,
                       ),
                     ),
@@ -1041,8 +1041,8 @@ class _BottomBar extends ConsumerWidget {
         width: 48, height: 40,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: color.withValues(alpha: 0.1),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          color: color.withOpacity( 0.1),
+          border: Border.all(color: color.withOpacity( 0.3)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1131,8 +1131,8 @@ void _showEmotePicker(BuildContext context, WidgetRef ref) {
                 width: 64, height: 72,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+                  color: Colors.white.withOpacity( 0.05),
+                  border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1243,7 +1243,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               width: 28, height: 28,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white.withOpacity( 0.08),
               ),
               child: Icon(Icons.remove, color: value > min ? Colors.white : Colors.white24, size: 16),
             ),
@@ -1257,7 +1257,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
               width: 28, height: 28,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white.withOpacity( 0.08),
               ),
               child: Icon(Icons.add, color: value < max ? Colors.white : Colors.white24, size: 16),
             ),
@@ -1372,11 +1372,11 @@ class _ChatSheetState extends ConsumerState<_ChatSheet> {
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: 'Ketik pesan...',
-                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
+                      hintStyle: TextStyle(color: Colors.white.withOpacity( 0.3), fontSize: 12),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      fillColor: Colors.white.withOpacity( 0.06),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -1552,8 +1552,8 @@ class _PlayerProfileSheet extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: color.withValues(alpha: 0.12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          color: color.withOpacity( 0.12),
+          border: Border.all(color: color.withOpacity( 0.3)),
         ),
         child: Column(
           children: [
@@ -1643,10 +1643,10 @@ class _CurseTransformOverlayState extends State<_CurseTransformOverlay>
                 height: 72,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF6B21A8).withValues(alpha: 0.4),
+                  color: const Color(0xFF6B21A8).withOpacity( 0.4),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF9B59B6).withValues(alpha: 0.6),
+                      color: const Color(0xFF9B59B6).withOpacity( 0.6),
                       blurRadius: 20,
                       spreadRadius: 4,
                     ),
@@ -1715,14 +1715,14 @@ class _CursedAvatarState extends State<_CursedAvatar>
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6B21A8).withValues(alpha: 0.2),
+                color: const Color(0xFF6B21A8).withOpacity( 0.2),
                 border: Border.all(
-                  color: const Color(0xFF9B59B6).withValues(alpha: 0.5),
+                  color: const Color(0xFF9B59B6).withOpacity( 0.5),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF9B59B6).withValues(alpha: 0.3),
+                    color: const Color(0xFF9B59B6).withOpacity( 0.3),
                     blurRadius: 8,
                   ),
                 ],
@@ -1755,9 +1755,9 @@ class _ChatBubbleWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: Colors.white.withValues(alpha: 0.9),
+        color: Colors.white.withOpacity( 0.9),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 1)),
+          BoxShadow(color: Colors.black.withOpacity( 0.2), blurRadius: 4, offset: const Offset(0, 1)),
         ],
       ),
       child: Text(
@@ -1800,7 +1800,7 @@ class _CenterActionSlot extends ConsumerWidget {
     if (room.isPlaying) {
       label = 'LEAVE';
       color = Colors.red;
-      bgColor = Colors.red.withValues(alpha: 0.15);
+      bgColor = Colors.red.withOpacity( 0.15);
       onTap = () {
         ref.read(roomV2Provider.notifier).leaveRoom(myId, room.roomId);
         context.go('/home');
@@ -1810,7 +1810,7 @@ class _CenterActionSlot extends ConsumerWidget {
       if (seated >= 8) {
         label = 'PLAY';
         color = const Color(0xFF4ADE80);
-        bgColor = const Color(0xFF4ADE80).withValues(alpha: 0.15);
+        bgColor = const Color(0xFF4ADE80).withOpacity( 0.15);
         onTap = () {
           HapticFeedback.heavyImpact();
           ref.read(roomV2Provider.notifier).startGame(room.roomId);
@@ -1818,18 +1818,18 @@ class _CenterActionSlot extends ConsumerWidget {
       } else {
         label = '$seated/8';
         color = const Color(0xFFDAA520);
-        bgColor = const Color(0xFFDAA520).withValues(alpha: 0.1);
+        bgColor = const Color(0xFFDAA520).withOpacity( 0.1);
         onTap = null;
       }
     } else if (!isSeated) {
       label = 'SIT';
       color = Colors.white54;
-      bgColor = Colors.white.withValues(alpha: 0.05);
+      bgColor = Colors.white.withOpacity( 0.05);
       onTap = null; // They need to tap a seat
     } else if (!isReady) {
       label = 'SIAP';
       color = const Color(0xFF4ADE80);
-      bgColor = const Color(0xFF4ADE80).withValues(alpha: 0.15);
+      bgColor = const Color(0xFF4ADE80).withOpacity( 0.15);
       onTap = () {
         HapticFeedback.mediumImpact();
         ref.read(roomV2Provider.notifier).setReady(myId, room.roomId, true);
@@ -1837,7 +1837,7 @@ class _CenterActionSlot extends ConsumerWidget {
     } else {
       label = 'WAIT';
       color = const Color(0xFFDAA520);
-      bgColor = const Color(0xFFDAA520).withValues(alpha: 0.1);
+      bgColor = const Color(0xFFDAA520).withOpacity( 0.1);
       onTap = null;
     }
 
@@ -1849,7 +1849,7 @@ class _CenterActionSlot extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: bgColor,
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+          border: Border.all(color: color.withOpacity( 0.3), width: 1),
         ),
         child: Center(
           child: Text(

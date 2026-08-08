@@ -230,9 +230,9 @@ class _PushBannerState extends State<_PushBanner> with SingleTickerProviderState
             decoration: BoxDecoration(
               color: const Color(0xFF1A1F2E),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 6)),
+                BoxShadow(color: Colors.black.withOpacity( 0.4), blurRadius: 20, offset: const Offset(0, 6)),
               ],
             ),
             child: Row(
@@ -242,7 +242,7 @@ class _PushBannerState extends State<_PushBanner> with SingleTickerProviderState
                   width: 36, height: 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: const Color(0xFFDAA520).withValues(alpha: 0.15),
+                    color: const Color(0xFFDAA520).withOpacity( 0.15),
                   ),
                   child: const Center(child: Text('🐺', style: TextStyle(fontSize: 18))),
                 ),

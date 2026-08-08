@@ -79,7 +79,7 @@ class _SocialLeaderboardPageState extends ConsumerState<SocialLeaderboardPage>
             margin: const EdgeInsets.only(right: 6),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.white.withValues(alpha: 0.05),
+              color: selected ? AppColors.primary : Colors.white.withOpacity( 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(e.value,
@@ -101,7 +101,7 @@ class _SocialLeaderboardPageState extends ConsumerState<SocialLeaderboardPage>
       controller: _tab,
       isScrollable: true,
       indicator: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.2),
+        color: AppColors.primary.withOpacity( 0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.primary),
       ),
@@ -173,12 +173,12 @@ class _LeaderboardTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isTop3
-            ? _rankColor.withValues(alpha: 0.08)
-            : Colors.white.withValues(alpha: 0.03),
+            ? _rankColor.withOpacity( 0.08)
+            : Colors.white.withOpacity( 0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: isTop3
-            ? _rankColor.withValues(alpha: 0.3)
-            : Colors.white.withValues(alpha: 0.06)),
+            ? _rankColor.withOpacity( 0.3)
+            : Colors.white.withOpacity( 0.06)),
       ),
       child: Row(children: [
         // Rank
@@ -193,7 +193,7 @@ class _LeaderboardTile extends StatelessWidget {
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(shape: BoxShape.circle,
-            color: AppColors.primary.withValues(alpha: 0.15)),
+            color: AppColors.primary.withOpacity( 0.15)),
           child: ClipOval(child: AvatarImage(
             displayName: entry.displayName,
             size: 36,

@@ -24,9 +24,9 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: const Color(0xFF1A1D2E),
-        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.6), blurRadius: 20),
+          BoxShadow(color: Colors.black.withOpacity( 0.6), blurRadius: 20),
         ],
       ),
       child: Column(
@@ -37,7 +37,7 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
             width: 40, height: 4,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withOpacity( 0.2),
             ),
           ),
           const SizedBox(height: 16),
@@ -51,7 +51,7 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
                 width: 2.5,
               ),
               boxShadow: isMe
-                  ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 12)]
+                  ? [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 12)]
                   : null,
             ),
             child: ClipOval(
@@ -102,8 +102,8 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               color: player.isAlive
-                  ? AppColors.success.withValues(alpha: 0.15)
-                  : AppColors.error.withValues(alpha: 0.15),
+                  ? AppColors.success.withOpacity( 0.15)
+                  : AppColors.error.withOpacity( 0.15),
             ),
             child: Text(
               player.isAlive ? '🟢 Hidup' : '💀 Tereliminasi',
@@ -121,8 +121,8 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: roleColor.withValues(alpha: 0.1),
-                border: Border.all(color: roleColor.withValues(alpha: 0.3)),
+                color: roleColor.withOpacity( 0.1),
+                border: Border.all(color: roleColor.withOpacity( 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -138,7 +138,7 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
-                      color: roleColor.withValues(alpha: 0.2),
+                      color: roleColor.withOpacity( 0.2),
                     ),
                     child: Text(
                       player.role.team == Team.red ? 'RED' : 'BLUE',
@@ -153,8 +153,8 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white.withValues(alpha: 0.05),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                color: Colors.white.withOpacity( 0.05),
+                border: Border.all(color: Colors.white.withOpacity( 0.1)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -173,9 +173,9 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.smart_toy_outlined, color: AppColors.textMuted.withValues(alpha: 0.6), size: 14),
+                  Icon(Icons.smart_toy_outlined, color: AppColors.textMuted.withOpacity( 0.6), size: 14),
                   const SizedBox(width: 4),
-                  Text('Bot', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 11)),
+                  Text('Bot', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.6), fontSize: 11)),
                 ],
               ),
             ),
@@ -186,7 +186,7 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
             child: TextButton(
               onPressed: () => Navigator.pop(ctx),
               style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.05),
+                backgroundColor: Colors.white.withOpacity( 0.05),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text('Tutup', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),

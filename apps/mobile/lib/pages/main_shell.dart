@@ -108,8 +108,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0D0F14),
-        border: Border(top: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.2))),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 20, offset: const Offset(0, -4))],
+        border: Border(top: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.2))),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.5), blurRadius: 20, offset: const Offset(0, -4))],
       ),
       child: SafeArea(
         top: false,
@@ -143,8 +143,8 @@ class _MainShellState extends ConsumerState<MainShell> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: isActive ? const Color(0xFFDAA520).withValues(alpha: 0.12) : Colors.transparent,
-          border: isActive ? Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)) : null,
+          color: isActive ? const Color(0xFFDAA520).withOpacity( 0.12) : Colors.transparent,
+          border: isActive ? Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -193,9 +193,9 @@ class _MainShellState extends ConsumerState<MainShell> {
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0D0F14).withValues(alpha: 0.95),
+              color: const Color(0xFF0D0F14).withOpacity( 0.95),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
             ),
             child: SafeArea(
               top: false,
@@ -254,8 +254,8 @@ class _MainShellState extends ConsumerState<MainShell> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: color.withValues(alpha: 0.06),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
+          color: color.withOpacity( 0.06),
+          border: Border.all(color: color.withOpacity( 0.15)),
         ),
         child: Row(
           children: [
@@ -263,7 +263,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               width: 38, height: 38,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: color.withValues(alpha: 0.12),
+                color: color.withOpacity( 0.12),
               ),
               child: Icon(icon, color: color, size: 20),
             ),
@@ -278,7 +278,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: 0.5), size: 20),
+            Icon(Icons.chevron_right_rounded, color: color.withOpacity( 0.5), size: 20),
           ],
         ),
       ),
@@ -319,9 +319,9 @@ class _HomeTab extends ConsumerWidget {
             begin: Alignment.topCenter, end: Alignment.bottomCenter,
             stops: const [0.0, 0.5, 1.0],
             colors: [
-              Colors.black.withValues(alpha: 0.3),
-              Colors.black.withValues(alpha: 0.4),
-              Colors.black.withValues(alpha: 0.75),
+              Colors.black.withOpacity( 0.3),
+              Colors.black.withOpacity( 0.4),
+              Colors.black.withOpacity( 0.75),
             ],
           )),
         ),
@@ -389,7 +389,7 @@ class _TopBar extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFFDAA520), width: 1.5),
-                color: Colors.black.withValues(alpha: 0.4),
+                color: Colors.black.withOpacity( 0.4),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
@@ -415,8 +415,8 @@ class _TopBar extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(4),
-                        color: const Color(0xFFDAA520).withValues(alpha: 0.2),
-                        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5), width: 0.5),
+                        color: const Color(0xFFDAA520).withOpacity( 0.2),
+                        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5), width: 0.5),
                       ),
                       child: Text('Lv.$level', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w700)),
                     ),
@@ -427,8 +427,8 @@ class _TopBar extends StatelessWidget {
                         height: 8,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
-                          color: Colors.black.withValues(alpha: 0.4),
-                          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3), width: 0.5),
+                          color: Colors.black.withOpacity( 0.4),
+                          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3), width: 0.5),
                         ),
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
@@ -478,8 +478,8 @@ class _CurrencyBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: Colors.black.withValues(alpha: 0.5),
-          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+          color: Colors.black.withOpacity( 0.5),
+          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text(emoji, style: const TextStyle(fontSize: 11)),
@@ -488,7 +488,7 @@ class _CurrencyBadge extends StatelessWidget {
           const SizedBox(width: 2),
           Container(
             width: 12, height: 12,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withOpacity( 0.3)),
             child: const Icon(Icons.add, color: Color(0xFFDAA520), size: 8),
           ),
         ]),
@@ -532,10 +532,10 @@ class _LogoSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5)),
             gradient: LinearGradient(colors: [
-              const Color(0xFFDAA520).withValues(alpha: 0.1),
-              const Color(0xFFDAA520).withValues(alpha: 0.05),
+              const Color(0xFFDAA520).withOpacity( 0.1),
+              const Color(0xFFDAA520).withOpacity( 0.05),
             ]),
           ),
           child: const Text(
@@ -621,9 +621,9 @@ class _SideMenuButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Colors.black.withValues(alpha: 0.5),
-          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
-          boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.05), blurRadius: 6)],
+          color: Colors.black.withOpacity( 0.5),
+          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+          boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.05), blurRadius: 6)],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: const Color(0xFFDAA520), size: 20),
@@ -651,10 +651,10 @@ class _EventBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(colors: [
               const Color(0xFF1A0E2E),
-              const Color(0xFF2D1B4E).withValues(alpha: 0.8),
+              const Color(0xFF2D1B4E).withOpacity( 0.8),
             ]),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
-            boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.1), blurRadius: 12)],
+            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
+            boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.1), blurRadius: 12)],
           ),
           child: Row(
             children: [
@@ -664,7 +664,7 @@ class _EventBanner extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   gradient: const LinearGradient(colors: [Color(0xFF4A1A6B), Color(0xFF2D1B4E)]),
-                  border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                  border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
                 ),
                 child: const Center(child: Text('🎃', style: TextStyle(fontSize: 22))),
               ),
@@ -681,7 +681,7 @@ class _EventBanner extends StatelessWidget {
                     Row(children: [
                       const Icon(Icons.access_time_rounded, color: Color(0xFF9CA3AF), size: 10),
                       const SizedBox(width: 3),
-                      Text('3hari 12jam', style: TextStyle(color: const Color(0xFF9CA3AF).withValues(alpha: 0.8), fontSize: 9)),
+                      Text('3hari 12jam', style: TextStyle(color: const Color(0xFF9CA3AF).withOpacity( 0.8), fontSize: 9)),
                     ]),
                   ],
                 ),
@@ -691,8 +691,8 @@ class _EventBanner extends StatelessWidget {
                 width: 28, height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFDAA520).withValues(alpha: 0.15),
-                  border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+                  color: const Color(0xFFDAA520).withOpacity( 0.15),
+                  border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
                 ),
                 child: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFDAA520), size: 12),
               ),
@@ -726,7 +726,7 @@ class _PlayModeCards extends StatelessWidget {
             ),
             border: Border.all(color: const Color(0xFFDAA520), width: 2),
             boxShadow: [
-              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 4)),
+              BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 16, offset: const Offset(0, 4)),
             ],
           ),
           child: const Column(
@@ -776,8 +776,8 @@ class _PlayModeCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: gradient),
-          border: Border.all(color: borderColor.withValues(alpha: 0.5), width: 1.2),
-          boxShadow: [BoxShadow(color: borderColor.withValues(alpha: 0.15), blurRadius: 10)],
+          border: Border.all(color: borderColor.withOpacity( 0.5), width: 1.2),
+          boxShadow: [BoxShadow(color: borderColor.withOpacity( 0.15), blurRadius: 10)],
         ),
         child: Stack(
           children: [
@@ -785,7 +785,7 @@ class _PlayModeCard extends StatelessWidget {
             Positioned(
               top: 20, left: 0, right: 0,
               child: Center(
-                child: Text(emoji, style: TextStyle(fontSize: 50, color: Colors.white.withValues(alpha: 0.08))),
+                child: Text(emoji, style: TextStyle(fontSize: 50, color: Colors.white.withOpacity( 0.08))),
               ),
             ),
             // Content
@@ -799,7 +799,7 @@ class _PlayModeCard extends StatelessWidget {
                     width: 28, height: 28,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: iconColor.withValues(alpha: 0.15),
+                      color: iconColor.withOpacity( 0.15),
                     ),
                     child: Icon(icon, color: iconColor, size: 16),
                   ),
@@ -815,7 +815,7 @@ class _PlayModeCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   // Subtitle
                   Text(subtitle, style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withOpacity( 0.6),
                     fontSize: 9,
                     height: 1.3,
                   )),
@@ -910,8 +910,8 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
         constraints: BoxConstraints(maxHeight: _expanded ? 180 : 44),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(_expanded ? 14 : 20),
-          color: Colors.black.withValues(alpha: 0.6),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          color: Colors.black.withOpacity( 0.6),
+          border: Border.all(color: Colors.white.withOpacity( 0.1)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -934,7 +934,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
                   const SizedBox(width: 4),
                   Text(
                     '$_onlineCount Online',
-                    style: TextStyle(color: const Color(0xFF4ADE80).withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: const Color(0xFF4ADE80).withOpacity( 0.8), fontSize: 10, fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),
                   Icon(_expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, color: AppColors.textMuted, size: 16),
@@ -966,7 +966,7 @@ class _GlobalChatBarState extends ConsumerState<_GlobalChatBar> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: Colors.white.withOpacity( 0.06),
                 ),
                 child: Row(children: [
                   Expanded(child: TextField(
@@ -1022,7 +1022,7 @@ class _SocialTab extends ConsumerWidget {
                   onTap: () => context.push('/social/leaderboard'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColors.primary.withValues(alpha: 0.1)),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColors.primary.withOpacity( 0.1)),
                     child: const Row(mainAxisSize: MainAxisSize.min, children: [
                       Text('🏆', style: TextStyle(fontSize: 14)),
                       SizedBox(width: 4),

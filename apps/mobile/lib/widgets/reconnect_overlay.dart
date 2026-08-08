@@ -85,7 +85,7 @@ class _ReconnectOverlayState extends ConsumerState<ReconnectOverlay> {
 
     return Positioned.fill(
       child: Container(
-        color: Colors.black.withValues(alpha: 0.85),
+        color: Colors.black.withOpacity( 0.85),
         child: Center(child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -112,7 +112,7 @@ class _ReconnectOverlayState extends ConsumerState<ReconnectOverlay> {
                 CircularProgressIndicator(
                   value: _countdown / _getDelay(),
                   strokeWidth: 4,
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  backgroundColor: Colors.white.withOpacity( 0.1),
                   valueColor: const AlwaysStoppedAnimation(AppColors.warning),
                 ),
                 Text('$_countdown',
@@ -150,7 +150,7 @@ class _ReconnectOverlayState extends ConsumerState<ReconnectOverlay> {
               label: const Text('Kembali ke Home'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textMuted,
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                side: BorderSide(color: Colors.white.withOpacity( 0.2)),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
             ),
           ]),

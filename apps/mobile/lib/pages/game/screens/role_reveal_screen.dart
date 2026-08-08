@@ -30,7 +30,7 @@ class RoleRevealScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         color: const Color(0xFF1A1F2E),
         border: Border.all(color: const Color(0xFFDAA520), width: 2),
-        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 20)],
+        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.2), blurRadius: 20)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -40,8 +40,8 @@ class RoleRevealScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
-              color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5)),
+              color: const Color(0xFFDAA520).withOpacity( 0.1),
             ),
             child: const Text('ROLE REVEAL', style: TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 2)),
           ),
@@ -56,9 +56,9 @@ class RoleRevealScreen extends ConsumerWidget {
             width: 120, height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: c.withValues(alpha: 0.1),
-              border: Border.all(color: c.withValues(alpha: 0.5), width: 2),
-              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.3), blurRadius: 24)],
+              color: c.withOpacity( 0.1),
+              border: Border.all(color: c.withOpacity( 0.5), width: 2),
+              boxShadow: [BoxShadow(color: c.withOpacity( 0.3), blurRadius: 24)],
             ),
             child: ClipOval(child: ChibiAvatar(config: chibiConfig, size: 90, animate: true, showShadow: false)),
           ),
@@ -68,8 +68,8 @@ class RoleRevealScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: Colors.black.withValues(alpha: 0.3),
-              border: Border.all(color: c.withValues(alpha: 0.2)),
+              color: Colors.black.withOpacity( 0.3),
+              border: Border.all(color: c.withOpacity( 0.2)),
             ),
             child: Text(
               _roleObjective(me!.role),

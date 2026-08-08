@@ -314,7 +314,7 @@ class _GiftFlyingAnimationOverlayState extends State<GiftFlyingAnimationOverlay>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: _glowColor.withValues(alpha: 0.6),
+                              color: _glowColor.withOpacity( 0.6),
                               blurRadius: 24 + progress * 16,
                               spreadRadius: 4,
                             ),
@@ -375,13 +375,13 @@ class _GiftFlyingAnimationOverlayState extends State<GiftFlyingAnimationOverlay>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            _rarityColor.withValues(alpha: 0.5),
-                            _rarityColor.withValues(alpha: 0.0),
+                            _rarityColor.withOpacity( 0.5),
+                            _rarityColor.withOpacity( 0.0),
                           ],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _rarityColor.withValues(alpha: 0.4),
+                            color: _rarityColor.withOpacity( 0.4),
                             blurRadius: 40,
                             spreadRadius: 10,
                           ),
@@ -407,10 +407,10 @@ class _GiftFlyingAnimationOverlayState extends State<GiftFlyingAnimationOverlay>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _rarityColor.withValues(alpha: 0.2),
+                          color: _rarityColor.withOpacity( 0.2),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: _rarityColor.withValues(alpha: 0.5),
+                            color: _rarityColor.withOpacity( 0.5),
                           ),
                         ),
                         child: Text(
@@ -421,7 +421,7 @@ class _GiftFlyingAnimationOverlayState extends State<GiftFlyingAnimationOverlay>
                             fontWeight: FontWeight.w800,
                             shadows: [
                               Shadow(
-                                color: _rarityColor.withValues(alpha: 0.6),
+                                color: _rarityColor.withOpacity( 0.6),
                                 blurRadius: 12,
                               ),
                             ],
@@ -452,15 +452,15 @@ class _GiftFlyingAnimationOverlayState extends State<GiftFlyingAnimationOverlay>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                _rarityColor.withValues(alpha: 0.15),
-                _rarityColor.withValues(alpha: 0.05),
+                _rarityColor.withOpacity( 0.15),
+                _rarityColor.withOpacity( 0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: _rarityColor.withValues(alpha: 0.3)),
+            border: Border.all(color: _rarityColor.withOpacity( 0.3)),
             boxShadow: [
               BoxShadow(
-                color: _rarityColor.withValues(alpha: 0.2),
+                color: _rarityColor.withOpacity( 0.2),
                 blurRadius: 20,
               ),
             ],

@@ -145,7 +145,7 @@ class _GiftCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: const Color(0xFF1A1D2E),
-        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
       ),
       child: Row(
         children: [
@@ -154,7 +154,7 @@ class _GiftCard extends StatelessWidget {
             width: 44, height: 44,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+              color: const Color(0xFFDAA520).withOpacity( 0.1),
             ),
             child: Center(child: Text(icon, style: const TextStyle(fontSize: 22))),
           ),

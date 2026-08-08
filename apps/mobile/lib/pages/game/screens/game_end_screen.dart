@@ -79,7 +79,7 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
       // Rewards — using actual values from game state
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: Colors.black.withOpacity( 0.4), borderRadius: BorderRadius.circular(16)),
         child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
           _rewardItem('⭐', '+$_xpEarned', 'XP'),
           const SizedBox(width: 28),
@@ -93,7 +93,7 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
         width: 120,
         child: LinearProgressIndicator(
           value: (5 - _countdown) / 5,
-          backgroundColor: Colors.white.withValues(alpha: 0.1),
+          backgroundColor: Colors.white.withOpacity( 0.1),
           color: color,
           borderRadius: BorderRadius.circular(4),
         ),

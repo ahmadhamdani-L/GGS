@@ -85,7 +85,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+        border: Border(bottom: BorderSide(color: Colors.white.withOpacity( 0.06))),
       ),
       child: Row(
         children: [
@@ -115,7 +115,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Colors.white.withOpacity( 0.06),
               ),
               child: const Icon(Icons.refresh_rounded, color: Color(0xFFDAA520), size: 18),
             ),
@@ -143,7 +143,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFFDAA520).withValues(alpha: 0.15),
+                  color: const Color(0xFFDAA520).withOpacity( 0.15),
                 ),
                 child: const Text('Refresh', style: TextStyle(color: Color(0xFFDAA520), fontSize: 12, fontWeight: FontWeight.w700)),
               ),
@@ -165,7 +165,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         color: const Color(0xFF111827),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+        border: Border(top: BorderSide(color: Colors.white.withOpacity( 0.06))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -179,8 +179,8 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Colors.white.withValues(alpha: 0.06),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    color: Colors.white.withOpacity( 0.06),
+                    border: Border.all(color: Colors.white.withOpacity( 0.1)),
                   ),
                   child: TextField(
                     controller: _codeCtrl,
@@ -250,7 +250,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
-                      boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
+                      boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 8)],
                     ),
                     child: const Center(
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -286,7 +286,7 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: const Color(0xFF1E293B),
-                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                      border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
                     ),
                     child: const Center(
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -354,12 +354,12 @@ class _LobbyRoomCard extends ConsumerWidget {
           color: canJoin ? null : const Color(0xFF12151F),
           border: Border.all(
             color: canJoin
-                ? const Color(0xFFDAA520).withValues(alpha: 0.35)
-                : Colors.white.withValues(alpha: 0.05),
+                ? const Color(0xFFDAA520).withOpacity( 0.35)
+                : Colors.white.withOpacity( 0.05),
             width: canJoin ? 1.5 : 1,
           ),
           boxShadow: canJoin
-              ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.08), blurRadius: 12)]
+              ? [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.08), blurRadius: 12)]
               : null,
         ),
         child: Row(
@@ -372,7 +372,7 @@ class _LobbyRoomCard extends ConsumerWidget {
                 gradient: canJoin
                     ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)])
                     : null,
-                color: canJoin ? null : Colors.white.withValues(alpha: 0.06),
+                color: canJoin ? null : Colors.white.withOpacity( 0.06),
               ),
               child: Center(
                 child: Text(
@@ -412,17 +412,17 @@ class _LobbyRoomCard extends ConsumerWidget {
                   // Player count + host
                   Row(
                     children: [
-                      Icon(Icons.people_rounded, color: Colors.white.withValues(alpha: 0.4), size: 12),
+                      Icon(Icons.people_rounded, color: Colors.white.withOpacity( 0.4), size: 12),
                       const SizedBox(width: 3),
                       Text(
                         '${room.totalOccupants}/${room.maxSeats}',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11),
+                        style: TextStyle(color: Colors.white.withOpacity( 0.5), fontSize: 11),
                       ),
                       if (room.hostName.isNotEmpty) ...[
                         const SizedBox(width: 8),
-                        Icon(Icons.star_rounded, color: const Color(0xFFDAA520).withValues(alpha: 0.5), size: 11),
+                        Icon(Icons.star_rounded, color: const Color(0xFFDAA520).withOpacity( 0.5), size: 11),
                         const SizedBox(width: 2),
-                        Text(room.hostName, style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10)),
+                        Text(room.hostName, style: TextStyle(color: Colors.white.withOpacity( 0.4), fontSize: 10)),
                       ],
                     ],
                   ),
@@ -435,9 +435,9 @@ class _LobbyRoomCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
                 color: isFull
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : statusColor.withValues(alpha: 0.15),
-                border: Border.all(color: isFull ? Colors.white.withValues(alpha: 0.1) : statusColor.withValues(alpha: 0.4)),
+                    ? Colors.white.withOpacity( 0.08)
+                    : statusColor.withOpacity( 0.15),
+                border: Border.all(color: isFull ? Colors.white.withOpacity( 0.1) : statusColor.withOpacity( 0.4)),
               ),
               child: Text(
                 isFull ? 'FULL' : statusText,

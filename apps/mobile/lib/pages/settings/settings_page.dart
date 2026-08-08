@@ -97,7 +97,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           decoration: BoxDecoration(
             color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
           ),
           child: Column(children: [
             _infoRow(Icons.person_rounded, 'Nama', profile?.displayName ?? 'Player'),
@@ -133,7 +133,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           decoration: BoxDecoration(
             color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
           ),
           child: Column(children: [
             // BGM toggle + slider
@@ -199,7 +199,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           decoration: BoxDecoration(
             color: const Color(0xFF1A1F2E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
           ),
           child: Column(children: [
             _infoRow(Icons.info_outline_rounded, 'Versi', '1.0.0'),
@@ -223,7 +223,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.error),
         label: const Text('Keluar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+          side: BorderSide(color: AppColors.error.withOpacity( 0.3)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
@@ -279,7 +279,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         label: Text('Hapus Akun Permanen',
           style: TextStyle(color: Colors.red.shade900, fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.red.shade900.withValues(alpha: 0.3)),
+          side: BorderSide(color: Colors.red.shade900.withOpacity( 0.3)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
@@ -324,7 +324,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   labelText: 'Masukkan password untuk konfirmasi',
                   prefixIcon: const Icon(Icons.lock_outline, size: 18),
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  fillColor: Colors.white.withOpacity( 0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),

@@ -170,7 +170,7 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
                             width: 40, height: 40,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
-                              color: Colors.white.withValues(alpha: 0.06),
+                              color: Colors.white.withOpacity( 0.06),
                             ),
                             child: const Icon(Icons.arrow_back_rounded, color: AppColors.textSecondary, size: 20),
                           ),
@@ -210,7 +210,7 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
                           borderRadius: BorderRadius.circular(4),
                           color: _currentPage == index
                               ? _slides[_currentPage].color
-                              : Colors.white.withValues(alpha: 0.2),
+                              : Colors.white.withOpacity( 0.2),
                         ),
                       ),
                     ),
@@ -230,12 +230,12 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
                         gradient: LinearGradient(
                           colors: [
                             _slides[_currentPage].color,
-                            _slides[_currentPage].color.withValues(alpha: 0.8),
+                            _slides[_currentPage].color.withOpacity( 0.8),
                           ],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: _slides[_currentPage].color.withValues(alpha: 0.3),
+                            color: _slides[_currentPage].color.withOpacity( 0.3),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -275,12 +275,12 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [slide.color.withValues(alpha: 0.3), Colors.transparent],
+                colors: [slide.color.withOpacity( 0.3), Colors.transparent],
                 stops: const [0.5, 1.0],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: slide.color.withValues(alpha: 0.3),
+                  color: slide.color.withOpacity( 0.3),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
@@ -320,8 +320,8 @@ class _TutorialPageState extends ConsumerState<TutorialPage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: slide.color.withValues(alpha: 0.08),
-                border: Border.all(color: slide.color.withValues(alpha: 0.2)),
+                color: slide.color.withOpacity( 0.08),
+                border: Border.all(color: slide.color.withOpacity( 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

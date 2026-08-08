@@ -82,8 +82,8 @@ class _DebugOverlayState extends State<DebugOverlay> {
               height: 44,
               decoration: BoxDecoration(
                 color: _hasErrors 
-                    ? Colors.red.withValues(alpha: 0.9)
-                    : Colors.black.withValues(alpha: 0.7),
+                    ? Colors.red.withOpacity( 0.9)
+                    : Colors.black.withOpacity( 0.7),
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: Colors.white24),
               ),
@@ -117,7 +117,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.9),
+        color: Colors.black.withOpacity( 0.9),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white24),
       ),
@@ -231,7 +231,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
         margin: const EdgeInsets.only(right: 4),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: selected ? Colors.blue.withValues(alpha: 0.3) : Colors.transparent,
+          color: selected ? Colors.blue.withOpacity( 0.3) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? Colors.blue : Colors.white24,
@@ -261,7 +261,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: _getLevelColor(_filterLevel).withValues(alpha: 0.3),
+          color: _getLevelColor(_filterLevel).withOpacity( 0.3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _getLevelColor(_filterLevel)),
         ),
@@ -327,7 +327,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: Colors.white.withOpacity( 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(

@@ -142,7 +142,7 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
               )),
             ),
           ),
-          Container(color: Colors.black.withValues(alpha: 0.6)),
+          Container(color: Colors.black.withOpacity( 0.6)),
           // Content
           SafeArea(
             child: Column(
@@ -180,14 +180,14 @@ class _LobbyPageState extends ConsumerState<LobbyPage> {
           // Countdown overlay
           if (roomState.countdown != null && roomState.countdown! > 0)
             Container(
-              color: Colors.black.withValues(alpha: 0.8),
+              color: Colors.black.withOpacity( 0.8),
               child: Center(
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.5, end: 1.0),
                   duration: const Duration(milliseconds: 400),
                   builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text('${roomState.countdown}', style: TextStyle(color: AppColors.primary, fontSize: 80, fontWeight: FontWeight.w900, shadows: [Shadow(color: AppColors.primary.withValues(alpha: 0.6), blurRadius: 40)])),
+                    Text('${roomState.countdown}', style: TextStyle(color: AppColors.primary, fontSize: 80, fontWeight: FontWeight.w900, shadows: [Shadow(color: AppColors.primary.withOpacity( 0.6), blurRadius: 40)])),
                     const SizedBox(height: 8),
                     const Text('Game dimulai...', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                   ]),
@@ -228,8 +228,8 @@ class _LobbyHeader extends StatelessWidget {
                   width: 40, height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.4),
-                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                    color: Colors.black.withOpacity( 0.4),
+                    border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
                   ),
                   child: const Icon(Icons.arrow_back_rounded, color: Color(0xFFDAA520), size: 20),
                 ),
@@ -249,7 +249,7 @@ class _LobbyHeader extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: Colors.black.withOpacity( 0.5),
                       border: Border.all(color: const Color(0xFFDAA520), width: 1.5),
                     ),
                     child: Column(children: [
@@ -258,7 +258,7 @@ class _LobbyHeader extends StatelessWidget {
                       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Text(roomCode, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 3)),
                         const SizedBox(width: 8),
-                        Icon(Icons.copy_rounded, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 16),
+                        Icon(Icons.copy_rounded, color: const Color(0xFFDAA520).withOpacity( 0.7), size: 16),
                       ]),
                     ]),
                   ),
@@ -281,8 +281,8 @@ class _LobbyHeader extends StatelessWidget {
                     width: 40, height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.black.withValues(alpha: 0.4),
-                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                      color: Colors.black.withOpacity( 0.4),
+                      border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
                     ),
                     child: const Icon(Icons.settings_rounded, color: Color(0xFFDAA520), size: 20),
                   ),
@@ -341,9 +341,9 @@ class _RoomSettingsSheetState extends ConsumerState<_RoomSettingsSheet> {
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.95),
+            color: AppColors.surface.withOpacity( 0.95),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: Colors.white.withOpacity( 0.1)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -436,16 +436,16 @@ class _RoomSettingsSheetState extends ConsumerState<_RoomSettingsSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.info.withValues(alpha: 0.1),
+                    color: AppColors.info.withOpacity( 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+                    border: Border.all(color: AppColors.info.withOpacity( 0.3)),
                   ),
                   child: Row(children: [
                     const Icon(Icons.info_outline, color: AppColors.info, size: 18),
                     const SizedBox(width: 10),
                     Expanded(child: Text(
                       'Komposisi role otomatis sesuai jumlah pemain saat game dimulai',
-                      style: TextStyle(color: AppColors.info.withValues(alpha: 0.9), fontSize: 11),
+                      style: TextStyle(color: AppColors.info.withOpacity( 0.9), fontSize: 11),
                     )),
                   ]),
                 ),
@@ -482,9 +482,9 @@ class _RoomSettingsSheetState extends ConsumerState<_RoomSettingsSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Colors.white.withOpacity( 0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withOpacity( 0.06)),
       ),
       child: Column(
         children: [
@@ -496,7 +496,7 @@ class _RoomSettingsSheetState extends ConsumerState<_RoomSettingsSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: AppColors.primary.withOpacity( 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(value, style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
@@ -569,7 +569,7 @@ class _SeatCard extends ConsumerWidget {
             title: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: color.withValues(alpha: 0.2),
+                  backgroundColor: color.withOpacity( 0.2),
                   child: Text('P${index + 1}',
                       style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
@@ -604,9 +604,9 @@ class _SeatCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withOpacity( 0.3),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(color: Colors.white.withOpacity( 0.05)),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -822,10 +822,10 @@ class _SeatCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: hasPlayer ? const Color(0xFF2A2F3A) : Colors.transparent,
-                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: hasPlayer ? 0.8 : 0.3), width: 1),
+                border: Border.all(color: const Color(0xFFDAA520).withOpacity( hasPlayer ? 0.8 : 0.3), width: 1),
               ),
               child: Center(
-                child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withValues(alpha: hasPlayer ? 1.0 : 0.5), fontSize: 9, fontWeight: FontWeight.w700)),
+                child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withOpacity( hasPlayer ? 1.0 : 0.5), fontSize: 9, fontWeight: FontWeight.w700)),
               ),
             ),
           ),
@@ -940,7 +940,7 @@ class _StartGameBanner extends ConsumerWidget {
                 border: Border.all(color: const Color(0xFFDAA520), width: 2),
                 boxShadow: [
                   if (isActive)
-                    BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                    BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Row(
@@ -1079,8 +1079,8 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                   width: 64, height: 72,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.white.withValues(alpha: 0.05),
-                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+                    color: Colors.white.withOpacity( 0.05),
+                    border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1121,8 +1121,8 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
     return Container(
       padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1117).withValues(alpha: 0.95),
-        border: Border(top: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.15))),
+        color: const Color(0xFF0D1117).withOpacity( 0.95),
+        border: Border(top: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.15))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1137,9 +1137,9 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: Colors.black.withOpacity( 0.5),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      border: Border.all(color: Colors.white.withOpacity( 0.06)),
                     ),
                     child: _messages.isEmpty
                         ? const Center(
@@ -1183,8 +1183,8 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _chatExpanded
-                        ? const Color(0xFFDAA520).withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.06),
+                        ? const Color(0xFFDAA520).withOpacity( 0.2)
+                        : Colors.white.withOpacity( 0.06),
                   ),
                   child: Icon(
                     _chatExpanded ? Icons.chat_bubble_rounded : Icons.chat_bubble_outline_rounded,
@@ -1201,8 +1201,8 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(17),
-                    color: Colors.white.withValues(alpha: 0.06),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    color: Colors.white.withOpacity( 0.06),
+                    border: Border.all(color: Colors.white.withOpacity( 0.08)),
                   ),
                   child: TextField(
                     controller: _chatCtrl,
@@ -1244,7 +1244,7 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                   width: 34, height: 34,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.white.withOpacity( 0.06),
                   ),
                   child: const Icon(Icons.emoji_emotions_rounded, color: Color(0xFFDAA520), size: 16),
                 ),
@@ -1264,8 +1264,8 @@ class _LobbyBottomBarState extends ConsumerState<_LobbyBottomBar> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: audio.bgmEnabled
-                          ? const Color(0xFFDAA520).withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.06),
+                          ? const Color(0xFFDAA520).withOpacity( 0.2)
+                          : Colors.white.withOpacity( 0.06),
                     ),
                     child: Icon(
                       audio.bgmEnabled ? Icons.music_note_rounded : Icons.music_off_rounded,
@@ -1341,9 +1341,9 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
         child: Container(
           height: MediaQuery.of(context).size.height * 0.55,
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.95),
+            color: AppColors.surface.withOpacity( 0.95),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: Colors.white.withOpacity( 0.1)),
           ),
           child: Column(
             children: [
@@ -1368,7 +1368,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: AppColors.primary.withValues(alpha: 0.12),
+                      color: AppColors.primary.withOpacity( 0.12),
                     ),
                     child: Text(widget.roomCode, style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
                   ),
@@ -1405,7 +1405,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                     label: const Text('Copy Kode Room', style: TextStyle(fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                      side: BorderSide(color: AppColors.primary.withOpacity( 0.5)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -1423,7 +1423,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.people_outline_rounded, color: AppColors.textMuted.withValues(alpha: 0.5), size: 48),
+          Icon(Icons.people_outline_rounded, color: AppColors.textMuted.withOpacity( 0.5), size: 48),
           const SizedBox(height: 12),
           const Text('Belum ada teman', style: TextStyle(color: AppColors.textMuted, fontSize: 14, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
@@ -1450,7 +1450,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _friends.length,
-      separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+      separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity( 0.05), height: 1),
       itemBuilder: (_, i) {
         final friend = _friends[i] as Map<String, dynamic>;
         final userId = friend['userId'] as String? ?? '';
@@ -1464,7 +1464,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                backgroundColor: AppColors.primary.withOpacity( 0.15),
                 child: Text(
                   displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 16),
@@ -1494,7 +1494,7 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: AppColors.success.withValues(alpha: 0.12),
+                    color: AppColors.success.withOpacity( 0.12),
                   ),
                   child: const Text('Terkirim ✓', style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w700)),
                 )

@@ -84,9 +84,9 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1F2E).withValues(alpha: 0.8),
+              color: const Color(0xFF1A1F2E).withOpacity( 0.8),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
             ),
             child: Row(children: [
               const Text('💬', style: TextStyle(fontSize: 14)),
@@ -138,8 +138,8 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.black.withValues(alpha: 0.5),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                color: Colors.black.withOpacity( 0.5),
+                border: Border.all(color: AppColors.primary.withOpacity( 0.4)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(
@@ -164,8 +164,8 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
       constraints: const BoxConstraints(maxHeight: 220),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.black.withValues(alpha: 0.4),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: Colors.black.withOpacity( 0.4),
+        border: Border.all(color: Colors.white.withOpacity( 0.08)),
       ),
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       child: Column(
@@ -243,9 +243,9 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withOpacity( 0.1),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                        border: Border.all(color: Colors.white.withOpacity( 0.15)),
                       ),
                       child: Text(preset, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                     ),
@@ -259,7 +259,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
               margin: const EdgeInsets.only(top: 4),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white.withOpacity( 0.08),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Row(children: [

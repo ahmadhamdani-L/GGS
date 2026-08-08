@@ -173,8 +173,8 @@ class _QuestCard extends StatelessWidget {
         color: const Color(0xFF1A1D2E),
         border: Border.all(
           color: completed && !claimed
-              ? const Color(0xFF4ADE80).withValues(alpha: 0.4)
-              : const Color(0xFF2D3748).withValues(alpha: 0.5),
+              ? const Color(0xFF4ADE80).withOpacity( 0.4)
+              : const Color(0xFF2D3748).withOpacity( 0.5),
         ),
       ),
       child: Column(
@@ -201,7 +201,7 @@ class _QuestCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: target > 0 ? (progress / target).clamp(0.0, 1.0) : 0,
                     backgroundColor:
-                        Colors.white.withValues(alpha: 0.08),
+                        Colors.white.withOpacity( 0.08),
                     valueColor: AlwaysStoppedAnimation(
                       completed
                           ? const Color(0xFF4ADE80)
@@ -281,7 +281,7 @@ class _QuestCard extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
-        color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+        color: const Color(0xFFDAA520).withOpacity( 0.1),
       ),
       child: Text('$icon $value',
           style: const TextStyle(

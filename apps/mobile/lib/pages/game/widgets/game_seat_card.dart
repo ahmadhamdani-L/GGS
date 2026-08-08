@@ -41,15 +41,15 @@ class GameSeatCard extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: isDead
-                ? const Color(0xFF0D1117).withValues(alpha: 0.7)
+                ? const Color(0xFF0D1117).withOpacity( 0.7)
                 : isTarget
-                    ? AppColors.error.withValues(alpha: 0.06)
+                    ? AppColors.error.withOpacity( 0.06)
                     : const Color(0xFF1A1F2E),
             border: Border.all(color: borderColor, width: isMe || isTarget ? 2.5 : 1.5),
             boxShadow: isMe
-                ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 10)]
+                ? [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 10)]
                 : isTarget
-                    ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.3), blurRadius: 8)]
+                    ? [BoxShadow(color: AppColors.error.withOpacity( 0.3), blurRadius: 8)]
                     : null,
           ),
           child: Column(
@@ -82,9 +82,9 @@ class GameSeatCard extends ConsumerWidget {
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.black.withValues(alpha: 0.6),
+                              color: Colors.black.withOpacity( 0.6),
                             ),
-                            child: Icon(Icons.close_rounded, color: Colors.white.withValues(alpha: 0.7), size: 16),
+                            child: Icon(Icons.close_rounded, color: Colors.white.withOpacity( 0.7), size: 16),
                           ),
                         ],
                       )
@@ -112,7 +112,7 @@ class GameSeatCard extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isDead
-                        ? Colors.white.withValues(alpha: 0.35)
+                        ? Colors.white.withOpacity( 0.35)
                         : (isMe ? const Color(0xFFDAA520) : Colors.white),
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -128,13 +128,13 @@ class GameSeatCard extends ConsumerWidget {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
                     Text(
                       player.role.team == Team.red ? '⬡' : '○',
-                      style: TextStyle(color: isDead ? roleColor.withValues(alpha: 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: isDead ? roleColor.withOpacity( 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(width: 1),
                     Text('${player.role.emoji} ', style: const TextStyle(fontSize: 9)),
                     Text(
                       player.role.displayName.toUpperCase(),
-                      style: TextStyle(color: isDead ? roleColor.withValues(alpha: 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: isDead ? roleColor.withOpacity( 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
                     ),
                   ]),
                 )
@@ -150,10 +150,10 @@ class GameSeatCard extends ConsumerWidget {
             width: 16, height: 16,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.black.withValues(alpha: 0.6),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.6), width: 1),
+              color: Colors.black.withOpacity( 0.6),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.6), width: 1),
             ),
-            child: Center(child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withValues(alpha: 0.8), fontSize: 8, fontWeight: FontWeight.w700))),
+            child: Center(child: Text('${index + 1}', style: TextStyle(color: const Color(0xFFDAA520).withOpacity( 0.8), fontSize: 8, fontWeight: FontWeight.w700))),
           ),
         ),
         // "YOU" badge (top-center)
@@ -178,7 +178,7 @@ class GameSeatCard extends ConsumerWidget {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Container(
                 width: 14, height: 14,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.error.withValues(alpha: 0.9)),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.error.withOpacity( 0.9)),
                 child: const Icon(Icons.gps_fixed_rounded, color: Colors.white, size: 9),
               ),
             ]),
@@ -191,8 +191,8 @@ class GameSeatCard extends ConsumerWidget {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.9),
-                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 4)],
+                color: AppColors.primary.withOpacity( 0.9),
+                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity( 0.4), blurRadius: 4)],
               ),
               child: const Text('📜', style: TextStyle(fontSize: 8)),
             ),
@@ -218,7 +218,7 @@ class CrossPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.13)
+      ..color = Colors.white.withOpacity( 0.13)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
     canvas.drawLine(const Offset(8, 8), Offset(size.width - 8, size.height - 8), paint);

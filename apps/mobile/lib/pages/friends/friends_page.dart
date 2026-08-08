@@ -277,7 +277,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
       decoration: BoxDecoration(
         color: const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
       ),
       child: Row(children: [
         Container(
@@ -285,7 +285,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
           height: 54,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            border: Border.all(color: Colors.white.withOpacity( 0.15)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -329,9 +329,9 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
             height: 32,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: _actionLoading ? color.withValues(alpha: 0.05) : color.withValues(alpha: 0.12),
+              color: _actionLoading ? color.withOpacity( 0.05) : color.withOpacity( 0.12),
             ),
-            child: Icon(icon, color: _actionLoading ? color.withValues(alpha: 0.3) : color, size: 16),
+            child: Icon(icon, color: _actionLoading ? color.withOpacity( 0.3) : color, size: 16),
           ),
         ),
       ),
@@ -341,7 +341,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
   Widget _emptyState(String title, String subtitle) {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.people_outline_rounded, color: AppColors.textMuted.withValues(alpha: 0.3), size: 48),
+        Icon(Icons.people_outline_rounded, color: AppColors.textMuted.withOpacity( 0.3), size: 48),
         const SizedBox(height: 12),
         Text(title, style: const TextStyle(color: AppColors.textSecondary, fontSize: 15, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),

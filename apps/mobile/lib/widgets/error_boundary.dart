@@ -99,7 +99,7 @@ class _DefaultErrorWidget extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
+              color: Colors.red.withOpacity( 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -123,7 +123,7 @@ class _DefaultErrorWidget extends StatelessWidget {
               ? '${error.toString().substring(0, 100)}...'
               : error.toString(),
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Colors.white.withOpacity( 0.7),
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
@@ -175,7 +175,7 @@ class LoadingWidget extends StatelessWidget {
           Text(
             message!,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: Colors.white.withOpacity( 0.8),
               fontSize: 14,
             ),
           ),
@@ -220,13 +220,13 @@ class EmptyStateWidget extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: Colors.white.withValues(alpha: 0.3),
+              color: Colors.white.withOpacity( 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               message,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Colors.white.withOpacity( 0.6),
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -300,9 +300,9 @@ class _ShimmerPlaceholderState extends State<ShimmerPlaceholder>
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value, 0),
               colors: [
-                Colors.white.withValues(alpha: 0.05),
-                Colors.white.withValues(alpha: 0.15),
-                Colors.white.withValues(alpha: 0.05),
+                Colors.white.withOpacity( 0.05),
+                Colors.white.withOpacity( 0.15),
+                Colors.white.withOpacity( 0.05),
               ],
             ),
           ),

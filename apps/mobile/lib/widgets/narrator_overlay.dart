@@ -150,7 +150,7 @@ class _NarratorOverlayState extends State<NarratorOverlay>
       child: FadeTransition(
         opacity: _fadeAnim,
         child: Container(
-          color: Colors.black.withValues(alpha: 0.92),
+          color: Colors.black.withOpacity( 0.92),
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -165,14 +165,14 @@ class _NarratorOverlayState extends State<NarratorOverlay>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          textColor.withValues(alpha: 0.25),
+                          textColor.withOpacity( 0.25),
                           Colors.transparent,
                         ],
                         stops: const [0.5, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: textColor.withValues(alpha: 0.3),
+                          color: textColor.withOpacity( 0.3),
                           blurRadius: 40,
                           spreadRadius: 10,
                         ),
@@ -197,7 +197,7 @@ class _NarratorOverlayState extends State<NarratorOverlay>
                         height: 1.6,
                         shadows: [
                           Shadow(
-                            color: textColor.withValues(alpha: 0.4),
+                            color: textColor.withOpacity( 0.4),
                             blurRadius: 10,
                           ),
                         ],
@@ -216,7 +216,7 @@ class _NarratorOverlayState extends State<NarratorOverlay>
                     Text(
                       'Tap untuk skip',
                       style: TextStyle(
-                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                        color: AppColors.textMuted.withOpacity( 0.5),
                         fontSize: 11,
                       ),
                     ),
@@ -298,7 +298,7 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
           borderRadius: BorderRadius.circular(1),
           boxShadow: [
             BoxShadow(
-              color: widget.color.withValues(alpha: 0.5),
+              color: widget.color.withOpacity( 0.5),
               blurRadius: 4,
             ),
           ],
@@ -372,12 +372,12 @@ class _NarratorBannerState extends State<NarratorBanner>
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: widget.color.withValues(alpha: 0.15),
+            color: widget.color.withOpacity( 0.15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: widget.color.withValues(alpha: 0.4)),
+            border: Border.all(color: widget.color.withOpacity( 0.4)),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withValues(alpha: 0.2),
+                color: widget.color.withOpacity( 0.2),
                 blurRadius: 12,
               ),
             ],

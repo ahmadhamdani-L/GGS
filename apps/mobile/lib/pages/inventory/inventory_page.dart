@@ -112,7 +112,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> with SingleTicker
             decoration: BoxDecoration(
               color: const Color(0xFF1A1F2E),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
+              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
             ),
             child: TabBar(
               controller: _tabCtrl,
@@ -155,7 +155,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> with SingleTicker
 
   Widget _emptyState() => Center(
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(Icons.inventory_2_outlined, color: Colors.white.withValues(alpha: 0.2), size: 48),
+      Icon(Icons.inventory_2_outlined, color: Colors.white.withOpacity( 0.2), size: 48),
       const SizedBox(height: 12),
       const Text('Belum ada item', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
       const SizedBox(height: 4),
@@ -181,7 +181,7 @@ class _InventoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: const Color(0xFF1A1F2E),
-        border: Border.all(color: _borderColor.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: _borderColor.withOpacity( 0.5), width: 1.5),
       ),
       child: Stack(children: [
         // Content
@@ -207,8 +207,8 @@ class _InventoryCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                color: Colors.black.withValues(alpha: 0.7),
-                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+                color: Colors.black.withOpacity( 0.7),
+                border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5)),
               ),
               child: Text('x${item.quantity}', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w700)),
             ),
@@ -219,7 +219,7 @@ class _InventoryCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Colors.black.withOpacity( 0.6),
               ),
               child: const Center(child: Icon(Icons.lock_rounded, color: Color(0xFF4A5060), size: 20)),
             ),
