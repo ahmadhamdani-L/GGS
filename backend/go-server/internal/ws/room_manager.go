@@ -31,7 +31,7 @@ import (
 // ─── Constants ───────────────────────────────────────────────
 
 const (
-	MaxSeats             = 16
+	MaxSeats             = 18
 	MinPlayersToStart    = 8  // Minimum seated players (humans + bots) to start
 	HostGracePeriod      = 30 * time.Second
 	ReconnectGracePeriod = 30 * time.Second
@@ -166,7 +166,7 @@ type RoomSettings struct {
 
 func DefaultSettings() RoomSettings {
 	return RoomSettings{
-		MaxPlayers:     MaxSeats,
+		MaxPlayers:     18,
 		DiscussionTime: 60,
 		VotingTime:     30,
 		NightTime:      30,
