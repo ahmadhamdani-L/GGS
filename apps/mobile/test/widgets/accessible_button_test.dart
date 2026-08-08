@@ -22,7 +22,7 @@ void main() {
       expect(find.byType(ElevatedButton), findsOneWidget);
 
       // Check semantics
-      final semantics = tester.getSemantics(find.byType(Semantics).first);
+      final semantics = tester.getSemantics(find.byKey(const Key('accessible_button_semantics')));
       expect(semantics.label, 'Test Button');
     });
 

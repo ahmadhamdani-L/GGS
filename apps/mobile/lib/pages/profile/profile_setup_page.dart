@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../pages/tutorial/tutorial_page.dart';
 import '../../providers/auth_provider.dart';
+import 'profile_name_validator.dart';
 
 class ProfileSetupPage extends ConsumerStatefulWidget {
   const ProfileSetupPage({super.key});
@@ -33,6 +34,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
   @override
   void initState() {
     super.initState();
+    _nameController.addListener(_handleNameChanged);
     final profile = ref.read(authProvider).profile;
     if (profile != null && profile.displayName != 'Player') {
       _nameController.text = profile.displayName;
@@ -42,8 +44,15 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_handleNameChanged);
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _handleNameChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // ─── Image Picker ─────────────────────────────────────────
@@ -147,17 +156,35 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     setState(() { _uploading = true; _uploadError = null; });
 
     final api  = ref.read(apiServiceProvider);
-    final resp = await api.uploadAvatar(_customPhoto!.path);
+
+    // Retry on timeout/network failures
+    const maxAttempts = 3;
+    int attempt = 0;
+    ApiResponse<Map<String, dynamic>>? resp;
+
+    while (attempt < maxAttempts) {
+      attempt++;
+      resp = await api.uploadAvatar(_customPhoto!.path);
+      if (resp.isSuccess && resp.data != null) break;
+
+      // If transient/network timeout (statusCode 408 or 0) then retry
+      if (resp.statusCode == 408 || resp.statusCode == 0) {
+        await Future.delayed(Duration(milliseconds: 200 * attempt));
+        continue;
+      }
+      break;
+    }
 
     if (!mounted) return;
-    if (resp.isSuccess && resp.data != null) {
+
+    if (resp != null && resp.isSuccess && resp.data != null) {
       setState(() {
-        _uploadedAvatarUrl = resp.data!['avatarUrl'] as String?;
+        _uploadedAvatarUrl = resp!.data!['avatarUrl'] as String?;
         _uploading = false;
       });
     } else {
       setState(() {
-        _uploadError = resp.error ?? 'Upload gagal — akan pakai preset avatar';
+        _uploadError = resp?.error ?? 'Upload gagal — akan pakai preset avatar';
         _uploading   = false;
       });
     }
@@ -167,10 +194,10 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty || name.length < 2) {
+    final validationMessage = validateDisplayName(name);
+    if (validationMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama minimal 2 karakter'),
-          backgroundColor: AppColors.warning));
+        SnackBar(content: Text(validationMessage), backgroundColor: AppColors.warning));
       return;
     }
     if (_uploading) {
@@ -183,19 +210,42 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     setState(() => _saving = true);
 
     final notifier = ref.read(authProvider.notifier);
-    await notifier.updateProfile(
-      displayName: name,
-      avatarId:    _selectedAvatar,
-      avatarUrl:   _uploadedAvatarUrl, // null if using preset
-    );
+    try {
+      await notifier.updateProfile(
+        displayName: name,
+        avatarId:    _selectedAvatar,
+        avatarUrl:   _uploadedAvatarUrl, // null if using preset
+      );
 
-    if (!mounted) return;
-    setState(() => _saving = false);
+      if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final tutorialDone = prefs.getBool(kTutorialCompletedKey) ?? false;
-    if (!mounted) return;
-    context.go(tutorialDone ? '/home' : '/onboarding');
+      // Verify update reflected in state; authProvider.updateProfile doesn't return success bool
+      final updated = ref.read(authProvider).profile;
+      final bool success = updated != null && (
+        updated.displayName == name ||
+        updated.avatarUrl == _uploadedAvatarUrl ||
+        updated.avatarId == _selectedAvatar
+      );
+
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal menyimpan profil. Silakan coba lagi.'), backgroundColor: AppColors.error),
+        );
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final tutorialDone = prefs.getBool(kTutorialCompletedKey) ?? false;
+      if (!mounted) return;
+      context.go(tutorialDone ? '/home' : '/onboarding');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e'), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   // ─── Build ────────────────────────────────────────────────

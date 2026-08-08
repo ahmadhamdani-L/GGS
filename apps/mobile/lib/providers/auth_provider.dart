@@ -88,18 +88,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final refreshToken = await _secureStorage.read(key: _kRefreshToken);
     if (refreshToken == null) return false;
 
-    final resp = await _api.refreshToken(refreshToken);
-    
-    if (resp.isSuccess && resp.data != null) {
-      await _saveTokens(
-        accessToken: resp.data!['accessToken'] as String,
-        refreshToken: resp.data!['refreshToken'] as String,
-        expiresIn: resp.data!['expiresIn'] as int,
-      );
-      return true;
+    // Retry on transient failures (network) with small backoff
+    const maxAttempts = 3;
+    var attempt = 0;
+    while (attempt < maxAttempts) {
+      attempt++;
+      final resp = await _api.refreshToken(refreshToken);
+
+      if (resp.isSuccess && resp.data != null) {
+        await _saveTokens(
+          accessToken: resp.data!['accessToken'] as String,
+          refreshToken: resp.data!['refreshToken'] as String,
+          expiresIn: resp.data!['expiresIn'] as int,
+        );
+        return true;
+      }
+
+      // If network error (statusCode == 0) then retry after backoff
+      if (resp.statusCode == 0 && attempt < maxAttempts) {
+        await Future.delayed(Duration(milliseconds: 200 * attempt));
+        continue;
+      }
+
+      // Non-retryable or exhausted attempts
+      break;
     }
-    
-    // Refresh failed - logout
+
+    // Refresh ultimately failed - logout to clear state
     await logout();
     return false;
   }

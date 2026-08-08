@@ -27,13 +27,22 @@ class ApiService {
   }
 
 // Add X-App-Version header to every request so the server can enforce min version.
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-        'X-App-Version': '1.0.0', // matches pubspec version: 1.0.0+1
-      };
+  Map<String, String> get _headers {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'X-App-Version': '1.0.0', // matches pubspec version: 1.0.0+1
+    };
 
-  // --- Auth ---
+    if (_token != null && _token!.isNotEmpty) {
+      // Normalize token - allow callers to pass either raw token or 'Bearer ...'
+      headers['Authorization'] = _token!.toLowerCase().startsWith('bearer ')
+          ? _token!
+          : 'Bearer ${_token!}';
+    }
+
+    return headers;
+  }
+// --- Auth ---
 
   Future<ApiResponse<Map<String, dynamic>>> register({
     required String email,
@@ -235,7 +244,7 @@ class ApiService {
       final response = await http.get(
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
-      );
+      ).timeout(const Duration(seconds: 15));
       stopwatch.stop();
       final result = _parseResponse(response);
       if (result.isSuccess) {
@@ -244,6 +253,10 @@ class ApiService {
         logger.apiError('GET', path, result.error ?? 'Unknown', status: response.statusCode);
       }
       return result;
+    } on TimeoutException {
+      stopwatch.stop();
+      logger.apiError('GET', path, 'Request timeout');
+      return ApiResponse(error: 'Request timeout', statusCode: 408);
     } catch (e) {
       stopwatch.stop();
       logger.apiError('GET', path, e.toString());
@@ -260,7 +273,7 @@ class ApiService {
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 15));
       stopwatch.stop();
       final result = _parseResponse(response);
       if (result.isSuccess) {
@@ -269,6 +282,10 @@ class ApiService {
         logger.apiError('POST', path, result.error ?? 'Unknown', status: response.statusCode);
       }
       return result;
+    } on TimeoutException {
+      stopwatch.stop();
+      logger.apiError('POST', path, 'Request timeout');
+      return ApiResponse(error: 'Request timeout', statusCode: 408);
     } catch (e) {
       stopwatch.stop();
       logger.apiError('POST', path, e.toString());
@@ -285,7 +302,7 @@ class ApiService {
         Uri.parse('${AppConfig.apiUrl}$path'),
         headers: _headers,
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 15));
       stopwatch.stop();
       final result = _parseResponse(response);
       if (result.isSuccess) {
@@ -294,6 +311,10 @@ class ApiService {
         logger.apiError('PUT', path, result.error ?? 'Unknown', status: response.statusCode);
       }
       return result;
+    } on TimeoutException {
+      stopwatch.stop();
+      logger.apiError('PUT', path, 'Request timeout');
+      return ApiResponse(error: 'Request timeout', statusCode: 408);
     } catch (e) {
       stopwatch.stop();
       logger.apiError('PUT', path, e.toString());
