@@ -160,7 +160,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     // Retry on timeout/network failures
     const maxAttempts = 3;
     int attempt = 0;
-    var resp;
+    ApiResponse<Map<String, dynamic>>? resp;
 
     while (attempt < maxAttempts) {
       attempt++;
@@ -287,7 +287,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
                       boxShadow: [BoxShadow(
                         color: (_uploadedAvatarUrl != null
                             ? AppColors.success
-                            : AppColors.primary).withOpacity( 0.35),
+                            : AppColors.primary).withValues(alpha: 0.35),
                         blurRadius: 24, spreadRadius: 2)],
                     ),
                     child: ClipRRect(
@@ -371,10 +371,10 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
                   fillColor: AppColors.surfaceElevated,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.white.withOpacity( 0.08))),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.white.withOpacity( 0.08))),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),

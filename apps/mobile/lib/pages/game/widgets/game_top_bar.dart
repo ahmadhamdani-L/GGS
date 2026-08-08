@@ -67,9 +67,9 @@ class _GameTopBarState extends State<GameTopBar> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity( 0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5)),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Text(phaseEmoji, style: const TextStyle(fontSize: 14)),
@@ -84,9 +84,9 @@ class _GameTopBarState extends State<GameTopBar> {
               width: 52, height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.black.withOpacity( 0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 border: Border.all(color: timerColor, width: 3),
-                boxShadow: [BoxShadow(color: timerColor.withOpacity( 0.3), blurRadius: 12)],
+                boxShadow: [BoxShadow(color: timerColor.withValues(alpha: 0.3), blurRadius: 12)],
               ),
               child: Center(child: Text('$_remaining', style: TextStyle(color: timerColor, fontSize: 20, fontWeight: FontWeight.w900))),
             ),
@@ -96,11 +96,11 @@ class _GameTopBarState extends State<GameTopBar> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('HIDUP ', style: TextStyle(color: AppColors.success.withOpacity( 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
+                Text('HIDUP ', style: TextStyle(color: AppColors.success.withValues(alpha: 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
                 Text('$alive', style: const TextStyle(color: AppColors.success, fontSize: 14, fontWeight: FontWeight.w900)),
               ]),
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('MATI ', style: TextStyle(color: AppColors.error.withOpacity( 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
+                Text('MATI ', style: TextStyle(color: AppColors.error.withValues(alpha: 0.8), fontSize: 9, fontWeight: FontWeight.w600)),
                 Text('$dead', style: const TextStyle(color: AppColors.error, fontSize: 14, fontWeight: FontWeight.w900)),
               ]),
             ],

@@ -80,8 +80,8 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                           width: 40, height: 40,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            color: Colors.white.withOpacity( 0.06),
-                            border: Border.all(color: Colors.white.withOpacity( 0.1)),
+                            color: Colors.white.withValues(alpha: 0.06),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                           ),
                           child: const Icon(Icons.arrow_back_rounded, color: AppColors.textSecondary, size: 20),
                         ),
@@ -99,7 +99,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                         height: 48,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary.withOpacity( 0.5), width: 1.5),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
@@ -130,7 +130,7 @@ class _RoomPageState extends ConsumerState<RoomPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        color: AppColors.error.withOpacity( 0.1),
+                        color: AppColors.error.withValues(alpha: 0.1),
                       ),
                       child: Row(
                         children: [
@@ -361,8 +361,8 @@ class _MabarCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity( 0.04),
-          border: Border.all(color: iconColor.withOpacity( 0.3)),
+          color: Colors.white.withValues(alpha: 0.04),
+          border: Border.all(color: iconColor.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -370,7 +370,7 @@ class _MabarCard extends StatelessWidget {
               width: 48, height: 48,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: iconColor.withOpacity( 0.15),
+                color: iconColor.withValues(alpha: 0.15),
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),
@@ -385,7 +385,7 @@ class _MabarCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textMuted.withOpacity( 0.5), size: 24),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textMuted.withValues(alpha: 0.5), size: 24),
           ],
         ),
       ),
@@ -418,7 +418,7 @@ class _RoomCard extends StatelessWidget {
     final isPlaying = status == 'playing';
     final borderColor = isSelected
         ? AppColors.primary
-        : (isFull || isPlaying ? AppColors.error.withOpacity( 0.3) : Colors.white.withOpacity( 0.08));
+        : (isFull || isPlaying ? AppColors.error.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.08));
 
     return GestureDetector(
       onTap: (isFull || isPlaying) ? null : onTap,
@@ -430,8 +430,8 @@ class _RoomCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity( 0.06)
-                  : Colors.white.withOpacity( 0.03),
+                  ? AppColors.primary.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
             ),
@@ -443,8 +443,8 @@ class _RoomCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: (isFull || isPlaying)
-                        ? AppColors.error.withOpacity( 0.1)
-                        : AppColors.primary.withOpacity( 0.1),
+                        ? AppColors.error.withValues(alpha: 0.1)
+                        : AppColors.primary.withValues(alpha: 0.1),
                   ),
                   child: Center(
                     child: Text(
@@ -490,12 +490,12 @@ class _RoomCard extends StatelessWidget {
                           ),
                           if (hostName != null && hostName!.isNotEmpty) ...[
                             const SizedBox(width: 8),
-                            Icon(Icons.star_rounded, size: 12, color: AppColors.primaryLight.withOpacity( 0.7)),
+                            Icon(Icons.star_rounded, size: 12, color: AppColors.primaryLight.withValues(alpha: 0.7)),
                             const SizedBox(width: 2),
                             Expanded(
                               child: Text(
                                 hostName!,
-                                style: TextStyle(color: AppColors.textMuted.withOpacity( 0.8), fontSize: 11),
+                                style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8), fontSize: 11),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -510,7 +510,7 @@ class _RoomCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: _getStatusColor().withOpacity( 0.1),
+                    color: _getStatusColor().withValues(alpha: 0.1),
                   ),
                   child: Text(
                     _getStatusText(),
@@ -572,7 +572,7 @@ class _JoinOptionsSheet extends StatelessWidget {
             width: 40, height: 4,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: Colors.white.withOpacity( 0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
           ),
           const SizedBox(height: 20),
@@ -597,7 +597,7 @@ class _JoinOptionsSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 gradient: AppColors.primaryGradient,
                 boxShadow: [
-                  BoxShadow(color: AppColors.primary.withOpacity( 0.3), blurRadius: 16, offset: const Offset(0, 6)),
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6)),
                 ],
               ),
               child: const Row(
@@ -629,7 +629,7 @@ class _JoinOptionsSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 gradient: AppColors.blueGradient,
                 boxShadow: [
-                  BoxShadow(color: AppColors.blueTeam.withOpacity( 0.2), blurRadius: 16, offset: const Offset(0, 6)),
+                  BoxShadow(color: AppColors.blueTeam.withValues(alpha: 0.2), blurRadius: 16, offset: const Offset(0, 6)),
                 ],
               ),
               child: const Row(
@@ -685,7 +685,7 @@ class _CreateRoomSheetState extends State<_CreateRoomSheet> {
             width: 40, height: 4,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: Colors.white.withOpacity( 0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
           ),
           const SizedBox(height: 20),
@@ -693,7 +693,7 @@ class _CreateRoomSheetState extends State<_CreateRoomSheet> {
             width: 64, height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.success.withOpacity( 0.15),
+              color: AppColors.success.withValues(alpha: 0.15),
             ),
             child: const Icon(Icons.groups_rounded, color: AppColors.success, size: 32),
           ),
@@ -706,8 +706,8 @@ class _CreateRoomSheetState extends State<_CreateRoomSheet> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              color: Colors.white.withOpacity( 0.04),
-              border: Border.all(color: Colors.white.withOpacity( 0.08)),
+              color: Colors.white.withValues(alpha: 0.04),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Column(
               children: [
@@ -734,7 +734,7 @@ class _CreateRoomSheetState extends State<_CreateRoomSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Min 8 pemain untuk mulai game', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.7), fontSize: 11)),
+          Text('Min 8 pemain untuk mulai game', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 11)),
           const SizedBox(height: 24),
           GradientButton(
             label: 'Buat Room',
@@ -757,8 +757,8 @@ class _CreateRoomSheetState extends State<_CreateRoomSheet> {
           height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: isSelected ? AppColors.primary.withOpacity( 0.15) : Colors.white.withOpacity( 0.04),
-            border: Border.all(color: isSelected ? AppColors.primary : Colors.white.withOpacity( 0.1)),
+            color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
+            border: Border.all(color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1)),
           ),
           child: Center(
             child: Text(
@@ -798,7 +798,7 @@ class _JoinCodeSheet extends StatelessWidget {
             width: 40, height: 4,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: Colors.white.withOpacity( 0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
           ),
           const SizedBox(height: 20),
@@ -806,7 +806,7 @@ class _JoinCodeSheet extends StatelessWidget {
             width: 64, height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.blueTeam.withOpacity( 0.15),
+              color: AppColors.blueTeam.withValues(alpha: 0.15),
             ),
             child: const Icon(Icons.qr_code_rounded, color: AppColors.blueTeam, size: 32),
           ),
@@ -823,11 +823,11 @@ class _JoinCodeSheet extends StatelessWidget {
             style: const TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 8),
             decoration: InputDecoration(
               hintText: 'ABCD',
-              hintStyle: TextStyle(color: AppColors.textMuted.withOpacity( 0.3), fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 8),
+              hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.3), fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 8),
               filled: true,
-              fillColor: Colors.white.withOpacity( 0.04),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withOpacity( 0.1))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withOpacity( 0.1))),
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.blueTeam, width: 2)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             ),
@@ -861,13 +861,13 @@ class _EmptyPublicRoomsState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity( 0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity( 0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
-          Icon(Icons.meeting_room_outlined, size: 40, color: AppColors.textMuted.withOpacity( 0.5)),
+          Icon(Icons.meeting_room_outlined, size: 40, color: AppColors.textMuted.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           const Text(
             'Belum ada room publik aktif',
@@ -886,7 +886,7 @@ class _EmptyPublicRoomsState extends StatelessWidget {
             label: const Text('Segarkan', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
-              side: BorderSide(color: AppColors.primary.withOpacity( 0.4)),
+              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),

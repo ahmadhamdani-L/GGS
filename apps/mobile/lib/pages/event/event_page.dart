@@ -127,9 +127,9 @@ class _EventCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(colors: [
           const Color(0xFF1A0E2E),
-          const Color(0xFF1A1D2E).withOpacity( 0.9),
+          const Color(0xFF1A1D2E).withValues(alpha: 0.9),
         ]),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,8 +163,8 @@ class _EventCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
-                    color: const Color(0xFFDAA520).withOpacity( 0.1),
-                    border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
+                    color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
                   ),
                   child: Text('${_formatKey(e.key)}: ${e.value}', style: const TextStyle(color: Color(0xFFDAA520), fontSize: 10)),
                 );
@@ -186,7 +186,7 @@ class _EventCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
-                    color: const Color(0xFF4ADE80).withOpacity( 0.1),
+                    color: const Color(0xFF4ADE80).withValues(alpha: 0.1),
                   ),
                   child: Text('$icon $amount', style: const TextStyle(color: Color(0xFF4ADE80), fontSize: 11, fontWeight: FontWeight.w600)),
                 );

@@ -164,7 +164,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             color: const Color(0xFF0D1117),
-            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3), width: 1.5),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3), width: 1.5),
           ),
           child: Stack(
             children: [
@@ -186,7 +186,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                           onSelect: (key) => setState(() => _selectedCategory = key),
                         ),
                         // Vertical divider
-                        Container(width: 1, color: const Color(0xFFDAA520).withOpacity( 0.15)),
+                        Container(width: 1, color: const Color(0xFFDAA520).withValues(alpha: 0.15)),
                         // Right content
                         Expanded(child: _buildContent(shopState)),
                       ],
@@ -299,7 +299,7 @@ class _ShopTopBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.15))),
+        border: Border(bottom: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.15))),
       ),
       child: Row(
         children: [
@@ -336,8 +336,8 @@ class _BalanceBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: color.withOpacity( 0.1),
-          border: Border.all(color: color.withOpacity( 0.4)),
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text(emoji, style: const TextStyle(fontSize: 13)),
@@ -346,7 +346,7 @@ class _BalanceBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Container(
             width: 14, height: 14,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity( 0.25)),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.25)),
             child: Icon(Icons.add, color: color, size: 9),
           ),
         ]),
@@ -393,9 +393,9 @@ class _CategorySidebar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: isActive ? const Color(0xFFDAA520).withOpacity( 0.12) : Colors.transparent,
+                color: isActive ? const Color(0xFFDAA520).withValues(alpha: 0.12) : Colors.transparent,
                 border: isActive
-                    ? Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5))
+                    ? Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5))
                     : Border.all(color: Colors.transparent),
               ),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -495,9 +495,9 @@ class _FeaturedCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: const Color(0xFF1A1D2E),
-          border: Border.all(color: _glowColor.withOpacity( 0.6), width: 1.5),
+          border: Border.all(color: _glowColor.withValues(alpha: 0.6), width: 1.5),
           boxShadow: [
-            BoxShadow(color: _glowColor.withOpacity( 0.2), blurRadius: 12, spreadRadius: 1),
+            BoxShadow(color: _glowColor.withValues(alpha: 0.2), blurRadius: 12, spreadRadius: 1),
           ],
         ),
         child: Column(
@@ -520,7 +520,7 @@ class _FeaturedCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity( 0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(11)),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -559,7 +559,7 @@ class _ShopItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           color: const Color(0xFF1A1D2E),
-          border: Border.all(color: _borderColor.withOpacity( 0.5), width: 1.2),
+          border: Border.all(color: _borderColor.withValues(alpha: 0.5), width: 1.2),
         ),
         child: Column(
           children: [
@@ -570,7 +570,7 @@ class _ShopItemCard extends StatelessWidget {
                 child: Container(
                   margin: const EdgeInsets.all(4),
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: AppColors.success.withOpacity( 0.2), borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
                   child: const Text('Punya', style: TextStyle(color: AppColors.success, fontSize: 8, fontWeight: FontWeight.w600)),
                 ),
               )
@@ -593,7 +593,7 @@ class _ShopItemCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity( 0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(9)),
                 ),
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -630,8 +630,8 @@ class _PurchaseDialog extends StatelessWidget {
             width: 80, height: 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: Colors.black.withOpacity( 0.4),
-              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+              color: Colors.black.withValues(alpha: 0.4),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
             ),
             child: Center(child: Text(item.emoji, style: const TextStyle(fontSize: 40))),
           ),
@@ -643,8 +643,8 @@ class _PurchaseDialog extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFFDAA520).withOpacity( 0.1),
-              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+              color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Text(item.coinPrice > 0 ? '🪙' : '💎', style: const TextStyle(fontSize: 16)),

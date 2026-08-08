@@ -161,8 +161,8 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: Colors.white.withOpacity( 0.06),
-                      border: Border.all(color: Colors.white.withOpacity( 0.15)),
+                      color: Colors.white.withValues(alpha: 0.06),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                     ),
                     child: const Text('Skip Vote', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
@@ -183,7 +183,7 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
                         ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
                         : null,
                     color: (canIVote && _selectedTargetId != null) ? null : const Color(0xFF3A3A3A),
-                    border: Border.all(color: const Color(0xFFDAA520).withOpacity( (canIVote && _selectedTargetId != null) ? 1.0 : 0.3)),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: (canIVote && _selectedTargetId != null) ? 1.0 : 0.3)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text(

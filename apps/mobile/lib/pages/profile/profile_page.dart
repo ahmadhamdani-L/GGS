@@ -105,7 +105,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: const Color(0xFFD97706).withOpacity( 0.25), blurRadius: 16)],
+          boxShadow: [BoxShadow(color: const Color(0xFFD97706).withValues(alpha: 0.25), blurRadius: 16)],
         ),
         child: Row(
           children: [
@@ -122,7 +122,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const SizedBox(height: 2),
                   Text(
                     'Daftarkan email sekarang untuk menyimpan semua koin, XP & item secara permanen.',
-                    style: TextStyle(color: Colors.white.withOpacity( 0.85), fontSize: 11),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11),
                   ),
                 ],
               ),
@@ -131,7 +131,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity( 0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text('Simpan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
@@ -177,7 +177,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   labelText: 'Email',
                   prefixIcon: const Icon(Icons.email_outlined, size: 18),
                   filled: true,
-                  fillColor: Colors.white.withOpacity( 0.05),
+                  fillColor: Colors.white.withValues(alpha: 0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -190,7 +190,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   labelText: 'Password (min 8 char)',
                   prefixIcon: const Icon(Icons.lock_outline, size: 18),
                   filled: true,
-                  fillColor: Colors.white.withOpacity( 0.05),
+                  fillColor: Colors.white.withValues(alpha: 0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -264,8 +264,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           end: Alignment.bottomRight,
           colors: [Color(0xFF1E2433), Color(0xFF151A28)],
         ),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4), width: 1.5),
-        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.1), blurRadius: 20)],
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.1), blurRadius: 20)],
       ),
       child: Column(
         children: [
@@ -279,7 +279,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFDAA520), width: 2.5),
                   color: Colors.white,
-                  boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.25), blurRadius: 12)],
+                  boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.25), blurRadius: 12)],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(11),
@@ -299,7 +299,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
-                    color: Colors.white.withOpacity( 0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Text('ID ', style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w600)),
@@ -334,7 +334,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ]),
           const SizedBox(height: 14),
           // Divider
-          Container(height: 1, color: Colors.white.withOpacity( 0.06)),
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
           const SizedBox(height: 12),
           // Stats row: Games, Won, Charm, Popularity
           Row(
@@ -378,9 +378,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Expanded(child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity( 0.15)),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Column(children: [
         Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w800)),
@@ -414,7 +414,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -464,7 +464,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: (unlocked ? AppColors.success : AppColors.warning).withOpacity( 0.15),
+                color: (unlocked ? AppColors.success : AppColors.warning).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -499,7 +499,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           label: const Text('Social Leaderboard'),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFFDAA520),
-            side: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+            side: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
@@ -538,9 +538,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               width: (MediaQuery.of(context).size.width - 50) / 2,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: unlocked ? const Color(0xFFDAA520).withOpacity( 0.06) : Colors.white.withOpacity( 0.02),
+                color: unlocked ? const Color(0xFFDAA520).withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: unlocked ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05)),
+                border: Border.all(color: unlocked ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05)),
               ),
               child: Row(children: [
                 Text(a['emoji'] as String, style: TextStyle(fontSize: 20, color: unlocked ? null : AppColors.textMuted)),
@@ -578,13 +578,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity( 0.03),
+              color: Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(children: [
               Container(
                 width: 28, height: 28,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: (won ? AppColors.success : AppColors.error).withOpacity( 0.12)),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: (won ? AppColors.success : AppColors.error).withValues(alpha: 0.12)),
                 child: Icon(won ? Icons.check : Icons.close, size: 16, color: won ? AppColors.success : AppColors.error),
               ),
               const SizedBox(width: 10),

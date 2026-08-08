@@ -25,9 +25,9 @@ class NightChatPanel extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity( 0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: teamColor.withOpacity( 0.25)),
+        border: Border.all(color: teamColor.withValues(alpha: 0.25)),
       ),
       child: Column(children: [
         // Header
@@ -36,7 +36,7 @@ class NightChatPanel extends StatelessWidget {
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white.withOpacity( 0.05)),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: Colors.white.withValues(alpha: 0.05)),
             child: const Text('Room', style: TextStyle(color: AppColors.textMuted, fontSize: 9)),
           ),
         ]),
@@ -44,7 +44,7 @@ class NightChatPanel extends StatelessWidget {
         // Messages
         Expanded(
           child: messages.isEmpty
-              ? Center(child: Text('Kirim pesan ke tim...', style: TextStyle(color: teamColor.withOpacity( 0.4), fontSize: 11)))
+              ? Center(child: Text('Kirim pesan ke tim...', style: TextStyle(color: teamColor.withValues(alpha: 0.4), fontSize: 11)))
               : ListView.builder(
                   reverse: true,
                   itemCount: messages.length,
@@ -72,8 +72,8 @@ class NightChatPanel extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(17),
-                color: Colors.white.withOpacity( 0.06),
-                border: Border.all(color: teamColor.withOpacity( 0.2)),
+                color: Colors.white.withValues(alpha: 0.06),
+                border: Border.all(color: teamColor.withValues(alpha: 0.2)),
               ),
               child: TextField(
                 controller: chatCtrl,
@@ -89,7 +89,7 @@ class NightChatPanel extends StatelessWidget {
             onTap: onSend,
             child: Container(
               width: 34, height: 34,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: teamColor.withOpacity( 0.2)),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: teamColor.withValues(alpha: 0.2)),
               child: Icon(Icons.send_rounded, color: teamColor, size: 14),
             ),
           ),
@@ -146,9 +146,9 @@ class _SwipeableChatPanelState extends State<SwipeableChatPanel> {
           children: [
             // Page 0: Chat Room (disabled at night)
             Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.lock_rounded, color: AppColors.textMuted.withOpacity( 0.3), size: 24),
+              Icon(Icons.lock_rounded, color: AppColors.textMuted.withValues(alpha: 0.3), size: 24),
               const SizedBox(height: 6),
-              Text('Chat Room nonaktif saat malam', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.5), fontSize: 11)),
+              Text('Chat Room nonaktif saat malam', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 11)),
             ])),
             // Page 1: Team Chat (active)
             Padding(
@@ -156,7 +156,7 @@ class _SwipeableChatPanelState extends State<SwipeableChatPanel> {
               child: Column(children: [
                 Expanded(
                   child: widget.teamMessages.isEmpty
-                      ? Center(child: Text('Kirim pesan ke tim...', style: TextStyle(color: teamColor.withOpacity( 0.4), fontSize: 11)))
+                      ? Center(child: Text('Kirim pesan ke tim...', style: TextStyle(color: teamColor.withValues(alpha: 0.4), fontSize: 11)))
                       : ListView.builder(
                           reverse: true,
                           itemCount: widget.teamMessages.length,
@@ -182,8 +182,8 @@ class _SwipeableChatPanelState extends State<SwipeableChatPanel> {
                   height: 32,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    color: Colors.white.withOpacity( 0.06),
-                    border: Border.all(color: teamColor.withOpacity( 0.2)),
+                    color: Colors.white.withValues(alpha: 0.06),
+                    border: Border.all(color: teamColor.withValues(alpha: 0.2)),
                   ),
                   child: Row(children: [
                     Expanded(child: TextField(
@@ -215,8 +215,8 @@ class _SwipeableChatPanelState extends State<SwipeableChatPanel> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: isActive ? color.withOpacity( 0.15) : Colors.white.withOpacity( 0.03),
-          border: Border.all(color: isActive ? color.withOpacity( 0.4) : Colors.transparent),
+          color: isActive ? color.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.03),
+          border: Border.all(color: isActive ? color.withValues(alpha: 0.4) : Colors.transparent),
         ),
         child: Text(label, style: TextStyle(color: isActive ? color : AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
       ),
@@ -246,7 +246,7 @@ class NightInfoPanel extends StatelessWidget {
         if (me != null && me!.isAlive)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text('Tutup mata dan tunggu...', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.5), fontSize: 10)),
+            child: Text('Tutup mata dan tunggu...', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 10)),
           ),
       ]),
     );
@@ -271,10 +271,10 @@ class SeerResultBanner extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity( 0.5), width: 1.5),
-        boxShadow: [BoxShadow(color: color.withOpacity( 0.2), blurRadius: 12)],
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 12)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -285,7 +285,7 @@ class SeerResultBanner extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(targetName, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
-              Text(teamLabel, style: TextStyle(color: color.withOpacity( 0.8), fontSize: 11, fontWeight: FontWeight.w600)),
+              Text(teamLabel, style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w600)),
             ],
           ),
         ],
@@ -308,9 +308,9 @@ class DoctorProtectBanner extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity( 0.5), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -390,9 +390,9 @@ class _WitchActionPanelState extends State<WitchActionPanel> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.redTeam.withOpacity( 0.12),
+                color: AppColors.redTeam.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.redTeam.withOpacity( 0.4)),
+                border: Border.all(color: AppColors.redTeam.withValues(alpha: 0.4)),
               ),
               child: Column(
                 children: [
@@ -442,10 +442,10 @@ class _WitchActionPanelState extends State<WitchActionPanel> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
-                          color: healUsed ? Colors.grey.withOpacity( 0.2) : AppColors.success.withOpacity( 0.15),
+                          color: healUsed ? Colors.grey.withValues(alpha: 0.2) : AppColors.success.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: healUsed ? Colors.grey.withOpacity( 0.3) : AppColors.success.withOpacity( 0.6),
+                            color: healUsed ? Colors.grey.withValues(alpha: 0.3) : AppColors.success.withValues(alpha: 0.6),
                             width: 1.5,
                           ),
                         ),
@@ -476,10 +476,10 @@ class _WitchActionPanelState extends State<WitchActionPanel> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
-                          color: poisonUsed ? Colors.grey.withOpacity( 0.2) : witchColor.withOpacity( 0.15),
+                          color: poisonUsed ? Colors.grey.withValues(alpha: 0.2) : witchColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: poisonUsed ? Colors.grey.withOpacity( 0.3) : witchColor.withOpacity( 0.6),
+                            color: poisonUsed ? Colors.grey.withValues(alpha: 0.3) : witchColor.withValues(alpha: 0.6),
                             width: 1.5,
                           ),
                         ),
@@ -512,9 +512,9 @@ class _WitchActionPanelState extends State<WitchActionPanel> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity( 0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity( 0.15)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                   ),
                   child: const Center(
                     child: Text('LEWATI (Tidak Gunakan Ramuan)', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -545,15 +545,15 @@ class _WitchActionPanelState extends State<WitchActionPanel> {
                         width: 70,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: witchColor.withOpacity( 0.1),
+                          color: witchColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: witchColor.withOpacity( 0.4)),
+                          border: Border.all(color: witchColor.withValues(alpha: 0.4)),
                         ),
                         child: Column(
                           children: [
                             Container(
                               width: 36, height: 36,
-                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: witchColor.withOpacity( 0.6))),
+                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: witchColor.withValues(alpha: 0.6))),
                               child: ClipOval(
                                 child: ChibiAvatar(
                                   config: parseChibiConfig(p.chibiConfig) ?? generateChibiFromId(p.id),

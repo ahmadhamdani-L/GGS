@@ -57,7 +57,7 @@ class _GiftAnimationOverlayState extends State<GiftAnimationOverlay>
           x:    _rng.nextDouble() * 360 - 180,
           y:    _rng.nextDouble() * 400 - 200,
           size: _rng.nextDouble() * 12 + 6,
-          color: _rarityColor.withOpacity( 0.7 + _rng.nextDouble() * 0.3),
+          color: _rarityColor.withValues(alpha: 0.7 + _rng.nextDouble() * 0.3),
           emoji: _rng.nextBool() ? widget.item.emoji : '✨',
         ));
       }
@@ -96,7 +96,7 @@ class _GiftAnimationOverlayState extends State<GiftAnimationOverlay>
       child: GestureDetector(
         onTap: widget.onDone,
         child: Container(
-          color: Colors.black.withOpacity( widget.item.isLegendary ? 0.85 : 0.6),
+          color: Colors.black.withValues(alpha: widget.item.isLegendary ? 0.85 : 0.6),
           child: Stack(fit: StackFit.expand, children: [
             // Particles
             ...(_particles.map((p) => AnimatedBuilder(
@@ -132,7 +132,7 @@ class _GiftAnimationOverlayState extends State<GiftAnimationOverlay>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: RadialGradient(colors: [
-                              _rarityColor.withOpacity( 0.4),
+                              _rarityColor.withValues(alpha: 0.4),
                               Colors.transparent,
                             ]),
                           ),
@@ -145,7 +145,7 @@ class _GiftAnimationOverlayState extends State<GiftAnimationOverlay>
                           color: _rarityColor,
                           fontSize: widget.item.isLegendary ? 24 : 20,
                           fontWeight: FontWeight.w900,
-                          shadows: [Shadow(color: _rarityColor.withOpacity( 0.5), blurRadius: 20)],
+                          shadows: [Shadow(color: _rarityColor.withValues(alpha: 0.5), blurRadius: 20)],
                         )),
                       const SizedBox(height: 6),
                       Text(
@@ -197,9 +197,9 @@ class _GiftAnimationOverlayState extends State<GiftAnimationOverlay>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity( 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(children: [
         Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),

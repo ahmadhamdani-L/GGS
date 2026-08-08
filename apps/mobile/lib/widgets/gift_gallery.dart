@@ -68,9 +68,9 @@ class GiftGallery extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity( 0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity( 0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
@@ -145,9 +145,9 @@ class _AlbumTile extends StatelessWidget {
         width: 52, height: 60,
         margin: const EdgeInsets.only(right: 8),
         decoration: BoxDecoration(
-          color: _rarityColor.withOpacity( 0.1),
+          color: _rarityColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _rarityColor.withOpacity( 0.35)),
+          border: Border.all(color: _rarityColor.withValues(alpha: 0.35)),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Text(entry.giftEmoji, style: const TextStyle(fontSize: 24)),

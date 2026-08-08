@@ -105,7 +105,7 @@ class _ReportDialogState extends State<_ReportDialog> {
               style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Detail tambahan (opsional)',
-                hintStyle: TextStyle(color: AppColors.textMuted.withOpacity( 0.5)),
+                hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5)),
                 filled: true,
                 fillColor: AppColors.surfaceElevated,
                 border: OutlineInputBorder(
@@ -175,7 +175,7 @@ class _ReasonTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: isSelected ? AppColors.primary.withOpacity( 0.2) : AppColors.surfaceElevated,
+        color: isSelected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,

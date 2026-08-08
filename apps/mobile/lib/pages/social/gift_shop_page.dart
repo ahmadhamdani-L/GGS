@@ -162,9 +162,9 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : Colors.white.withOpacity( 0.06),
+                color: selected ? AppColors.primary : Colors.white.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: selected ? AppColors.primary : Colors.white.withOpacity( 0.1)),
+                border: Border.all(color: selected ? AppColors.primary : Colors.white.withValues(alpha: 0.1)),
               ),
               child: Text(labels[cat]!, style: TextStyle(
                 color: selected ? Colors.white : AppColors.textMuted,
@@ -182,7 +182,7 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity( 0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -228,9 +228,9 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity( 0.98),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity( 0.08))),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.4), blurRadius: 20, offset: const Offset(0, -4))],
+        color: AppColors.surface.withValues(alpha: 0.98),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, -4))],
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         // Selected item info
@@ -253,9 +253,9 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: _rarityColor(item.rarity).withOpacity( 0.15),
+              color: _rarityColor(item.rarity).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _rarityColor(item.rarity).withOpacity( 0.4)),
+              border: Border.all(color: _rarityColor(item.rarity).withValues(alpha: 0.4)),
             ),
             child: Text(item.rarity.toUpperCase(),
               style: TextStyle(color: _rarityColor(item.rarity), fontSize: 9, fontWeight: FontWeight.w800)),
@@ -272,11 +272,11 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
             hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
             counterText: '',
             filled: true,
-            fillColor: Colors.white.withOpacity( 0.04),
+            fillColor: Colors.white.withValues(alpha: 0.04),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.white.withOpacity( 0.08))),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.white.withOpacity( 0.08))),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -289,7 +289,7 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity( 0.1),
+              color: AppColors.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text('Diamond tidak cukup — Top up Diamond',
@@ -354,7 +354,7 @@ class _GiftShopPageState extends ConsumerState<GiftShopPage>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withOpacity( 0.1),
+                color: const Color(0xFFFFD700).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(children: [
@@ -474,15 +474,15 @@ class _GiftCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: selected
-              ? _rarityColor.withOpacity( 0.15)
-              : Colors.white.withOpacity( 0.04),
+              ? _rarityColor.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? _rarityColor : Colors.white.withOpacity( 0.08),
+            color: selected ? _rarityColor : Colors.white.withValues(alpha: 0.08),
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
-              ? [BoxShadow(color: _rarityColor.withOpacity( 0.3), blurRadius: 12)]
+              ? [BoxShadow(color: _rarityColor.withValues(alpha: 0.3), blurRadius: 12)]
               : null,
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -535,7 +535,7 @@ class _GiftCard extends StatelessWidget {
               margin: const EdgeInsets.only(top: 3),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity( 0.15),
+                color: AppColors.error.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text('LIMITED', style: TextStyle(color: AppColors.error, fontSize: 7, fontWeight: FontWeight.w800)),

@@ -81,7 +81,7 @@ class _TestamentScreenState extends ConsumerState<TestamentScreen> {
                 if (isDead && hasTestament)
                   Positioned(right: 3, bottom: 14, child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withOpacity( 0.8)),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withValues(alpha: 0.8)),
                     child: const Text('📜', style: TextStyle(fontSize: 8)),
                   )),
               ]),
@@ -96,9 +96,9 @@ class _TestamentScreenState extends ConsumerState<TestamentScreen> {
           margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity( 0.75),
+            color: Colors.black.withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withOpacity( 0.2)),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
           ),
           child: isMyTestament && !_sent
               // Writing mode
@@ -112,7 +112,7 @@ class _TestamentScreenState extends ConsumerState<TestamentScreen> {
                     style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
                     decoration: InputDecoration(
                       hintText: 'Pesan terakhir...',
-                      hintStyle: TextStyle(color: AppColors.textMuted.withOpacity( 0.5)),
+                      hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5)),
                       border: InputBorder.none, counterStyle: const TextStyle(color: AppColors.textMuted, fontSize: 9),
                     ),
                   )),
@@ -147,7 +147,7 @@ class _TestamentScreenState extends ConsumerState<TestamentScreen> {
                           const SizedBox(height: 4),
                           const Text('Mendengarkan wasiat...', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                           const SizedBox(height: 2),
-                          Text('Tap pemain mati untuk baca wasiat', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.5), fontSize: 9)),
+                          Text('Tap pemain mati untuk baca wasiat', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 9)),
                         ])),
         ),
       ),

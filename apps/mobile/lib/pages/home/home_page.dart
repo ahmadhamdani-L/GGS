@@ -150,9 +150,9 @@ class _HomePageState extends ConsumerState<HomePage> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity( 0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
               ),
               child: Column(children: [
                 const Text('Temanmu mengundangmu bermain!', style: TextStyle(color: Colors.white, fontSize: 13)),
@@ -269,9 +269,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 end: Alignment.bottomCenter,
                 stops: const [0.0, 0.3, 1.0],
                 colors: [
-                  Colors.black.withOpacity( 0.3),
-                  Colors.black.withOpacity( 0.5),
-                  Colors.black.withOpacity( 0.8),
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.5),
+                  Colors.black.withValues(alpha: 0.8),
                 ],
               ),
             ),
@@ -304,8 +304,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(8),
-                                      color: Colors.black.withOpacity( 0.3),
-                                      border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                     ),
                                     child: const Row(mainAxisSize: MainAxisSize.min, children: [
                                       Icon(Icons.help_outline_rounded, color: Color(0xFFDAA520), size: 14),
@@ -322,15 +322,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(14),
-                                      color: Colors.black.withOpacity( 0.4),
-                                      border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                     ),
                                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                                       const Text('💎', style: TextStyle(fontSize: 12)),
                                       const SizedBox(width: 4),
                                       Text('${ref.watch(diamondBalanceProvider)?.amount ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                                       const SizedBox(width: 4),
-                                      Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                      Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                         child: const Icon(Icons.add, color: Color(0xFFDAA520), size: 10)),
                                     ]),
                                   ),
@@ -341,15 +341,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(14),
-                                    color: Colors.black.withOpacity( 0.4),
-                                    border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                   ),
                                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                                     const Text('🪙', style: TextStyle(fontSize: 12)),
                                     const SizedBox(width: 4),
                                     Text('${profile?.coins ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                                     const SizedBox(width: 4),
-                                    Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                    Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                       child: const Icon(Icons.add, color: Color(0xFFDAA520), size: 10)),
                                   ]),
                                 ),
@@ -364,8 +364,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     width: 32, height: 32,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(8),
-                                      color: Colors.black.withOpacity( 0.3),
-                                      border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                                     ),
                                     child: const Icon(Icons.settings_rounded, color: Color(0xFFDAA520), size: 16),
                                   ),
@@ -534,8 +534,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
-            color: const Color(0xFFDAA520).withOpacity( 0.08),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+            color: const Color(0xFFDAA520).withValues(alpha: 0.08),
           ),
           child: const Text(
             'WEREWOLF ONLINE',
@@ -586,7 +586,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               borderRadius: BorderRadius.circular(12),
               gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
               border: Border.all(color: const Color(0xFFDAA520), width: 1.5),
-              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 10)],
+              boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 10)],
             ),
             child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text('⚔️', style: TextStyle(fontSize: 16)),
@@ -605,8 +605,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: Colors.white.withOpacity( 0.04),
-              border: Border.all(color: Colors.white.withOpacity( 0.1)),
+              color: Colors.white.withValues(alpha: 0.04),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: const Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(Icons.smart_toy_outlined, color: AppColors.textMuted, size: 16),
@@ -643,8 +643,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Colors.black.withOpacity( 0.4),
-          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+          color: Colors.black.withValues(alpha: 0.4),
+          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(emoji, style: const TextStyle(fontSize: 18)),
@@ -680,17 +680,17 @@ class _HomePageState extends ConsumerState<HomePage> {
               textAlign: TextAlign.center,
               decoration: InputDecoration(
                 hintText: 'KODE ROOM',
-                hintStyle: TextStyle(color: Colors.white.withOpacity( 0.3), letterSpacing: 2),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), letterSpacing: 2),
                 counterText: '',
                 filled: true,
-                fillColor: Colors.black.withOpacity( 0.3),
+                fillColor: Colors.black.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.5)),
+                  borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                  borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -734,13 +734,13 @@ class _HomePageState extends ConsumerState<HomePage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: const Color(0xFF1A1F2E),
-          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
+          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
         ),
         child: Column(children: [
           Text(emoji, style: const TextStyle(fontSize: 20)),
           const SizedBox(height: 4),
           Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
-          Text(subtitle, style: TextStyle(color: AppColors.textMuted.withOpacity( 0.7), fontSize: 9)),
+          Text(subtitle, style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 9)),
         ]),
       ),
     );
@@ -756,9 +756,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: Container(
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity( 0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity( 0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Center(child: Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600))),
           ),
@@ -832,9 +832,9 @@ class _PlayerCard extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity( 0.07),
+            color: Colors.white.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity( 0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: Row(
             children: [
@@ -846,9 +846,9 @@ class _PlayerCard extends ConsumerWidget {
                     height: 75,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withOpacity( 0.6), width: 2),
-                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity( 0.2), blurRadius: 12)],
-                      color: Colors.black.withOpacity( 0.2),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.6), width: 2),
+                      boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 12)],
+                      color: Colors.black.withValues(alpha: 0.2),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
@@ -910,8 +910,8 @@ class _PlayerCard extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6),
-                              color: const Color(0xFF00BCD4).withOpacity( 0.2),
-                              border: Border.all(color: const Color(0xFF00BCD4).withOpacity( 0.4)),
+                              color: const Color(0xFF00BCD4).withValues(alpha: 0.2),
+                              border: Border.all(color: const Color(0xFF00BCD4).withValues(alpha: 0.4)),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
@@ -955,7 +955,7 @@ class _PlayerCard extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
-        color: color.withOpacity( 0.12),
+        color: color.withValues(alpha: 0.12),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );

@@ -67,7 +67,7 @@ class PlayerGrid18 extends StatelessWidget {
                 child: Text(
                   '${index + 1}',
                   style: TextStyle(
-                    color: const Color(0xFFDAA520).withOpacity( 0.3),
+                    color: const Color(0xFFDAA520).withValues(alpha: 0.3),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),

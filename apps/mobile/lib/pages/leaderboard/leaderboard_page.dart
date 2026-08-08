@@ -86,9 +86,9 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFDAA520).withOpacity( 0.15) : Colors.white.withOpacity( 0.04),
+          color: selected ? const Color(0xFFDAA520).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? const Color(0xFFDAA520).withOpacity( 0.4) : Colors.white.withOpacity( 0.1)),
+          border: Border.all(color: selected ? const Color(0xFFDAA520).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.1)),
         ),
         child: Text(label, style: TextStyle(color: selected ? const Color(0xFFDAA520) : AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
       ),
@@ -123,7 +123,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: color, width: 3),
-          boxShadow: [BoxShadow(color: color.withOpacity( 0.3), blurRadius: 16)],
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16)],
         ),
         child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Padding(
           padding: const EdgeInsets.all(2),
@@ -147,15 +147,15 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: rank <= 3 ? const Color(0xFFDAA520).withOpacity( 0.04) : const Color(0xFF1A1F2E),
+        color: rank <= 3 ? const Color(0xFFDAA520).withValues(alpha: 0.04) : const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: rank <= 3 ? const Color(0xFFDAA520).withOpacity( 0.3) : Colors.white.withOpacity( 0.05)),
+        border: Border.all(color: rank <= 3 ? const Color(0xFFDAA520).withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(children: [
         SizedBox(width: 28, child: Text('#$rank', style: TextStyle(color: rank <= 3 ? const Color(0xFFDAA520) : AppColors.textMuted, fontWeight: FontWeight.w700, fontSize: 13))),
         Container(
           width: 34, height: 44,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity( 0.15))),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.15))),
           child: ClipRRect(borderRadius: BorderRadius.circular(6), child: Padding(
             padding: const EdgeInsets.all(2),
             child: Image.asset(AppConstants.avatarPath(avatarId), fit: BoxFit.contain,

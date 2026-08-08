@@ -194,7 +194,7 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
             child: Image.asset(bgImage, key: ValueKey(bgImage), fit: BoxFit.cover, width: size.width, height: size.height,
               errorBuilder: (_, __, ___) => Container(color: AppColors.background)),
           ),
-          Container(color: Colors.black.withOpacity( game.phase.isNight ? 0.6 : 0.55)),
+          Container(color: Colors.black.withValues(alpha: game.phase.isNight ? 0.6 : 0.55)),
           // Content
           SafeArea(
             child: Column(
@@ -216,7 +216,7 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
             AnimatedBuilder(
               animation: _phaseAnimCtrl,
               builder: (_, __) => Container(
-                color: Colors.black.withOpacity( 0.85 * _phaseFadeAnim.value),
+                color: Colors.black.withValues(alpha: 0.85 * _phaseFadeAnim.value),
                 child: Center(
                   child: Transform.scale(
                     scale: _phaseScaleAnim.value,
@@ -227,10 +227,10 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
-                            colors: [_phaseOverlayColor.withOpacity( 0.3), Colors.transparent],
+                            colors: [_phaseOverlayColor.withValues(alpha: 0.3), Colors.transparent],
                             stops: const [0.5, 1.0],
                           ),
-                          boxShadow: [BoxShadow(color: _phaseOverlayColor.withOpacity( 0.4), blurRadius: 40, spreadRadius: 10)],
+                          boxShadow: [BoxShadow(color: _phaseOverlayColor.withValues(alpha: 0.4), blurRadius: 40, spreadRadius: 10)],
                         ),
                         child: Center(child: Text(_phaseOverlayEmoji, style: const TextStyle(fontSize: 52))),
                       ),
@@ -243,7 +243,7 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 3,
-                          shadows: [Shadow(color: _phaseOverlayColor.withOpacity( 0.6), blurRadius: 20)],
+                          shadows: [Shadow(color: _phaseOverlayColor.withValues(alpha: 0.6), blurRadius: 20)],
                         ),
                       ),
                       if (_phaseOverlaySubtext.isNotEmpty) ...[
@@ -251,7 +251,7 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
                         Text(
                           _phaseOverlaySubtext,
                           style: TextStyle(
-                            color: AppColors.textSecondary.withOpacity( _phaseFadeAnim.value),
+                            color: AppColors.textSecondary.withValues(alpha: _phaseFadeAnim.value),
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -450,7 +450,7 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (_, __) => Container(
-        color: Colors.black.withOpacity( 0.9 * _fadeAnim.value),
+        color: Colors.black.withValues(alpha: 0.9 * _fadeAnim.value),
         child: Center(
           child: Transform.translate(
             offset: Offset(0, _slideAnim.value),
@@ -465,10 +465,10 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [color.withOpacity( 0.4), Colors.transparent],
+                        colors: [color.withValues(alpha: 0.4), Colors.transparent],
                         stops: const [0.4, 1.0],
                       ),
-                      boxShadow: [BoxShadow(color: color.withOpacity( 0.5), blurRadius: 50, spreadRadius: 5)],
+                      boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 50, spreadRadius: 5)],
                     ),
                     child: Center(child: Text(emoji, style: const TextStyle(fontSize: 44))),
                   ),
@@ -479,7 +479,7 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 3,
-                    shadows: [Shadow(color: color.withOpacity( 0.6), blurRadius: 15)],
+                    shadows: [Shadow(color: color.withValues(alpha: 0.6), blurRadius: 15)],
                   )),
                   const SizedBox(height: 20),
                   // Victim avatar with death effect
@@ -490,8 +490,8 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
                         width: 80, height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: color.withOpacity( 0.6), width: 3),
-                          boxShadow: [BoxShadow(color: color.withOpacity( 0.3), blurRadius: 20)],
+                          border: Border.all(color: color.withValues(alpha: 0.6), width: 3),
+                          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 20)],
                         ),
                         child: ClipOval(
                           child: ColorFiltered(
@@ -541,9 +541,9 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity( 0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity( 0.1)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: const Text('REST IN PEACE', style: TextStyle(
                       color: AppColors.textMuted,

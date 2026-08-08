@@ -132,7 +132,7 @@ class _DiamondTopUpPageState extends ConsumerState<DiamondTopUpPage> {
               colors: [Color(0xFF1a0533), Color(0xFF2d1b69)],
               begin: Alignment.topLeft, end: Alignment.bottomRight),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF7B2FBE).withOpacity( 0.3)),
+            border: Border.all(color: const Color(0xFF7B2FBE).withValues(alpha: 0.3)),
           ),
           child: Row(children: [
             const Text('💎', style: TextStyle(fontSize: 36)),
@@ -204,17 +204,17 @@ class _PackageCard extends StatelessWidget {
       onTap: purchasing ? null : onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity( 0.04),
+          color: Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isBest
-                ? const Color(0xFFFFD700).withOpacity( 0.5)
+                ? const Color(0xFFFFD700).withValues(alpha: 0.5)
                 : _isPopular
-                    ? AppColors.primary.withOpacity( 0.4)
-                    : Colors.white.withOpacity( 0.08),
+                    ? AppColors.primary.withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.08),
             width: _isBest || _isPopular ? 2 : 1),
           boxShadow: _isBest
-              ? [BoxShadow(color: const Color(0xFFFFD700).withOpacity( 0.15), blurRadius: 12)]
+              ? [BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.15), blurRadius: 12)]
               : null,
         ),
         child: Stack(children: [

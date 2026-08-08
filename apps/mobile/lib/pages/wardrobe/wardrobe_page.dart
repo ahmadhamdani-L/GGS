@@ -212,7 +212,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity( 0.2),
+                      color: AppColors.warning.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text('Belum Disimpan', 
@@ -237,7 +237,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Colors.white.withOpacity( 0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                   child: const Icon(Icons.casino_rounded, color: Color(0xFFDAA520), size: 20),
                 ),
@@ -257,7 +257,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: Colors.white.withOpacity( 0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                   child: const Icon(Icons.refresh_rounded, color: AppColors.textMuted, size: 20),
                 ),
@@ -281,10 +281,10 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5), width: 2),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5), width: 2),
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.15), blurRadius: 20),
+              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.15), blurRadius: 20),
             ],
           ),
           child: ClipRRect(
@@ -322,9 +322,9 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               gradient: _hasUnsavedChanges ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]) : null,
-              color: _hasUnsavedChanges ? null : const Color(0xFFDAA520).withOpacity( 0.6),
+              color: _hasUnsavedChanges ? null : const Color(0xFFDAA520).withValues(alpha: 0.6),
               boxShadow: _hasUnsavedChanges ? [
-                BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 12, offset: const Offset(0, 4)),
+                BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
               ] : null,
             ),
             child: Row(
@@ -356,9 +356,9 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity( 0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: Colors.white.withOpacity( 0.08)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Column(
               children: [
@@ -371,7 +371,7 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
                     isScrollable: true, // Scrollable for 6 tabs
                     indicator: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: const Color(0xFFDAA520).withOpacity( 0.2),
+                      color: const Color(0xFFDAA520).withValues(alpha: 0.2),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
@@ -508,9 +508,9 @@ class _HairStyleGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -721,9 +721,9 @@ class _EyeStyleGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+                color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -835,9 +835,9 @@ class _ExpressionGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -911,9 +911,9 @@ class _ClothesTab extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.info.withOpacity( 0.1),
+                color: AppColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.info.withOpacity( 0.3)),
+                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
@@ -957,9 +957,9 @@ class _PantsTab extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity( 0.1),
+                color: AppColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withOpacity( 0.3)),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
@@ -1038,9 +1038,9 @@ class _PantsStyleGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+                color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                  color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -1176,9 +1176,9 @@ class _ShirtStyleGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1394,9 +1394,9 @@ class _AccessoryGrid extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: isSelected ? const Color(0xFFDAA520).withOpacity( 0.2) : Colors.white.withOpacity( 0.05),
+              color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1595,11 +1595,11 @@ class _ColorGrid extends StatelessWidget {
               color: c,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.2),
+                color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.2),
                 width: isSelected ? 3 : 1,
               ),
               boxShadow: isSelected
-                  ? [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 8)]
+                  ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 8)]
                   : null,
             ),
             child: isSelected
@@ -1630,9 +1630,9 @@ class _ToggleOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: value ? const Color(0xFFDAA520).withOpacity( 0.15) : Colors.white.withOpacity( 0.05),
+          color: value ? const Color(0xFFDAA520).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
           border: Border.all(
-            color: value ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+            color: value ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
             width: value ? 2 : 1,
           ),
         ),
@@ -1653,7 +1653,7 @@ class _ToggleOption extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: value ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: value ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 150),
@@ -1667,7 +1667,7 @@ class _ToggleOption extends StatelessWidget {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity( 0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 2,
                       ),
                     ],
@@ -1713,10 +1713,10 @@ class _GenderSelector extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: isActive
-                    ? const Color(0xFFDAA520).withOpacity( 0.2)
-                    : Colors.white.withOpacity( 0.05),
+                    ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: isActive ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                  color: isActive ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                   width: isActive ? 2 : 1,
                 ),
               ),
@@ -1770,10 +1770,10 @@ class _FaceShapeSelector extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               color: isActive
-                  ? const Color(0xFFDAA520).withOpacity( 0.2)
-                  : Colors.white.withOpacity( 0.05),
+                  ? const Color(0xFFDAA520).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.05),
               border: Border.all(
-                color: isActive ? const Color(0xFFDAA520) : Colors.white.withOpacity( 0.1),
+                color: isActive ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1),
                 width: isActive ? 2 : 1,
               ),
             ),

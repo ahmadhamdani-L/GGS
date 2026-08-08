@@ -21,7 +21,7 @@ class ActivityFeedStrip extends ConsumerWidget {
         if (feed.isEmpty) return const SizedBox.shrink();
         return Container(
           height: 44,
-          color: Colors.white.withOpacity( 0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -57,9 +57,9 @@ class _FeedPill extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _color.withOpacity( 0.1),
+        color: _color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _color.withOpacity( 0.25)),
+        border: Border.all(color: _color.withValues(alpha: 0.25)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         if (item.isLegendary)
@@ -127,15 +127,15 @@ class _FeedTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _accent.withOpacity( 0.06),
+        color: _accent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _accent.withOpacity( 0.2)),
+        border: Border.all(color: _accent.withValues(alpha: 0.2)),
       ),
       child: Row(children: [
         Container(
           width: 42, height: 42,
           decoration: BoxDecoration(
-            color: _accent.withOpacity( 0.15),
+            color: _accent.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: Center(child: Text(item.giftEmoji, style: const TextStyle(fontSize: 22))),

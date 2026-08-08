@@ -197,7 +197,7 @@ class AccessibleCard extends StatelessWidget {
     final card = Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface.withOpacity( 0.9),
+        color: backgroundColor ?? AppColors.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
         border: selected
             ? Border.all(color: AppColors.primary, width: 2)
@@ -205,7 +205,7 @@ class AccessibleCard extends StatelessWidget {
         // Ensure sufficient contrast
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity( 0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -267,7 +267,7 @@ class AccessibleText extends StatelessWidget {
     // Ensure minimum contrast ratio (WCAG AA: 4.5:1 for normal text, 3:1 for large text)
     final effectiveStyle = (style ?? const TextStyle()).copyWith(
       // Ensure text has sufficient contrast
-      color: (style?.color ?? Colors.white).withOpacity( 1.0),
+      color: (style?.color ?? Colors.white).withValues(alpha: 1.0),
     );
 
     final textWidget = Text(
@@ -361,7 +361,7 @@ class AccessibleAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity( 0.3),
+        color: AppColors.primary.withValues(alpha: 0.3),
         shape: BoxShape.circle,
       ),
       child: Center(

@@ -41,7 +41,7 @@ class VoteResultScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1A1F2E),
           border: Border.all(color: const Color(0xFFDAA520), width: 2),
-          boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.2), blurRadius: 20)],
+          boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.2), blurRadius: 20)],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -51,8 +51,8 @@ class VoteResultScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.5)),
-                color: const Color(0xFFDAA520).withOpacity( 0.1),
+                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+                color: const Color(0xFFDAA520).withValues(alpha: 0.1),
               ),
               child: const Text('HASIL VOTE', style: TextStyle(color: Color(0xFFDAA520), fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 2)),
             ),
@@ -64,7 +64,7 @@ class VoteResultScreen extends ConsumerWidget {
                 width: 80, height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.error.withOpacity( 0.1),
+                  color: AppColors.error.withValues(alpha: 0.1),
                   border: Border.all(color: AppColors.error, width: 2),
                 ),
                 child: ClipOval(child: ChibiAvatar(
@@ -106,7 +106,7 @@ class VoteResultScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity( 0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -128,7 +128,7 @@ class VoteResultScreen extends ConsumerWidget {
                             height: 8,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(4),
-                              color: entry.key == eliminatedPlayer?.id ? AppColors.error : AppColors.primary.withOpacity( 0.5),
+                              color: entry.key == eliminatedPlayer?.id ? AppColors.error : AppColors.primary.withValues(alpha: 0.5),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -144,7 +144,7 @@ class VoteResultScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               'Game akan dilanjutkan ke malam hari.',
-              style: TextStyle(color: AppColors.textMuted.withOpacity( 0.7), fontSize: 10),
+              style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 10),
             ),
           ],
         ),

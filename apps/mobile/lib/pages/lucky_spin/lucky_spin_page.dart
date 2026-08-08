@@ -189,7 +189,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
             center: const Alignment(0, -0.3),
             radius: 1.2,
             colors: [
-              const Color(0xFF2D1B4E).withOpacity( 0.6),
+              const Color(0xFF2D1B4E).withValues(alpha: 0.6),
               const Color(0xFF0A0514),
             ],
           ),
@@ -209,7 +209,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity( 0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
@@ -261,11 +261,11 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFDAA520).withOpacity( 0.2),
-            const Color(0xFFDAA520).withOpacity( 0.05),
+            const Color(0xFFDAA520).withValues(alpha: 0.2),
+            const Color(0xFFDAA520).withValues(alpha: 0.05),
           ],
         ),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
       ),
       child: const Text(
         'Spin & Dapatkan Hadiah Menarik!',
@@ -288,7 +288,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity( 0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.history_rounded, color: Colors.white70, size: 20),
@@ -303,8 +303,8 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFFDAA520).withOpacity( 0.1),
-              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+              color: const Color(0xFFDAA520).withValues(alpha: 0.1),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -343,7 +343,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFDAA520).withOpacity( 0.2 + _glowController.value * 0.2),
+                      color: const Color(0xFFDAA520).withValues(alpha: 0.2 + _glowController.value * 0.2),
                       blurRadius: 30 + _glowController.value * 15,
                       spreadRadius: 2,
                     ),
@@ -364,7 +364,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                 colors: [Color(0xFFDAA520), Color(0xFFB8860B), Color(0xFFF4D03F), Color(0xFFB8860B)],
               ),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 15),
+                BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 15),
               ],
             ),
           ),
@@ -392,7 +392,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
               ),
               border: Border.all(color: const Color(0xFFF4D03F), width: 2),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.6), blurRadius: 10),
+                BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.6), blurRadius: 10),
               ],
             ),
             child: const Center(
@@ -468,7 +468,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFFDAA520).withOpacity( 0.5),
+                    color: const Color(0xFFDAA520).withValues(alpha: 0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -516,8 +516,8 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity( 0.05),
-          border: Border.all(color: Colors.white.withOpacity( 0.1)),
+          color: Colors.white.withValues(alpha: 0.05),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [
@@ -558,7 +558,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                   Container(
                     height: 10,
                     width: double.infinity,
-                    color: Colors.white.withOpacity( 0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                   FractionallySizedBox(
                     widthFactor: spinState.luckyPointsProgress,
@@ -639,11 +639,11 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity( 0.4), size: 14),
+              Icon(Icons.info_outline_rounded, color: Colors.white.withValues(alpha: 0.4), size: 14),
               const SizedBox(width: 6),
               Text(
                 'Hadiah akan dikirim langsung ke Inventory kamu.',
-                style: TextStyle(color: Colors.white.withOpacity( 0.4), fontSize: 11),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
               ),
             ],
           ),
@@ -660,7 +660,7 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
     return GestureDetector(
       onTap: _dismissResult,
       child: Container(
-        color: Colors.black.withOpacity( 0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         child: Center(
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
@@ -683,9 +683,9 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                     Color(prize.rarity.segmentColorValue),
                   ],
                 ),
-                border: Border.all(color: rarityColor.withOpacity( 0.6), width: 2),
+                border: Border.all(color: rarityColor.withValues(alpha: 0.6), width: 2),
                 boxShadow: [
-                  BoxShadow(color: rarityColor.withOpacity( 0.3), blurRadius: 30),
+                  BoxShadow(color: rarityColor.withValues(alpha: 0.3), blurRadius: 30),
                 ],
               ),
               child: Column(
@@ -713,8 +713,8 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      color: rarityColor.withOpacity( 0.15),
-                      border: Border.all(color: rarityColor.withOpacity( 0.4)),
+                      color: rarityColor.withValues(alpha: 0.15),
+                      border: Border.all(color: rarityColor.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       prize.rarity.label,
@@ -770,8 +770,8 @@ class _CurrencyBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: color.withOpacity( 0.1),
-        border: Border.all(color: color.withOpacity( 0.3)),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -803,8 +803,8 @@ class _RewardCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Color(prize.rarity.segmentColorValue).withOpacity( 0.6),
-        border: Border.all(color: rarityColor.withOpacity( 0.4)),
+        color: Color(prize.rarity.segmentColorValue).withValues(alpha: 0.6),
+        border: Border.all(color: rarityColor.withValues(alpha: 0.4)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -823,7 +823,7 @@ class _RewardCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4),
-              color: rarityColor.withOpacity( 0.15),
+              color: rarityColor.withValues(alpha: 0.15),
             ),
             child: Text(
               prize.rarity.label,
@@ -872,7 +872,7 @@ class _HistorySheet extends ConsumerWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: history.length,
-                separatorBuilder: (_, _) => Divider(color: Colors.white.withOpacity( 0.05)),
+                separatorBuilder: (_, _) => Divider(color: Colors.white.withValues(alpha: 0.05)),
                 itemBuilder: (ctx, i) {
                   final entry = history[i];
                   final rarityColor = Color(_rarityColorFromString(entry.rarity));
@@ -883,7 +883,7 @@ class _HistorySheet extends ConsumerWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        color: rarityColor.withOpacity( 0.15),
+                        color: rarityColor.withValues(alpha: 0.15),
                       ),
                       child: Center(
                         child: Text(
@@ -904,7 +904,7 @@ class _HistorySheet extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(4),
-                        color: rarityColor.withOpacity( 0.15),
+                        color: rarityColor.withValues(alpha: 0.15),
                       ),
                       child: Text(
                         entry.rarity.toUpperCase(),
@@ -986,7 +986,7 @@ class _WheelPainter extends CustomPainter {
 
       // Draw segment border
       final borderPaint = Paint()
-        ..color = const Color(0xFFDAA520).withOpacity( 0.3)
+        ..color = const Color(0xFFDAA520).withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.5;
       canvas.drawPath(path, borderPaint);

@@ -107,8 +107,8 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity( 0.4),
-                  Colors.black.withOpacity( 0.7),
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.black.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -135,9 +135,9 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1A1F2E).withOpacity( 0.9),
+                          color: const Color(0xFF1A1F2E).withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+                          border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           children: [
@@ -188,7 +188,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
             shape: BoxShape.circle,
             gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520)]),
             boxShadow: [
-              BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.4), blurRadius: 24, spreadRadius: 2),
+              BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 24, spreadRadius: 2),
             ],
           ),
           child: const Center(child: Text('🐺', style: TextStyle(fontSize: 42))),
@@ -209,8 +209,8 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
-            color: const Color(0xFFDAA520).withOpacity( 0.08),
+            border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+            color: const Color(0xFFDAA520).withValues(alpha: 0.08),
           ),
           child: const Text(
             'WEREWOLF ONLINE',
@@ -225,9 +225,9 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Container(
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity( 0.4),
+        color: Colors.black.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.2)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.2)),
       ),
       child: TabBar(
         controller: _tabController,
@@ -252,9 +252,9 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity( 0.1),
+        color: AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity( 0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -269,12 +269,12 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Container(height: 0.5, color: Colors.white.withOpacity( 0.1))),
+        Expanded(child: Container(height: 0.5, color: Colors.white.withValues(alpha: 0.1))),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('atau', style: TextStyle(color: AppColors.textMuted.withOpacity( 0.7), fontSize: 12)),
+          child: Text('atau', style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 12)),
         ),
-        Expanded(child: Container(height: 0.5, color: Colors.white.withOpacity( 0.1))),
+        Expanded(child: Container(height: 0.5, color: Colors.white.withValues(alpha: 0.1))),
       ],
     );
   }
@@ -289,7 +289,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
         label: const Text('Main sebagai Tamu', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         style: OutlinedButton.styleFrom(
           foregroundColor: const Color(0xFFDAA520),
-          side: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.4)),
+          side: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
@@ -328,7 +328,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 borderRadius: BorderRadius.circular(10),
                 gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
                 border: Border.all(color: const Color(0xFFDAA520)),
-                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 8)],
+                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
               ),
               child: Center(child: auth.isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -376,9 +376,9 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity( 0.1),
+                        color: AppColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.success.withOpacity( 0.3)),
+                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                       ),
                       child: Row(children: [
                         const Icon(Icons.check_circle_outline, color: AppColors.success, size: 16),
@@ -408,13 +408,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                       decoration: InputDecoration(
                         hintText: '000000',
                         hintStyle: TextStyle(
-                            color: AppColors.textMuted.withOpacity( 0.4),
+                            color: AppColors.textMuted.withValues(alpha: 0.4),
                             fontSize: 22,
                             letterSpacing: 8),
                         labelText: 'Kode 6 Digit',
                         prefixIcon: const Icon(Icons.pin_outlined, size: 18),
                         filled: true,
-                        fillColor: Colors.white.withOpacity( 0.05),
+                        fillColor: Colors.white.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         counterText: '',
                       ),
@@ -428,7 +428,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                         labelText: 'Password Baru (min 8, huruf besar & angka)',
                         prefixIcon: const Icon(Icons.lock_outline, size: 18),
                         filled: true,
-                        fillColor: Colors.white.withOpacity( 0.05),
+                        fillColor: Colors.white.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
@@ -454,7 +454,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined, size: 18),
                         filled: true,
-                        fillColor: Colors.white.withOpacity( 0.05),
+                        fillColor: Colors.white.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
@@ -569,7 +569,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 borderRadius: BorderRadius.circular(10),
                 gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)]),
                 border: Border.all(color: const Color(0xFFDAA520)),
-                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withOpacity( 0.3), blurRadius: 8)],
+                boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 8)],
               ),
               child: Center(child: auth.isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -578,7 +578,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
           ),
           const SizedBox(height: 8),
           Center(child: Text('Dengan mendaftar, kamu setuju dengan\nSyarat & Ketentuan dan Kebijakan Privasi',
-            style: TextStyle(color: AppColors.textMuted.withOpacity( 0.5), fontSize: 9), textAlign: TextAlign.center)),
+            style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.5), fontSize: 9), textAlign: TextAlign.center)),
         ],
       ),
     );
@@ -593,16 +593,16 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: label,
-        hintStyle: TextStyle(color: AppColors.textMuted.withOpacity( 0.6), fontSize: 13),
-        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withOpacity( 0.7), size: 20),
+        hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 20),
         filled: true,
-        fillColor: Colors.black.withOpacity( 0.3),
+        fillColor: Colors.black.withValues(alpha: 0.3),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3))),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3))),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Color(0xFFDAA520), width: 1.5)),
@@ -620,8 +620,8 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: label,
-        hintStyle: TextStyle(color: AppColors.textMuted.withOpacity( 0.6), fontSize: 13),
-        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withOpacity( 0.7), size: 20),
+        hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.6), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFFDAA520).withValues(alpha: 0.7), size: 20),
         suffixIcon: IconButton(
           icon: Icon(
               obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -629,13 +629,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
           onPressed: onToggle,
         ),
         filled: true,
-        fillColor: Colors.black.withOpacity( 0.3),
+        fillColor: Colors.black.withValues(alpha: 0.3),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3))),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: const Color(0xFFDAA520).withOpacity( 0.3))),
+            borderSide: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Color(0xFFDAA520), width: 1.5)),

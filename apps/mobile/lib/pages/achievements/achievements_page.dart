@@ -103,7 +103,7 @@ class _AchievementsPageState extends ConsumerState<AchievementsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFDAA520).withOpacity( 0.15),
+                color: const Color(0xFFDAA520).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20)),
               child: Text('$unlockedCount / $totalCount',
                 style: const TextStyle(color: Color(0xFFDAA520), fontSize: 13, fontWeight: FontWeight.w700)),
@@ -117,7 +117,7 @@ class _AchievementsPageState extends ConsumerState<AchievementsPage> {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: totalCount > 0 ? unlockedCount / totalCount : 0,
-              backgroundColor: Colors.white.withOpacity( 0.06),
+              backgroundColor: Colors.white.withValues(alpha: 0.06),
               valueColor: const AlwaysStoppedAnimation(Color(0xFFDAA520)),
               minHeight: 6,
             ),
@@ -182,13 +182,13 @@ class _AchievementTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: unlocked
-            ? const Color(0xFFDAA520).withOpacity( 0.08)
+            ? const Color(0xFFDAA520).withValues(alpha: 0.08)
             : const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: unlocked
-              ? const Color(0xFFDAA520).withOpacity( 0.3)
-              : Colors.white.withOpacity( 0.05)),
+              ? const Color(0xFFDAA520).withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(children: [
         // Emoji badge
@@ -196,13 +196,13 @@ class _AchievementTile extends StatelessWidget {
           width: 42, height: 42,
           decoration: BoxDecoration(
             color: unlocked
-                ? const Color(0xFFDAA520).withOpacity( 0.15)
-                : Colors.white.withOpacity( 0.04),
+                ? const Color(0xFFDAA520).withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.04),
             shape: BoxShape.circle,
           ),
           child: Center(child: Text(emoji,
             style: TextStyle(fontSize: 20,
-              color: unlocked ? null : Colors.white.withOpacity( 0.3)))),
+              color: unlocked ? null : Colors.white.withValues(alpha: 0.3)))),
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -215,7 +215,7 @@ class _AchievementTile extends StatelessWidget {
         if (unlocked)
           const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22)
         else
-          Icon(Icons.lock_outline_rounded, color: Colors.white.withOpacity( 0.2), size: 20),
+          Icon(Icons.lock_outline_rounded, color: Colors.white.withValues(alpha: 0.2), size: 20),
       ]),
     );
   }

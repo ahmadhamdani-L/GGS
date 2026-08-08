@@ -117,7 +117,7 @@ class _NightScreenState extends ConsumerState<NightScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: AppColors.success.withOpacity( 0.2),
+                        color: AppColors.success.withValues(alpha: 0.2),
                         border: Border.all(color: AppColors.success, width: 2.5),
                       ),
                       child: const Center(child: Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24)),
@@ -135,13 +135,13 @@ class _NightScreenState extends ConsumerState<NightScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF1A1F2E),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.4)),
+              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
             ),
             child: Column(
               children: [
                 // Role label
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text('KAMU ADALAH ', style: TextStyle(color: Colors.white.withOpacity( 0.7), fontSize: 10, fontWeight: FontWeight.w600)),
+                  Text('KAMU ADALAH ', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.w600)),
                   Text(me.role.displayName.toUpperCase(), style: TextStyle(
                     color: me.role.team == Team.red ? AppColors.redTeam : AppColors.blueTeam,
                     fontSize: 12, fontWeight: FontWeight.w900,
@@ -186,8 +186,8 @@ class _NightScreenState extends ConsumerState<NightScreen> {
                               width: 38, height: 38,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.6), width: 1.5),
-                                color: Colors.black.withOpacity( 0.4),
+                                border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.6), width: 1.5),
+                                color: Colors.black.withValues(alpha: 0.4),
                               ),
                               child: ClipOval(child: ChibiAvatar(
                                 config: parseChibiConfig(t.chibiConfig) ?? generateChibiFromId(t.id),
@@ -216,8 +216,8 @@ class _NightScreenState extends ConsumerState<NightScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.white.withOpacity( 0.06),
-                          border: Border.all(color: Colors.white.withOpacity( 0.15)),
+                          color: Colors.white.withValues(alpha: 0.06),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                         ),
                         child: const Text('Skip ›', style: TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
                       ),

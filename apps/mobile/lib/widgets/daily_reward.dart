@@ -81,7 +81,7 @@ class _DailyRewardCardState extends ConsumerState<DailyRewardCard> {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1F2E),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDAA520).withOpacity( 0.3)),
+        border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,13 +115,13 @@ class _DailyRewardCardState extends ConsumerState<DailyRewardCard> {
                         borderRadius: BorderRadius.circular(8),
                         color: isCurrent
                             ? ((_claimedToday)
-                                ? AppColors.success.withOpacity( 0.15)
-                                : const Color(0xFFDAA520).withOpacity( 0.15))
-                            : (isPast ? AppColors.success.withOpacity( 0.05) : Colors.white.withOpacity( 0.03)),
+                                ? AppColors.success.withValues(alpha: 0.15)
+                                : const Color(0xFFDAA520).withValues(alpha: 0.15))
+                            : (isPast ? AppColors.success.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.03)),
                         border: Border.all(
                           color: isCurrent
                               ? ((_claimedToday) ? AppColors.success : const Color(0xFFDAA520))
-                              : (isPast ? AppColors.success.withOpacity( 0.3) : Colors.white.withOpacity( 0.08)),
+                              : (isPast ? AppColors.success.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.08)),
                           width: isCurrent ? 1.5 : 1,
                         ),
                       ),

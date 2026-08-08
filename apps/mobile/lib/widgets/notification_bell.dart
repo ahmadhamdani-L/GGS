@@ -223,8 +223,8 @@ class _NotificationBellState extends ConsumerState<NotificationBell> {
             width: 38, height: 38,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: Colors.white.withOpacity( 0.06),
-              border: Border.all(color: Colors.white.withOpacity( 0.1)),
+              color: Colors.white.withValues(alpha: 0.06),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary, size: 20),
           ),
@@ -294,7 +294,7 @@ class _NotificationSheet extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(6),
-                      color: AppColors.primary.withOpacity( 0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                     ),
                     child: const Text('Baca Semua', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
                   ),
@@ -333,7 +333,7 @@ class _NotificationSheet extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity( 0.2),
+          color: AppColors.error.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(Icons.delete_outline, color: AppColors.error),
@@ -349,9 +349,9 @@ class _NotificationSheet extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: n.isRead ? AppColors.surfaceElevated : AppColors.primary.withOpacity( 0.08),
+            color: n.isRead ? AppColors.surfaceElevated : AppColors.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: n.isRead ? null : Border.all(color: AppColors.primary.withOpacity( 0.2)),
+            border: n.isRead ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(n.emoji, style: const TextStyle(fontSize: 20)),

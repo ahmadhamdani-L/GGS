@@ -97,7 +97,7 @@ class _PlayerProfilePageState extends ConsumerState<PlayerProfilePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity( 0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12)),
             child: Text('Level $level • $xp XP',
               style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
@@ -175,9 +175,9 @@ class _PlayerProfilePageState extends ConsumerState<PlayerProfilePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: color.withOpacity( 0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity( 0.3))),
+          border: Border.all(color: color.withValues(alpha: 0.3))),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
