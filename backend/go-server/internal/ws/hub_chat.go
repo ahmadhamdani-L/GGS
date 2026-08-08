@@ -40,31 +40,53 @@ func (h *Hub) handleChat(client *Client, payload json.RawMessage) {
 
 	// Check chat permissions per phase (Criterion 5 Audit):
 	// - Lobby (room.Game == nil): all players in room can chat
-	// - Discussion & Voting: alive players only can chat
+	// - Discussion & Voting: alive players only can chat (others get Ghost Chat)
 	room.mu.RLock()
 	canChat := false
+	isGhost := false
+	
 	if room.Game == nil {
 		canChat = true // Everyone can chat in lobby
 	} else if room.Game.Phase == game.PhaseDiscussion || room.Game.Phase == game.PhaseVoting {
 		for _, p := range room.Game.Players {
-			if p.ID == req.SenderID && p.IsAlive {
-				canChat = true
+			if p.ID == req.SenderID {
+				if p.IsAlive {
+					canChat = true
+				} else {
+					isGhost = true
+				}
 				break
 			}
 		}
 	}
 	room.mu.RUnlock()
 
-	if !canChat {
+	if !canChat && !isGhost {
 		return
 	}
 
-	// Broadcast chat message to all players in room
+	// Broadcast chat message
 	resp := map[string]interface{}{
 		"senderId": req.SenderID,
 		"content":  content,
 	}
 	respBytes, _ := json.Marshal(resp)
+
+	if isGhost {
+		ghostMsg := &Message{Type: "ghost_chat_message", Payload: respBytes}
+		room.mu.RLock()
+		defer room.mu.RUnlock()
+		for _, p := range room.Game.Players {
+			// Only dead players see ghost chat
+			if !p.IsAlive && !p.IsBot {
+				if c, ok := room.Clients[p.ID]; ok {
+					safeSend(c, ghostMsg)
+				}
+			}
+		}
+		return
+	}
+
 	h.broadcastToRoom(client.RoomID, &Message{Type: "chat_message", Payload: respBytes}, nil)
 }
 

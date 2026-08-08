@@ -12,6 +12,7 @@ import '../../../providers/room_provider.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/game_seat_card.dart';
 import '../widgets/player_profile_dialog.dart';
+import '../../../services/audio_service.dart';
 
 // ═══════════════════════════════════════════════════════════
 // VOTING — Player list with checkmarks + confirm button
@@ -155,6 +156,7 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
                     HapticFeedback.mediumImpact();
                     setState(() => _hasVoted = true);
                     // Vote for empty/skip
+                    ref.read(audioServiceProvider).playVoteSfx();
                     ref.read(gameProvider.notifier).castVote(widget.me!.id, '');
                   },
                   child: Container(
@@ -173,6 +175,7 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
                 onTap: (canIVote && _selectedTargetId != null) ? () {
                   HapticFeedback.heavyImpact();
                   setState(() => _hasVoted = true);
+                  ref.read(audioServiceProvider).playVoteSfx();
                   ref.read(gameProvider.notifier).castVote(widget.me!.id, _selectedTargetId!);
                 } : null,
                 child: Container(

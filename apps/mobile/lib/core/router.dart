@@ -8,10 +8,11 @@ import '../pages/auth/auth_page.dart';
 import '../pages/profile/profile_setup_page.dart';
 import '../pages/profile/profile_page.dart';
 import '../pages/main_shell.dart';
-import '../pages/lobby/lobby_page.dart';
+
 import '../pages/game/game_page.dart';
 import '../pages/results/results_page.dart';
 import '../pages/stats/stats_page.dart';
+import '../pages/stats/match_replay_page.dart';
 import '../pages/leaderboard/leaderboard_page.dart';
 import '../pages/social/social_leaderboard_page.dart';
 import '../pages/legal/legal_page.dart';
@@ -35,6 +36,9 @@ import '../pages/lucky_spin/lucky_spin_page.dart';
 import '../pages/gift_inbox/gift_inbox_page.dart';
 import '../pages/lobby_v2/lobby_v2_page.dart';
 import '../pages/lobby_v2/room_v2_page.dart';
+import '../pages/rank/rank_page.dart';
+import '../pages/guild/guild_landing_page.dart';
+import '../pages/guild/guild_dashboard_page.dart';
 import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -90,12 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home',
         builder: (context, state) => const MainShell(),
       ),
-      GoRoute(
-        path: '/lobby/:roomCode',
-        builder: (context, state) => LobbyPage(
-          roomCode: state.pathParameters['roomCode']!,
-        ),
-      ),
+
       GoRoute(
         path: '/game/:gameId',
         builder: (context, state) => GamePage(
@@ -111,6 +110,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stats',
         builder: (context, state) => const StatsPage(),
+      ),
+      GoRoute(
+        path: '/replay/:id',
+        builder: (context, state) => MatchReplayPage(
+          matchId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/leaderboard',
@@ -213,6 +218,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/lucky-spin',
         builder: (context, state) => const LuckySpinPage(),
       ),
+      GoRoute(
+        path: '/guild',
+        builder: (context, state) {
+          final profile = ref.read(authProvider).profile;
+          if (profile != null && profile.guildId != null && profile.guildId!.isNotEmpty) {
+            return GuildDashboardPage(guildId: profile.guildId!);
+          }
+          return const GuildLandingPage();
+        },
+      ),
       // Gift Inbox
       GoRoute(
         path: '/gift-inbox',
@@ -228,6 +243,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoomV2Page(
           roomId: state.pathParameters['roomId']!,
         ),
+      ),
+      GoRoute(
+        path: '/rank',
+        builder: (context, state) => const RankPage(),
       ),
     ],
   );

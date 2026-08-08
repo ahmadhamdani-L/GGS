@@ -31,10 +31,11 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
   Timer? _autoCloseTimer;
   int _countdown = 60;
 
-  // Rewards from game state (fallback to defaults if not available)
-  int get _xpEarned => ref.read(gameProvider)?.rewards?.xpEarned ?? 50;
-  int get _coinsEarned => ref.read(gameProvider)?.rewards?.coinsEarned ?? 20;
-  int get _mmrChange => ref.read(gameProvider)?.rewards?.mmrChange ?? 0;
+  // P1-4 FIX: Use ref.watch so UI updates if rewards arrive after initial build.
+  // Fallback to 0 instead of fake values — the UI will show "–" for missing data.
+  int get _xpEarned => ref.watch(gameProvider.select((g) => g?.rewards?.xpEarned ?? 0));
+  int get _coinsEarned => ref.watch(gameProvider.select((g) => g?.rewards?.coinsEarned ?? 0));
+  int get _mmrChange => ref.watch(gameProvider.select((g) => g?.rewards?.mmrChange ?? 0));
 
   @override
   void initState() {
@@ -243,15 +244,20 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
           style: TextStyle(color: isUp ? AppColors.success : AppColors.error, fontSize: 16, fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: 8),
-        Builder(builder: (context) {
-          final level = ref.watch(authProvider).profile?.level ?? 1;
-          final String tier = level >= 20 ? '👑 Grandmaster' : level >= 15 ? '💎 Diamond' : level >= 10 ? '🥇 Gold' : level >= 5 ? '🥈 Silver' : '🥉 Bronze';
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        GestureDetector(
+          onTap: () => context.push('/rank'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: AppColors.primary.withValues(alpha: 0.12)),
-            child: Text(tier, style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
-          );
-        }),
+            child: const Row(
+              children: [
+                Text('Detail Rank', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 10),
+              ],
+            ),
+          ),
+        ),
       ]),
     );
   }

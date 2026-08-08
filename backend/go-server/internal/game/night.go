@@ -90,6 +90,12 @@ func SubmitNightActionSequential(state *GameState, playerID, targetID string, wi
 	// Check if ALL role-players (human, alive, connected) have submitted → resolve immediately.
 	// H-1 FIX: Skip disconnected players — they will be auto-handled by the timer/disconnect
 	// system. Waiting for a disconnected player blocks the entire game unnecessarily.
+	return CheckAndResolveNight(state), nil
+}
+
+// CheckAndResolveNight evaluates if all human players have submitted their night actions.
+// If true, it immediately resolves the night phase.
+func CheckAndResolveNight(state *GameState) *GameState {
 	allHumansDone := true
 	for _, p := range state.Players {
 		if !p.IsBot && p.IsAlive && p.IsConnected && p.Role != RoleVillager {
@@ -119,8 +125,7 @@ func SubmitNightActionSequential(state *GameState, playerID, targetID string, wi
 		}
 		state = ResolveNightActions(state)
 	}
-
-	return state, nil
+	return state
 }
 
 // AdvanceNightTurn moves to the next role's turn (exported for bot use)

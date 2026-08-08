@@ -188,13 +188,9 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background with animated cross-fade
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 600),
-            child: Image.asset(bgImage, key: ValueKey(bgImage), fit: BoxFit.cover, width: size.width, height: size.height,
-              errorBuilder: (_, __, ___) => Container(color: AppColors.background)),
-          ),
-          Container(color: Colors.black.withValues(alpha: game.phase.isNight ? 0.6 : 0.55)),
+          // Background matched with lobby
+          GameBackground(isNight: game.phase.isNight),
+          Container(color: Colors.black.withValues(alpha: game.phase.isNight ? 0.3 : 0.1)),
           // Content
           SafeArea(
             child: Column(
@@ -557,6 +553,74 @@ class _DeathAnnouncementOverlayState extends State<_DeathAnnouncementOverlay>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class GameBackground extends StatelessWidget {
+  final bool isNight;
+  const GameBackground({super.key, required this.isNight});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(seconds: 1),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isNight
+              ? [const Color(0xFF1A0A2E), const Color(0xFF0D0515), const Color(0xFF050208)]
+              : [const Color(0xFF0F1B3D), const Color(0xFF0A0E1A), const Color(0xFF060810)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Moon (smaller, top-right corner)
+          Positioned(
+            top: 40,
+            right: 20,
+            child: AnimatedContainer(
+              duration: const Duration(seconds: 1),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568)).withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Stars
+          ...List.generate(12, (i) {
+            final x = (i * 37.0 + 20) % (MediaQuery.of(context).size.width - 10);
+            final y = (i * 23.0 + 15) % 200.0;
+            final size = (i % 3 + 1) * 1.0;
+            return Positioned(
+              left: x,
+              top: y,
+              child: AnimatedOpacity(
+                duration: const Duration(seconds: 1),
+                opacity: isNight ? (0.4 + (i % 3) * 0.2) : (0.2 + (i % 3) * 0.1),
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

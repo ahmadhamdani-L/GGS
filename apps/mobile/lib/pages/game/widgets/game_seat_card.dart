@@ -45,14 +45,28 @@ class GameSeatCard extends ConsumerWidget {
                 : isTarget
                     ? AppColors.error.withValues(alpha: 0.06)
                     : const Color(0xFF1A1F2E),
-            border: Border.all(color: borderColor, width: isMe || isTarget ? 2.5 : 1.5),
+            border: isMe || isTarget ? null : Border.all(color: borderColor, width: 1.5),
+            gradient: isMe || isTarget
+                ? LinearGradient(
+                    colors: isTarget
+                        ? [AppColors.error.withValues(alpha: 0.5), Colors.transparent]
+                        : [const Color(0xFFDAA520).withValues(alpha: 0.5), Colors.transparent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             boxShadow: isMe
-                ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 10)]
+                ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 15, spreadRadius: 1)]
                 : isTarget
-                    ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.3), blurRadius: 8)]
+                    ? [BoxShadow(color: AppColors.error.withValues(alpha: 0.4), blurRadius: 12)]
                     : null,
           ),
-          child: Column(
+          child: Container(
+            decoration: isMe || isTarget ? BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: borderColor, width: 2.5),
+            ) : null,
+            child: Column(
             children: [
               // Character area
               Expanded(
@@ -138,9 +152,9 @@ class GameSeatCard extends ConsumerWidget {
                     ),
                   ]),
                 )
-              else
                 const SizedBox(height: 4),
             ],
+          ),
           ),
         ),
         // Seat number (top-left corner)

@@ -756,6 +756,37 @@ func (s *Server) HandleMatchHistory(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, 200, map[string]interface{}{"matches": history})
 }
 
+func (s *Server) HandleGetMatchReplay(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+	
+	// Extract match ID from URL path: /api/matches/{id}/replay
+	matchID := r.PathValue("id")
+	if matchID == "" {
+		errorResponse(w, 400, "invalid path")
+		return
+	}
+
+	var actions []db.GameAction
+	var err error
+	if db.DB != nil {
+		actions, err = db.GetGameReplay(matchID)
+	}
+	
+	if err != nil {
+		errorResponseWithCode(w, 500, "failed to fetch match replay", "FETCH_FAILED")
+		return
+	}
+	
+	if actions == nil {
+		actions = []db.GameAction{}
+	}
+	
+	jsonResponse(w, 200, map[string]interface{}{"actions": actions})
+}
+
 func (s *Server) HandleLeaderboard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		errorResponse(w, 405, "method not allowed")
@@ -1557,4 +1588,87 @@ func (s *Server) HandleNotifications(w http.ResponseWriter, r *http.Request) {
 	default:
 		errorResponse(w, 405, "method not allowed")
 	}
+}
+
+// ─── Quests (wraps missions for QuestPage FE) ────────────
+
+// HandleQuests serves GET /api/quests — returns daily + weekly quests.
+// P0-1 FIX: QuestPage calls /api/quests which previously had no handler.
+// This wraps existing daily missions and returns them in the format
+// the Flutter QuestPage expects: { daily: [...], weekly: [...] }
+func (s *Server) HandleQuests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+
+	userID := r.Context().Value(userIDKey).(string)
+
+	missions, err := db.GetDailyMissions(userID)
+	if err != nil {
+		missions = []db.DailyMission{}
+	}
+
+	// Transform missions into the quest format the FE expects
+	daily := make([]map[string]interface{}, 0, len(missions))
+	for _, m := range missions {
+		daily = append(daily, map[string]interface{}{
+			"id":             m.ID,
+			"title":          m.Title,
+			"description":    m.Description,
+			"progress":       m.Progress,
+			"target":         m.Target,
+			"claimed":        m.IsClaimed,
+			"completed":      m.IsCompleted,
+			"rewardCoins":    m.CoinReward,
+			"rewardXp":       m.XPReward,
+			"rewardDiamonds": 0,
+		})
+	}
+
+	// Weekly quests — placeholder for future implementation
+	weekly := []map[string]interface{}{}
+
+	jsonResponse(w, 200, map[string]interface{}{
+		"daily":  daily,
+		"weekly": weekly,
+	})
+}
+
+// HandleClaimQuest serves POST /api/quests/claim — claims a quest reward.
+// P0-1 FIX: Wraps existing ClaimMissionReward for the quest endpoint.
+func (s *Server) HandleClaimQuest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+
+	userID := r.Context().Value(userIDKey).(string)
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	var req struct {
+		QuestID string `json:"questId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errorResponseWithCode(w, 400, "invalid request body", "INVALID_BODY")
+		return
+	}
+
+	req.QuestID = strings.TrimSpace(req.QuestID)
+	if req.QuestID == "" {
+		errorResponseWithCode(w, 400, "questId is required", "MISSING_QUEST_ID")
+		return
+	}
+
+	mission, err := db.ClaimMissionReward(userID, req.QuestID)
+	if err != nil {
+		errorResponseWithCode(w, 400, err.Error(), "CLAIM_FAILED")
+		return
+	}
+
+	jsonResponse(w, 200, map[string]interface{}{
+		"status":   "claimed",
+		"xpEarned": mission.XPReward,
+		"coins":    mission.CoinReward,
+	})
 }

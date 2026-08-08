@@ -10,6 +10,9 @@ import '../../../models/ws_message.dart';
 import '../../../providers/room_provider.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/player_profile_dialog.dart';
+import '../../../services/audio_service.dart';
+
+import 'dart:ui' as dart_ui;
 
 // Player name colors — each player gets a consistent color
 const _nameColors = [
@@ -49,10 +52,11 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
     if (_sub == null) {
       _sub = ref.read(webSocketProvider).messages.listen((msg) {
         if (!mounted) return;
-        if (msg.type == 'chat_message') {
+        if (msg.type == 'chat_message' || msg.type == 'ghost_chat_message') {
           setState(() => _messages.add({
             'senderId': msg.payload['senderId'] as String? ?? '',
             'content': msg.payload['content'] as String? ?? '',
+            'isGhost': msg.type == 'ghost_chat_message' ? 'true' : 'false',
           }));
         }
       });
@@ -66,7 +70,11 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
     final text = _chatCtrl.text.trim();
     if (text.isEmpty || widget.me == null) return;
     ref.read(webSocketProvider).send(WsMessage.sendChat(senderId: widget.me!.id, content: text));
-    setState(() => _messages.add({'senderId': widget.me!.id, 'content': text}));
+    setState(() => _messages.add({
+      'senderId': widget.me!.id, 
+      'content': text,
+      'isGhost': widget.me!.isAlive ? 'false' : 'true',
+    }));
     _chatCtrl.clear();
   }
 
@@ -160,13 +168,17 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
   }
 
   Widget _buildChatOverlay() {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 220),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Colors.black.withValues(alpha: 0.4),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: dart_ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 220),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            borderRadius: BorderRadius.circular(14),
+          ),
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -186,8 +198,9 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                     itemBuilder: (_, i) {
                       final msg = _messages[_messages.length - 1 - i];
                       final senderId = msg['senderId'] ?? '';
+                      final isGhost = msg['isGhost'] == 'true';
                       final sender = widget.game.players.where((p) => p.id == senderId).firstOrNull;
-                      final nameColor = _getNameColor(senderId);
+                      final nameColor = isGhost ? AppColors.textMuted : _getNameColor(senderId);
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
@@ -200,12 +213,17 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                                 text: TextSpan(
                                   children: [
                                     TextSpan(
-                                      text: '${sender?.name ?? '???'}: ',
+                                      text: isGhost ? '👻 ${sender?.name ?? '???'}: ' : '${sender?.name ?? '???'}: ',
                                       style: TextStyle(color: nameColor, fontSize: 13, fontWeight: FontWeight.w700),
                                     ),
                                     TextSpan(
                                       text: msg['content'] ?? '',
-                                      style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.3),
+                                      style: TextStyle(
+                                        color: isGhost ? AppColors.textMuted : Colors.white, 
+                                        fontSize: 13, 
+                                        height: 1.3,
+                                        fontStyle: isGhost ? FontStyle.italic : FontStyle.normal,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -219,7 +237,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
           ),
           const SizedBox(height: 4),
           // Quick chat presets
-          if (widget.me != null && widget.me!.isAlive)
+          if (widget.me != null)
             SizedBox(
               height: 26,
               child: ListView(
@@ -238,7 +256,11 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                       ref.read(webSocketProvider).send(
                         WsMessage.sendChat(senderId: widget.me!.id, content: preset),
                       );
-                      setState(() => _messages.add({'senderId': widget.me!.id, 'content': preset}));
+                      setState(() => _messages.add({
+                        'senderId': widget.me!.id, 
+                        'content': preset,
+                        'isGhost': widget.me!.isAlive ? 'false' : 'true',
+                      }));
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -254,40 +276,40 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
               ),
             ),
           // Input bar
-          if (widget.me != null && widget.me!.isAlive)
+          if (widget.me != null)
             Container(
               margin: const EdgeInsets.only(top: 4),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: widget.me!.isAlive ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(18),
+                border: widget.me!.isAlive ? null : Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
               child: Row(children: [
                 Expanded(child: TextField(
                   controller: _chatCtrl,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: const InputDecoration(
-                    hintText: 'Ketik pesan...',
+                  decoration: InputDecoration(
+                    hintText: widget.me!.isAlive ? 'Ketik pesan...' : '👻 Ghost Chat...',
                     border: InputBorder.none, isDense: true,
                     contentPadding: EdgeInsets.zero,
-                    hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
                   ),
                   onSubmitted: (_) => _send(),
                 )),
                 GestureDetector(onTap: _send, child: Container(
                   width: 28, height: 28,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primary),
-                  child: const Icon(Icons.send_rounded, color: Colors.black, size: 14),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle, 
+                    color: widget.me!.isAlive ? AppColors.primary : Colors.grey.withValues(alpha: 0.5)
+                  ),
+                  child: Icon(Icons.send_rounded, color: widget.me!.isAlive ? Colors.black : Colors.white, size: 14),
                 )),
               ]),
-            )
-          else
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text('☠️ Kamu sudah mati — hanya bisa membaca', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
             ),
         ],
       ),
-    );
+      ),
+    )));
   }
 }

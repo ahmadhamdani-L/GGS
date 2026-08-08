@@ -152,6 +152,10 @@ class ApiService {
     return _get('/api/history?limit=$limit');
   }
 
+  Future<ApiResponse<Map<String, dynamic>>> getMatchReplay(String matchId) async {
+    return _get('/api/matches/$matchId/replay');
+  }
+
   Future<ApiResponse<Map<String, dynamic>>> getLeaderboard({String sort = 'rating', int limit = 50}) async {
     return _get('/api/leaderboard?sort=$sort&limit=$limit');
   }
@@ -510,11 +514,10 @@ class ApiService {
   // ─── Quests ────────────────────────────────────────────────
 
   /// GET /api/quests — get daily & weekly quests with progress
-  Future<ApiResponse<Map<String, dynamic>>> getQuests() => _get('/api/quests');
-
-  /// POST /api/quests/claim — claim quest reward
-  Future<ApiResponse<Map<String, dynamic>>> claimQuestReward(String questId) =>
-      _post('/api/quests/claim', {'questId': questId});
+  Future<ApiResponse<Map<String, dynamic>>> getQuests() => _get('/api/missions');
+  
+  /// POST /api/missions — claim quest reward (expecting missionId in body)
+  Future<ApiResponse<Map<String, dynamic>>> claimQuestReward(String questId) => _post('/api/missions', {'missionId': questId});
 
   // ─── Lucky Spin ────────────────────────────────────────────
 
@@ -535,5 +538,102 @@ class ApiService {
   /// POST /api/gifts/claim — claim a specific gift or all
   Future<ApiResponse<Map<String, dynamic>>> claimGift({String? giftId, bool all = false}) =>
       _post('/api/gifts/claim', {'giftId': giftId ?? '', 'all': all});
+// --- Guilds ---
+
+  Future<ApiResponse<Map<String, dynamic>>> createGuild(String name, String tag, String description) async {
+    try {
+      final res = await http.post(
+        Uri.parse('${Config.apiUrl}/guilds'),
+        headers: _headers,
+        body: jsonEncode({'name': name, 'tag': tag, 'description': description}),
+      );
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return ApiResponse(data: jsonDecode(res.body), statusCode: res.statusCode);
+      }
+      return ApiResponse(error: _parseError(res.body), statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> getGuild(String id) async {
+    try {
+      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id'), headers: _headers);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return ApiResponse(data: jsonDecode(res.body), statusCode: res.statusCode);
+      }
+      return ApiResponse(error: _parseError(res.body), statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<bool>> joinGuild(String id) async {
+    try {
+      final res = await http.post(Uri.parse('${Config.apiUrl}/guilds/$id/join'), headers: _headers);
+      return ApiResponse(data: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<bool>> leaveGuild() async {
+    try {
+      final res = await http.post(Uri.parse('${Config.apiUrl}/guilds/leave'), headers: _headers);
+      return ApiResponse(data: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<List<dynamic>>> searchGuilds(String query) async {
+    try {
+      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/search?q=${Uri.encodeComponent(query)}'), headers: _headers);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
+      }
+      return ApiResponse(error: _parseError(res.body), statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<List<dynamic>>> getGuildMembers(String id) async {
+    try {
+      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id/members'), headers: _headers);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
+      }
+      return ApiResponse(error: _parseError(res.body), statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<List<dynamic>>> getGuildChat(String id) async {
+    try {
+      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id/chat'), headers: _headers);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
+      }
+      return ApiResponse(error: _parseError(res.body), statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
+  Future<ApiResponse<bool>> sendGuildChat(String id, String content) async {
+    try {
+      final res = await http.post(
+        Uri.parse('${Config.apiUrl}/guilds/$id/chat/send'),
+        headers: _headers,
+        body: jsonEncode({'content': content}),
+      );
+      return ApiResponse(data: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode);
+    } catch (e) {
+      return ApiResponse(error: e.toString(), statusCode: 500);
+    }
+  }
+
 }
 

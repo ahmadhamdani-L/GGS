@@ -31,7 +31,7 @@ class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProvid
   }
 
   int _navigateAttempts = 0;
-  static const int _maxNavigateAttempts = 10;
+  static const int _maxNavigateAttempts = 20; // P3-16 FIX: Increased to 10s total timeout
 
   void _navigate() {
     if (!mounted) return;

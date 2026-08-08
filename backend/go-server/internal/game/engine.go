@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 	"time"
+
+	"github.com/ggs/werewolf-server/internal/db"
 )
 
 // Default role compositions per player count
@@ -356,6 +358,7 @@ func SubmitNightAction(state *GameState, playerID, targetID string) (*GameState,
 			return state, errors.New("doctor has used all 3 protects")
 		}
 		state.NightActions.DoctorTarget = &targetID
+		db.LogGameAction(state.ID, state.Round, string(state.Phase), "skill_use", playerID, targetID, map[string]interface{}{"role": "doctor"})
 
 	case PhaseSeerTurn:
 		if player.Role != RoleSeer {
@@ -377,6 +380,7 @@ func SubmitNightAction(state *GameState, playerID, targetID string) (*GameState,
 			state.NightActions.Seer2Result = &targetTeam
 			state.NightActions.Seer2SubmitterId = &playerID
 		}
+		db.LogGameAction(state.ID, state.Round, string(state.Phase), "skill_use", playerID, targetID, map[string]interface{}{"role": "seer", "result": targetTeam})
 
 	default:
 		return state, fmt.Errorf("cannot perform night action in phase %s", state.Phase)
@@ -425,6 +429,13 @@ func SubmitWitchAction(state *GameState, playerID string, useHeal bool, poisonTa
 		PoisonTarget: poisonTarget,
 	}
 
+	if useHeal {
+		db.LogGameAction(state.ID, state.Round, string(state.Phase), "skill_use", playerID, "", map[string]interface{}{"role": "witch", "action": "heal"})
+	}
+	if poisonTarget != nil {
+		db.LogGameAction(state.ID, state.Round, string(state.Phase), "skill_use", playerID, *poisonTarget, map[string]interface{}{"role": "witch", "action": "poison"})
+	}
+
 	// Advance
 	state = advanceNightPhase(state)
 	if state.Phase == PhaseNightResolve {
@@ -461,6 +472,8 @@ func CastVote(state *GameState, voterID, targetID string) (*GameState, error) {
 	}
 
 	state.Votes.Votes[voterID] = targetID
+	
+	db.LogGameAction(state.ID, state.Round, string(state.Phase), "vote", voterID, targetID, nil)
 
 	// H-2 FIX: Auto-resolve immediately when ALL alive+connected players have voted.
 	// Previously waited for timer always — caused 30s dead wait when everyone voted early.
@@ -582,6 +595,7 @@ func resolveNight(state *GameState) *GameState {
 					Phase:    "night",
 					Role:     string(state.Players[i].Role),
 				})
+				db.LogGameAction(state.ID, state.Round, string(state.Phase), "eliminate", "", *wolfKillID, map[string]interface{}{"reason": "wolf_kill"})
 				break
 			}
 		}
@@ -599,10 +613,10 @@ func resolveNight(state *GameState) *GameState {
 					Phase:    "night",
 					Role:     string(state.Players[i].Role),
 				})
-				break
+				db.LogGameAction(state.ID, state.Round, string(state.Phase), "eliminate", "", poisonID, map[string]interface{}{"reason": "witch_poison"})
+				state.WitchPoisonUsed = true
 			}
 		}
-		state.WitchPoisonUsed = true
 	}
 
 	// 6. Update doctor protect tracking
@@ -692,6 +706,7 @@ func resolveVotes(state *GameState) *GameState {
 					Phase:    "day",
 					Role:     string(state.Players[i].Role),
 				})
+				db.LogGameAction(state.ID, state.Round, string(state.Phase), "eliminate", "", eliminatedID, map[string]interface{}{"reason": "voted_out"})
 				state.PendingTestamentPlayerID = &eliminatedID
 				break
 			}

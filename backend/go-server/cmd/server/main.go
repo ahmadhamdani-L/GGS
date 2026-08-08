@@ -212,6 +212,7 @@ func main() {
 	// Stats
 	mux.HandleFunc("/api/stats", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleStats)))
 	mux.HandleFunc("/api/history", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleMatchHistory)))
+	mux.HandleFunc("/api/matches/{id}/replay", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleGetMatchReplay)))
 
 	// Leaderboard (public)
 	mux.HandleFunc("/api/leaderboard", rateLimitMiddleware(apiLimiter, server.HandleLeaderboard))
@@ -288,9 +289,23 @@ func main() {
 	mux.HandleFunc("/api/diamonds",           rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleGetDiamonds)))
 	mux.HandleFunc("/api/diamonds/topup",     server.HandleTopUpDiamonds) // protected by X-Admin-Key header
 
+	// Guild System
+	mux.HandleFunc("/api/guilds",             rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleCreateGuild)))
+	mux.HandleFunc("/api/guilds/{id}",        rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleGetGuild)))
+	mux.HandleFunc("/api/guilds/{id}/join",   rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleJoinGuild)))
+	mux.HandleFunc("/api/guilds/leave",       rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleLeaveGuild)))
+	mux.HandleFunc("/api/guilds/search",      rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleSearchGuilds)))
+	mux.HandleFunc("/api/guilds/{id}/members",rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleGetGuildMembers)))
+	mux.HandleFunc("/api/guilds/{id}/chat",   rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleGetGuildChat)))
+	mux.HandleFunc("/api/guilds/{id}/chat/send", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleSendGuildChat)))
+
 	// Events
 	mux.HandleFunc("/api/events", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleEvents)))
 	mux.HandleFunc("/api/events/claim", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleEventClaim)))
+
+	// Quests (P0-1 FIX: wraps missions for QuestPage FE)
+	mux.HandleFunc("/api/quests", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleQuests)))
+	mux.HandleFunc("/api/quests/claim", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleClaimQuest)))
 
 	// Lucky Spin
 	mux.HandleFunc("/api/lucky-spin", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleLuckySpin)))

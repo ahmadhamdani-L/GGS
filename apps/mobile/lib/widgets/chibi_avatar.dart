@@ -143,7 +143,7 @@ class _ChibiAvatarState extends State<ChibiAvatar> with TickerProviderStateMixin
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(50),
                       gradient: RadialGradient(
-                        colors: [Colors.black.withValues(alpha: 0.2), Colors.transparent],
+                        colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
                       ),
                     ),
                   ),

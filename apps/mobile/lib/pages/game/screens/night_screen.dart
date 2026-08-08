@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:ui' as dart_ui;
 
 import '../../../core/theme.dart';
 import '../../../models/game_state.dart';
@@ -13,6 +14,7 @@ import '../../../widgets/game_avatar.dart';
 import '../widgets/game_chat_panels.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/game_seat_card.dart';
+import '../../../services/audio_service.dart';
 
 // ═══════════════════════════════════════════════════════════
 // NIGHT PHASE — Circular avatars + Role action panel
@@ -44,10 +46,13 @@ class _NightScreenState extends ConsumerState<NightScreen> {
       _sub = ref.read(webSocketProvider).messages.listen((msg) {
         if (!mounted) return;
         if (msg.type == 'team_chat_message') {
-          setState(() => _teamMessages.add({
-            'senderId': msg.payload['senderId'] as String? ?? '',
-            'content': msg.payload['content'] as String? ?? '',
-          }));
+          setState(() {
+            _teamMessages.add({
+              'senderId': msg.payload['senderId'] as String? ?? '',
+              'content': msg.payload['content'] as String? ?? '',
+            });
+          });
+          ref.read(audioServiceProvider).playChatSfx();
         }
       });
     }
@@ -131,14 +136,19 @@ class _NightScreenState extends ConsumerState<NightScreen> {
         if (me != null && me.isAlive && me.role != Role.villager)
           Container(
             margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1F2E),
+            child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
-            ),
-            child: Column(
-              children: [
+              child: dart_ui.BackdropFilter(
+                filter: dart_ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFDAA520).withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    children: [
                 // Role label
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Text('KAMU ADALAH ', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.w600)),
@@ -233,7 +243,7 @@ class _NightScreenState extends ConsumerState<NightScreen> {
                 ],
               ],
             ),
-          ),
+          ))),
         // Chat Night counter at bottom
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

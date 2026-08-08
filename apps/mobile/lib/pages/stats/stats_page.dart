@@ -126,8 +126,12 @@ class _StatsPageState extends ConsumerState<StatsPage> {
     final coins = match['coinsEarned'] as int? ?? 0;
     final rounds = match['totalRounds'] as int? ?? 0;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    return GestureDetector(
+      onTap: () {
+        context.push('/replay/${match['id']}');
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
@@ -174,6 +178,11 @@ class _StatsPageState extends ConsumerState<StatsPage> {
           ]),
           Text(date.split('T').first, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
         ])),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: () => context.push('/replay/${match['id']}'),
+          icon: const Icon(Icons.play_circle_outline, color: AppColors.primary, size: 28),
+        ),
       ]),
     );
   }

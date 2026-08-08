@@ -19,6 +19,7 @@ class _QuestPageState extends ConsumerState<QuestPage>
   List<Map<String, dynamic>> _dailyQuests = [];
   List<Map<String, dynamic>> _weeklyQuests = [];
   bool _loading = true;
+  String? _error; // P1-6 FIX: track error state
 
   @override
   void initState() {
@@ -34,18 +35,26 @@ class _QuestPageState extends ConsumerState<QuestPage>
   }
 
   Future<void> _loadQuests() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final api = ref.read(apiServiceProvider);
     final res = await api.getQuests();
+    if (!mounted) return;
     if (res.isSuccess && res.data != null) {
-      final daily = res.data!['daily'] as List<dynamic>? ?? [];
-      final weekly = res.data!['weekly'] as List<dynamic>? ?? [];
+      final missions = res.data!['missions'] as List<dynamic>? ?? [];
       setState(() {
-        _dailyQuests = daily.cast<Map<String, dynamic>>();
-        _weeklyQuests = weekly.cast<Map<String, dynamic>>();
+        _dailyQuests = missions.cast<Map<String, dynamic>>();
+        _weeklyQuests = []; // The backend only returns missions currently
         _loading = false;
       });
     } else {
-      setState(() => _loading = false);
+      // P1-6 FIX: Show error instead of silently empty
+      setState(() {
+        _loading = false;
+        _error = res.error ?? 'Gagal memuat quest. Coba lagi.';
+      });
     }
   }
 
@@ -98,13 +107,51 @@ class _QuestPageState extends ConsumerState<QuestPage>
           ? const Center(
               child:
                   CircularProgressIndicator(color: Color(0xFFDAA520)))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildQuestList(_dailyQuests, 'daily'),
-                _buildQuestList(_weeklyQuests, 'weekly'),
-              ],
-            ),
+          : _error != null
+              // P1-6 FIX: Show error state with retry
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.cloud_off_rounded,
+                            color: Color(0xFF6B7280), size: 48),
+                        const SizedBox(height: 12),
+                        Text(_error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Color(0xFF9CA3AF), fontSize: 13)),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: _loadQuests,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFFDAA520)
+                                      .withValues(alpha: 0.5)),
+                            ),
+                            child: const Text('Coba Lagi',
+                                style: TextStyle(
+                                    color: Color(0xFFDAA520),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildQuestList(_dailyQuests, 'daily'),
+                    _buildQuestList(_weeklyQuests, 'weekly'),
+                  ],
+                ),
     );
   }
 

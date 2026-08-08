@@ -620,6 +620,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         Row(children: [
           Expanded(child: _buildSmallButton('📊 Stats', () => context.push('/stats'))),
           const SizedBox(width: 8),
+          Expanded(child: _buildSmallButton('👑 Rank', () => context.push('/rank'))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
           Expanded(child: _buildSmallButton('🎒 Inventory', () => context.push('/inventory'))),
           const SizedBox(width: 8),
           Expanded(child: _buildSmallButton('👥 Teman', () => context.push('/friends'))),

@@ -9,6 +9,11 @@ func MarkPlayerDisconnected(state *GameState, playerID string) *GameState {
 			break
 		}
 	}
+	
+	if state.Phase == PhaseNight {
+		state = CheckAndResolveNight(state)
+	}
+	
 	return state
 }
 

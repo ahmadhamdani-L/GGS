@@ -47,17 +47,9 @@ class _MainShellState extends ConsumerState<MainShell> {
 
       bool hasNavigated = false;
 
-      ref.listenManual<RoomState>(roomProvider, (prev, next) {
-        if (!mounted) return;
-        if (prev?.room != null && next.room == null) {
-          hasNavigated = false;
-          return;
-        }
-        if (!hasNavigated && (prev?.room == null) && next.room != null) {
-          hasNavigated = true;
-          context.go('/lobby/${next.room!.code}');
-        }
-      });
+      // P1-5 FIX: Removed V1 roomProvider listener that could cause
+      // unintended navigation to /lobby/:code when V2 system is active.
+      // V2 room navigation is handled by LobbyV2Page/RoomV2Page directly.
 
       ref.listenManual<GameState?>(gameProvider, (prev, next) {
         if (!mounted) return;
@@ -222,6 +214,10 @@ class _MainShellState extends ConsumerState<MainShell> {
                     _moreMenuItem(Icons.leaderboard_rounded, 'Leaderboard', 'Peringkat pemain', const Color(0xFF4ECDC4), () {
                       Navigator.pop(ctx);
                       context.push('/leaderboard');
+                    }),
+                    _moreMenuItem(Icons.shield_rounded, 'Guild & Clan', 'Bangun komunitasmu', const Color(0xFFC084FC), () {
+                      Navigator.pop(ctx);
+                      context.push('/guild');
                     }),
                     _moreMenuItem(Icons.assignment_rounded, 'Quest & Misi', 'Misi harian & mingguan', const Color(0xFF95E1D3), () {
                       Navigator.pop(ctx);
@@ -570,7 +566,7 @@ class _SideMenusAndCenter extends StatelessWidget {
           Column(children: [
             _SideMenuButton(icon: Icons.celebration_rounded, label: 'Event', onTap: () => context.push('/events')),
             _SideMenuButton(icon: Icons.assignment_rounded, label: 'Quest', onTap: () => context.push('/quest')),
-            _SideMenuButton(icon: Icons.military_tech_rounded, label: 'Ranking', onTap: () => context.push('/leaderboard')),
+            _SideMenuButton(icon: Icons.military_tech_rounded, label: 'Ranking', onTap: () => context.push('/rank')),
           ]),
           // Center space (character area — placeholder until background is ready)
           Expanded(
