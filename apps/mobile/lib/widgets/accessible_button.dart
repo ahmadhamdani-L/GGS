@@ -49,6 +49,7 @@ class _AccessibleButtonState extends State<AccessibleButton> {
     final isEnabled = widget.onPressed != null;
     
     return Semantics(
+      key: const Key('accessible_button_semantics'),
       button: true,
       enabled: isEnabled,
       label: widget.semanticLabel,
