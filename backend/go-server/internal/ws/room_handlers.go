@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ggs/werewolf-server/internal/bot"
@@ -721,8 +722,8 @@ func (h *Hub) handleGetLiveKitTokenV2(client *Client, payload json.RawMessage) {
 		return
 	}
 
-	apiKey := os.Getenv("LIVEKIT_API_KEY")
-	apiSecret := os.Getenv("LIVEKIT_API_SECRET")
+	apiKey := strings.TrimSpace(os.Getenv("LIVEKIT_API_KEY"))
+	apiSecret := strings.TrimSpace(os.Getenv("LIVEKIT_API_SECRET"))
 
 	if apiKey == "" || apiSecret == "" {
 		sendErrorV2(client, "LIVEKIT_NOT_CONFIGURED", "LiveKit API keys are missing in .env")
