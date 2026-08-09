@@ -31,7 +31,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
   }
 
   void _initLiveKit() {
-    final user = ref.read(authProvider).user;
+    final user = ref.read(authProvider).profile;
     if (user == null) return;
     
     // Listen for token responses
@@ -48,7 +48,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
   }
 
   void _requestLiveKitToken() {
-    final user = ref.read(authProvider).user;
+    final user = ref.read(authProvider).profile;
     final room = ref.read(roomV2Provider);
     if (user == null || room == null) return;
 
@@ -58,7 +58,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
   }
 
   void _syncMicState() async {
-    final user = ref.read(authProvider).user;
+    final user = ref.read(authProvider).profile;
     final room = ref.read(roomV2Provider);
     if (user == null || room == null) return;
 
@@ -90,7 +90,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
   Widget build(BuildContext context) {
     ref.listen(roomV2Provider, (prev, next) {
       if (prev != null && next != null) {
-        final user = ref.read(authProvider).user;
+        final user = ref.read(authProvider).profile;
         if (user != null) {
           final wasSpeaker = prev.seats.any((s) => s.playerId == user.id);
           final isSpeaker = next.seats.any((s) => s.playerId == user.id);
@@ -102,7 +102,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
     });
 
     final roomState = ref.watch(roomV2Provider);
-    final user = ref.watch(authProvider).user;
+    final user = ref.watch(authProvider).profile;
 
     if (roomState == null) {
       return const Scaffold(
@@ -337,7 +337,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
     return GestureDetector(
       onTap: () {
         if (!isOccupied) {
-          final user = ref.read(authProvider).user;
+          final user = ref.read(authProvider).profile;
           if (user != null) {
             ref.read(roomV2Provider.notifier).selectSeat(user.id, widget.roomId, index);
           }

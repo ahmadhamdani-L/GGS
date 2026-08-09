@@ -57,7 +57,7 @@ class LiveKitService extends ChangeNotifier {
       for (var publication in participant.audioTrackPublications) {
         final track = publication.track;
         if (track is RemoteAudioTrack) {
-          track.setVolume(muted ? 0.0 : 1.0);
+          track.mediaStreamTrack?.enabled = !muted;
         }
       }
     }
