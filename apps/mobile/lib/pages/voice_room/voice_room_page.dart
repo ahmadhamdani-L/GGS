@@ -8,6 +8,7 @@ import '../../models/room_v2.dart';
 import '../../providers/room_provider_v2.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/livekit_provider.dart';
+import '../../services/audio_service.dart';
 
 class VoiceRoomPage extends ConsumerStatefulWidget {
   final String roomId;
@@ -27,6 +28,8 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initLiveKit();
+      // Start background music when entering voice room
+      ref.read(audioServiceProvider).playBgm('bgm/Morning_in_the_High_Meadows.mp3');
     });
   }
 
@@ -35,13 +38,18 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
     if (user == null) return;
     
     // Listen for token responses
-    _tokenSub = ref.read(roomV2Provider.notifier).livekitTokens.listen((data) {
+    _tokenSub = ref.read(roomV2Provider.notifier).livekitTokens.listen((data) async {
       if (!mounted) return;
       final token = data['token']!;
       final url = data['url']!;
-      ref.read(liveKitProvider).connect(url, token).then((_) {
-        _syncMicState();
-      });
+      
+      final liveKit = ref.read(liveKitProvider);
+      if (liveKit.isConnected) {
+        await liveKit.disconnect();
+      }
+      
+      await liveKit.connect(url, token);
+      _syncMicState();
     });
 
     _requestLiveKitToken();
@@ -76,6 +84,11 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
     _tokenSub?.cancel();
     ref.read(liveKitProvider).disconnect();
     _chatCtrl.dispose();
+    
+    // Stop background music when leaving
+    final audio = ref.read(audioServiceProvider);
+    audio.stopBgm();
+    
     super.dispose();
   }
 
@@ -89,6 +102,7 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen(roomV2Provider, (prev, next) {
+      if (!mounted) return;
       if (prev != null && next != null) {
         final user = ref.read(authProvider).profile;
         if (user != null) {
@@ -126,6 +140,26 @@ class _VoiceRoomPageState extends ConsumerState<VoiceRoomPage> {
           ],
         ),
         actions: [
+          Consumer(
+            builder: (context, ref, child) {
+              final isAudioEnabled = ref.watch(audioServiceProvider).bgmEnabled;
+              return IconButton(
+                icon: Icon(
+                  isAudioEnabled ? Icons.music_note : Icons.music_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  final audio = ref.read(audioServiceProvider);
+                  audio.toggleBgm(!audio.bgmEnabled);
+                  if (audio.bgmEnabled) {
+                    audio.playBgm('bgm/Morning_in_the_High_Meadows.mp3');
+                  }
+                  // Force rebuild of icon
+                  setState(() {});
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.exit_to_app, color: Colors.white),
             onPressed: () {

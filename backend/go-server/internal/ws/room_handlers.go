@@ -10,6 +10,7 @@ import (
 	"github.com/ggs/werewolf-server/internal/bot"
 	"github.com/ggs/werewolf-server/internal/game"
 	"github.com/ggs/werewolf-server/internal/logger"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/livekit/protocol/auth"
 )
 
@@ -734,18 +735,32 @@ func (h *Hub) handleGetLiveKitTokenV2(client *Client, payload json.RawMessage) {
 	canSubscribe := true
 
 	grant := &auth.VideoGrant{
-		RoomJoin: true,
-		Room:     req.RoomID,
-		CanPublish: &canPublish,
+		RoomJoin:       true,
+		Room:           req.RoomID,
+		CanPublish:     &canPublish,
 		CanPublishData: &canPublishData,
-		CanSubscribe: &canSubscribe,
+		CanSubscribe:   &canSubscribe,
 	}
 	at.AddGrant(grant).
 		SetIdentity(client.UserID).
 		SetName(req.PlayerName).
 		SetValidFor(time.Hour * 24)
 
-	token, err := at.ToJWT()
+	// Custom JWT generation to bypass the 2026 system clock vs 2024 real-world LiveKit clock issue
+	claims := struct {
+		jwt.RegisteredClaims
+		*auth.ClaimGrants
+	}{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    apiKey,
+			Subject:   client.UserID,
+			IssuedAt:  jwt.NewNumericDate(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)),
+			NotBefore: jwt.NewNumericDate(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)),
+			ExpiresAt: jwt.NewNumericDate(time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)),
+		},
+		ClaimGrants: at.GetGrants(),
+	}
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(apiSecret))
 	if err != nil {
 		sendErrorV2(client, "TOKEN_ERROR", "Gagal generate token")
 		return

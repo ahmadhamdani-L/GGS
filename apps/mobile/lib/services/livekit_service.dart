@@ -24,6 +24,12 @@ class LiveKitService extends ChangeNotifier {
       });
 
       await _room!.connect(url, token);
+      
+      // Force audio output to loudspeaker instead of earpiece
+      try {
+        await Hardware.instance.setSpeakerphoneOn(true);
+      } catch (_) {}
+      
       _isConnected = true;
       notifyListeners();
     } catch (e) {
