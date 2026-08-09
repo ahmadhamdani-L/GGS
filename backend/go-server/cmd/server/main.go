@@ -260,6 +260,7 @@ func main() {
 	// Payment (Diamond top-up via Midtrans)
 	mux.HandleFunc("/api/payment/packages", rateLimitMiddleware(apiLimiter, server.HandleGetPackages))
 	mux.HandleFunc("/api/payment/create-order", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleCreateOrder)))
+	mux.HandleFunc("/api/wardrobe/purchase", rateLimitMiddleware(apiLimiter, server.AuthMiddleware(server.HandleWardrobePurchase)))
 	mux.HandleFunc("/api/payment/webhook", server.HandlePaymentWebhook)
 
 	// Admin dashboard API (all protected by X-Admin-Key)

@@ -3,13 +3,6 @@ import '../models/guild.dart';
 import '../services/api_service.dart';
 import 'auth_provider.dart';
 
-final apiServiceProvider = Provider<ApiService>((ref) {
-  final apiService = ApiService();
-  final token = ref.watch(authProvider).token;
-  apiService.setToken(token);
-  return apiService;
-});
-
 final guildProvider = StateNotifierProvider<GuildNotifier, GuildState>((ref) {
   return GuildNotifier(ref.read(apiServiceProvider));
 });

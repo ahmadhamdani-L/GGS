@@ -43,10 +43,11 @@ class _QuestPageState extends ConsumerState<QuestPage>
     final res = await api.getQuests();
     if (!mounted) return;
     if (res.isSuccess && res.data != null) {
-      final missions = res.data!['missions'] as List<dynamic>? ?? [];
+      final daily = res.data!['daily'] as List<dynamic>? ?? [];
+      final weekly = res.data!['weekly'] as List<dynamic>? ?? [];
       setState(() {
-        _dailyQuests = missions.cast<Map<String, dynamic>>();
-        _weeklyQuests = []; // The backend only returns missions currently
+        _dailyQuests = daily.cast<Map<String, dynamic>>();
+        _weeklyQuests = weekly.cast<Map<String, dynamic>>();
         _loading = false;
       });
     } else {

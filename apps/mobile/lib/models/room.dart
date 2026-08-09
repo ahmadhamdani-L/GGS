@@ -119,6 +119,7 @@ class UserProfile {
   final int    gamesWon;
   final Map<String, dynamic>? chibiConfig;
   final bool   isGuest;
+  final String? guildId;
 
   const UserProfile({
     required this.id,
@@ -133,6 +134,7 @@ class UserProfile {
     this.gamesWon    = 0,
     this.chibiConfig,
     this.isGuest   = false,
+    this.guildId,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -149,6 +151,7 @@ class UserProfile {
       gamesWon: (json['gamesWon'] as num?)?.toInt() ?? (json['games_won'] as num?)?.toInt() ?? 0,
       chibiConfig: json['chibiConfig'] as Map<String, dynamic>?,
       isGuest: json['isGuest'] as bool? ?? json['is_guest'] as bool? ?? false,
+      guildId: json['guildId'] as String? ?? json['guild_id'] as String?,
     );
   }
 
@@ -164,6 +167,7 @@ class UserProfile {
         'games_won': gamesWon,
         if (chibiConfig != null) 'chibiConfig': chibiConfig,
         'is_guest': isGuest,
+        if (guildId != null) 'guild_id': guildId,
       };
 
   String get avatarPath => AppConstants.avatarPath(avatarId);

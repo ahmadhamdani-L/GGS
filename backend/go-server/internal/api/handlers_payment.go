@@ -44,6 +44,59 @@ var diamondPackages = map[string]struct {
 	"diamond_5000": {Diamonds: 5000, Price: 649000, Name: "5000 Diamond (+bonus)"},
 }
 
+// HandleWardrobePurchase handles purchasing or renting wardrobe items (deducts coins)
+func (s *Server) HandleWardrobePurchase(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, 405, "method not allowed")
+		return
+	}
+	userID := r.Context().Value(ContextKeyUserID).(string)
+	
+	var req struct {
+		Price int `json:"price"`
+		Duration string `json:"duration"` // "1d", "3d", "7d", "perm"
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		errorResponseWithCode(w, 400, "invalid request body", "INVALID_BODY")
+		return
+	}
+
+	if req.Price <= 0 {
+		errorResponseWithCode(w, 400, "invalid price", "INVALID_PRICE")
+		return
+	}
+
+	// Deduct coins
+	if db.DB != nil {
+		// Use transaction to safely deduct coins
+		tx, err := db.DB.Begin()
+		if err != nil {
+			errorResponse(w, 500, "internal error")
+			return
+		}
+		defer tx.Rollback()
+
+		var currentCoins int
+		err = tx.QueryRow(`SELECT coins FROM profiles WHERE user_id = $1 FOR UPDATE`, userID).Scan(&currentCoins)
+		if err != nil || currentCoins < req.Price {
+			errorResponseWithCode(w, 400, "insufficient coins", "INSUFFICIENT_COINS")
+			return
+		}
+
+		_, err = tx.Exec(`UPDATE profiles SET coins = coins - $1 WHERE user_id = $2`, req.Price, userID)
+		if err != nil {
+			errorResponse(w, 500, "failed to update coins")
+			return
+		}
+		tx.Commit()
+	}
+
+	jsonResponse(w, 200, map[string]interface{}{
+		"success": true,
+		"message": "Item successfully purchased/rented",
+	})
+}
+
 // HandleCreateOrder creates a Midtrans Snap transaction and returns the payment URL.
 // POST /api/payment/create-order — body: { "packageId": "diamond_100" }
 func (s *Server) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {

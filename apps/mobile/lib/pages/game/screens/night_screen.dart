@@ -138,7 +138,7 @@ class _NightScreenState extends ConsumerState<NightScreen> {
             margin: const EdgeInsets.fromLTRB(12, 4, 12, 0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: dart_ui.BackdropFilter(
+              child: BackdropFilter(
                 filter: dart_ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
                   padding: const EdgeInsets.all(12),
@@ -243,7 +243,7 @@ class _NightScreenState extends ConsumerState<NightScreen> {
                 ],
               ],
             ),
-          ))),
+          )))),
         // Chat Night counter at bottom
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

@@ -151,7 +151,7 @@ class GameSeatCard extends ConsumerWidget {
                       style: TextStyle(color: isDead ? roleColor.withValues(alpha: 0.5) : roleColor, fontSize: 9, fontWeight: FontWeight.w800),
                     ),
                   ]),
-                )
+                ),
                 const SizedBox(height: 4),
             ],
           ),

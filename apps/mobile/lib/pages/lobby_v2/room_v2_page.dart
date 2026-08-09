@@ -82,15 +82,13 @@ class RoomV2Page extends ConsumerWidget {
                 // Seats grid (takes most space)
                 Expanded(
                   flex: 7,
-                  child: _SeatsGrid(room: room, myId: myId, isHost: isHost),
+                  child: _SeatsGrid(room: room, myId: myId, isHost: isHost, isSeated: isSeated, isReady: isReady),
                 ),
-                // Action bar (ready/start/emote)
+                // Action bar (emote, gift, social)
                 _BottomBar(
                   room: room,
                   myId: myId,
-                  isHost: isHost,
                   isSeated: isSeated,
-                  isReady: isReady,
                 ),
                 // Permanent chat panel (smaller)
                 Expanded(
@@ -178,26 +176,6 @@ class _RoomBackground extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Moon (smaller, top-right corner)
-          Positioned(
-            top: 20,
-            right: 20,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568)).withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-            ),
-          ),
           // Stars
           ...List.generate(12, (i) {
             final x = (i * 37.0 + 20) % (MediaQuery.of(context).size.width - 10);
@@ -505,13 +483,15 @@ class _SeatsGrid extends ConsumerWidget {
   final RoomStateV2 room;
   final String myId;
   final bool isHost;
-  const _SeatsGrid({required this.room, required this.myId, required this.isHost});
+  final bool isSeated;
+  final bool isReady;
+  const _SeatsGrid({required this.room, required this.myId, required this.isHost, required this.isSeated, required this.isReady});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seatCount = room.settings.maxPlayers.clamp(8, 18);
 
-    // Staggered layout: 5-4-4-5 rows (like Werewolf reference)
+    // Staggered layout: 5-4-4-5 rows
     final List<int> rowCounts = seatCount <= 8
         ? [4, 4]
         : seatCount <= 12
@@ -523,81 +503,96 @@ class _SeatsGrid extends ConsumerWidget {
     int seatIdx = 0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Column(
-        children: rowCounts.map((count) {
-          final rowWidgets = <Widget>[];
-          // For 4-player rows: seats align with columns 1,2,4,5 (skip col 3 middle)
-          final maxCols = rowCounts.reduce((a, b) => a > b ? a : b);
-          final needsOffset = count < maxCols;
+      child: Stack(
+        children: [
+          Column(
+            children: rowCounts.map((count) {
+              final rowWidgets = <Widget>[];
+              final maxCols = rowCounts.reduce((a, b) => a > b ? a : b);
+              final needsOffset = count < maxCols;
 
-          if (needsOffset) {
-            // 4 players map to columns 1, 2, 4, 5 (gap in middle)
-            for (int i = 0; i < count; i++) {
-              final idx = seatIdx;
-              final seat = room.seats.where((s) => s.index == idx).firstOrNull ?? SeatV2(index: idx);
-              final player = seat.isOccupied
-                  ? room.players.where((p) => p.userId == seat.playerId).firstOrNull
-                  : null;
-              final isMe = seat.playerId == myId;
-              rowWidgets.add(
-                Expanded(
-                  child: _SeatCard(
-                    seat: seat,
-                    player: player,
-                    index: idx,
-                    isMe: isMe,
-                    isHost: isHost,
-                    onTap: () => _handleSeatTap(ref, idx, seat),
-                    onLongPress: isHost && seat.isOccupied && !isMe
-                        ? () => _handleHostAction(context, ref, seat, player)
-                        : null,
-                  ),
-                ),
-              );
-              // Insert center action button after 2nd seat (gap in middle = col 3)
-              if (i == 1) {
-                rowWidgets.add(Expanded(child: _CenterActionSlot(
-                  room: room, myId: myId, isHost: isHost,
-                  isSeated: room.players.where((p) => p.userId == myId).firstOrNull?.isSeated ?? false,
-                  isReady: room.players.where((p) => p.userId == myId).firstOrNull?.isReady ?? false,
-                )));
+              if (needsOffset) {
+                // 4 players map to columns 1, 2, 4, 5 (gap in middle)
+                for (int i = 0; i < count; i++) {
+                  final idx = seatIdx;
+                  final seat = room.seats.where((s) => s.index == idx).firstOrNull ?? SeatV2(index: idx);
+                  final player = seat.isOccupied
+                      ? room.players.where((p) => p.userId == seat.playerId).firstOrNull
+                      : null;
+                  final isMe = seat.playerId == myId;
+                  rowWidgets.add(
+                    Expanded(
+                      child: _SeatCard(
+                        seat: seat,
+                        player: player,
+                        index: idx,
+                        isMe: isMe,
+                        isHost: isHost,
+                        onTap: () => _handleSeatTap(ref, idx, seat),
+                        onLongPress: isHost && seat.isOccupied && !isMe
+                            ? () => _handleHostAction(context, ref, seat, player)
+                            : null,
+                      ),
+                    ),
+                  );
+                  // Insert an empty space after 2nd seat to maintain the U-shape layout gap
+                  if (i == 1) {
+                    rowWidgets.add(const Expanded(child: SizedBox.shrink()));
+                  }
+                  seatIdx++;
+                }
+              } else {
+                for (int i = 0; i < count; i++) {
+                  final idx = seatIdx;
+                  final seat = room.seats.where((s) => s.index == idx).firstOrNull ?? SeatV2(index: idx);
+                  final player = seat.isOccupied
+                      ? room.players.where((p) => p.userId == seat.playerId).firstOrNull
+                      : null;
+                  final isMe = seat.playerId == myId;
+                  rowWidgets.add(
+                    Expanded(
+                      child: _SeatCard(
+                        seat: seat,
+                        player: player,
+                        index: idx,
+                        isMe: isMe,
+                        isHost: isHost,
+                        onTap: () => _handleSeatTap(ref, idx, seat),
+                        onLongPress: isHost && seat.isOccupied && !isMe
+                            ? () => _handleHostAction(context, ref, seat, player)
+                            : null,
+                      ),
+                    ),
+                  );
+                  seatIdx++;
+                }
               }
-              seatIdx++;
-            }
-          } else {
-            for (int i = 0; i < count; i++) {
-              final idx = seatIdx;
-              final seat = room.seats.where((s) => s.index == idx).firstOrNull ?? SeatV2(index: idx);
-              final player = seat.isOccupied
-                  ? room.players.where((p) => p.userId == seat.playerId).firstOrNull
-                  : null;
-              final isMe = seat.playerId == myId;
-              rowWidgets.add(
-                Expanded(
-                  child: _SeatCard(
-                    seat: seat,
-                    player: player,
-                    index: idx,
-                    isMe: isMe,
-                    isHost: isHost,
-                    onTap: () => _handleSeatTap(ref, idx, seat),
-                    onLongPress: isHost && seat.isOccupied && !isMe
-                        ? () => _handleHostAction(context, ref, seat, player)
-                        : null,
-                  ),
+
+              return Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: rowWidgets,
                 ),
               );
-              seatIdx++;
-            }
-          }
-
-          return Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: rowWidgets,
+            }).toList(),
+          ),
+          // Action Buttons overlay in the center! (Only for 18 players layout where there's a gap)
+          if (seatCount >= 18)
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 140,
+                height: 120,
+                child: _CenterActionConsole(
+                  room: room,
+                  myId: myId,
+                  isHost: isHost,
+                  isSeated: isSeated,
+                  isReady: isReady,
+                ),
+              ),
             ),
-          );
-        }).toList(),
+        ],
       ),
     );
   }
@@ -863,16 +858,16 @@ class _SeatCard extends ConsumerWidget {
   }
 }
 
-// ─── Bottom Bar ──────────────────────────────────────────────
+// ─── Center Action Console ───────────────────────────────────
 
-class _BottomBar extends ConsumerWidget {
+class _CenterActionConsole extends ConsumerWidget {
   final RoomStateV2 room;
   final String myId;
   final bool isHost;
   final bool isSeated;
   final bool isReady;
 
-  const _BottomBar({
+  const _CenterActionConsole({
     required this.room,
     required this.myId,
     required this.isHost,
@@ -882,152 +877,169 @@ class _BottomBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Main button logic
-    String buttonLabel;
-    bool buttonEnabled;
-    VoidCallback? onTap;
+    final buttonLabel = !isSeated ? 'JOIN' : isHost ? 'PLAY' : isReady ? 'BATAL SIAP' : 'SIAP';
+    // Settings disable if less than 8 players for host
+    final canHostPlay = room.players.where((p) => p.isSeated).length >= 8;
+    final buttonEnabled = !isSeated || (isHost ? canHostPlay : true);
 
-    if (isHost) {
-      final occupiedSeats = room.seats.where((s) => !s.isEmpty).length;
-      final seatedPlayers = room.players.where((p) => p.isSeated).length;
-      final effectiveSeated = occupiedSeats > seatedPlayers ? occupiedSeats : seatedPlayers;
-      final hasEnoughPlayers = effectiveSeated >= 8;
-      buttonEnabled = hasEnoughPlayers && room.isWaiting;
-      buttonLabel = hasEnoughPlayers ? 'MULAI' : '$effectiveSeated/8';
-      onTap = buttonEnabled
-          ? () {
-              HapticFeedback.heavyImpact();
-              ref.read(roomV2Provider.notifier).startGame(room.roomId);
-            }
-          : null;
-    } else if (!isSeated) {
-      buttonLabel = 'SEAT';
-      buttonEnabled = false;
-      onTap = null;
-    } else if (!isReady) {
-      buttonLabel = 'SIAP';
-      buttonEnabled = true;
-      onTap = () {
-        HapticFeedback.mediumImpact();
-        ref.read(roomV2Provider.notifier).setReady(myId, room.roomId, true);
-      };
-    } else {
-      buttonLabel = '✓';
-      buttonEnabled = false;
-      onTap = null;
+    void onTap() {
+      HapticFeedback.mediumImpact();
+      if (!isSeated) {
+        // Auto Join: find first empty seat
+        final firstEmpty = room.seats.where((s) => s.isEmpty).firstOrNull;
+        if (firstEmpty != null) {
+          ref.read(roomV2Provider.notifier).selectSeat(myId, room.roomId, firstEmpty.index);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Room penuh!'), behavior: SnackBarBehavior.floating));
+        }
+      } else if (isHost) {
+        if (canHostPlay) {
+          ref.read(roomV2Provider.notifier).startGame(room.roomId);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Minimal 8 pemain untuk memulai!'), behavior: SnackBarBehavior.floating));
+        }
+      } else {
+        // Ready / Unready
+        ref.read(roomV2Provider.notifier).setReady(myId, room.roomId, !isReady);
+      }
     }
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Host: add bot row
-          if (isHost && room.isWaiting)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: GestureDetector(
-                onTap: () {
-                  for (int i = 0; i < room.seats.length; i++) {
-                    if (room.seats[i].isEmpty) {
-                      ref.read(roomV2Provider.notifier).addBot(room.roomId, i);
-                      break;
-                    }
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: Colors.white.withValues(alpha: 0.05),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                  ),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.smart_toy_outlined, color: Colors.white38, size: 12),
-                    SizedBox(width: 4),
-                    Text('+Bot', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w600)),
-                  ]),
+    void onStandUp() {
+      HapticFeedback.mediumImpact();
+      ref.read(roomV2Provider.notifier).releaseSeat(myId, room.roomId);
+    }
+
+    if (!isSeated) {
+      // Big Join Button
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            boxShadow: [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.5), blurRadius: 15, spreadRadius: 2)],
+            border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+          ),
+          child: const Center(
+            child: Text('JOIN', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2)),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Main Button (Play / Ready / Batal)
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: 54,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: buttonEnabled
+                  ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
+                  : null,
+              color: buttonEnabled ? null : const Color(0xFF2D3748),
+              border: Border.all(
+                color: buttonEnabled ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.15),
+                width: buttonEnabled ? 1.5 : 1,
+              ),
+              boxShadow: buttonEnabled ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 10)] : null,
+            ),
+            child: Center(
+              child: Text(
+                buttonLabel,
+                style: TextStyle(
+                  color: buttonEnabled ? Colors.white : Colors.white38,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
-          // Action buttons row (like reference: Emote, Gift, Chat, VIP, + Play button)
-          Row(
-            children: [
-              // Emote
-              _actionBtn(
-                icon: Icons.emoji_emotions_rounded,
-                label: 'Emote',
-                color: const Color(0xFFFBBF24),
-                onTap: () => _showEmotePicker(context, ref),
-              ),
-              const SizedBox(width: 4),
-              // Gift/Kutuk
-              _actionBtn(
-                icon: Icons.card_giftcard_rounded,
-                label: 'Gift',
-                color: const Color(0xFFEC4899),
-                onTap: () {
-                  // Open gift target picker (show seated players)
-                  _showGiftTargetPicker(context, ref);
-                },
-              ),
-              const SizedBox(width: 4),
-              // Chat Teman (private/friend chat)
-              _actionBtn(
-                icon: Icons.chat_rounded,
-                label: 'Chat',
-                color: const Color(0xFF60A5FA),
-                onTap: () => context.push('/friends'),
-              ),
-              const SizedBox(width: 4),
-              // VIP
-              _actionBtn(
-                icon: Icons.star_rounded,
-                label: 'VIP',
-                color: const Color(0xFFDAA520),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('VIP coming soon!'), behavior: SnackBarBehavior.floating),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-              // Main PLAY/READY button (compact)
-              Expanded(
-                child: GestureDetector(
-                  onTap: onTap,
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: buttonEnabled
-                          ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
-                          : null,
-                      color: buttonEnabled ? null : const Color(0xFF2D3748),
-                      border: Border.all(
-                        color: buttonEnabled ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.15),
-                        width: buttonEnabled ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        buttonLabel,
-                        style: TextStyle(
-                          color: buttonEnabled ? Colors.white : Colors.white38,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          ),
+        ),
+        // Stand Up Button
+        GestureDetector(
+          onTap: onStandUp,
+          child: Container(
+            height: 32,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.red.withValues(alpha: 0.15),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+            ),
+            child: const Center(
+              child: Text('BERDIRI', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Bottom Bar ──────────────────────────────────────────────
+
+class _BottomBar extends ConsumerWidget {
+  final RoomStateV2 room;
+  final String myId;
+  final bool isSeated;
+
+  const _BottomBar({
+    required this.room,
+    required this.myId,
+    required this.isSeated,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Emote
+          _actionBtn(
+            icon: Icons.emoji_emotions_rounded,
+            label: 'Emote',
+            color: isSeated ? const Color(0xFFFBBF24) : Colors.white24,
+            onTap: isSeated ? () => _showEmotePicker(context, ref) : () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Duduk dulu untuk menggunakan emote!'), behavior: SnackBarBehavior.floating));
+            },
+          ),
+          // Gift/Kutuk
+          _actionBtn(
+            icon: Icons.card_giftcard_rounded,
+            label: 'Gift',
+            color: isSeated ? const Color(0xFFEC4899) : Colors.white24,
+            onTap: isSeated ? () => _showGiftTargetPicker(context, ref) : () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Duduk dulu untuk mengirim gift!'), behavior: SnackBarBehavior.floating));
+            },
+          ),
+          // Sosial (Friend chat)
+          _actionBtn(
+            icon: Icons.people_alt_rounded,
+            label: 'Sosial',
+            color: const Color(0xFF60A5FA),
+            onTap: () => context.push('/friends'),
+          ),
+          // Mic / Voice Chat
+          _actionBtn(
+            icon: Icons.mic_rounded,
+            label: 'Mic',
+            color: const Color(0xFF10B981),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Voice chat akan segera hadir!'), behavior: SnackBarBehavior.floating),
+              );
+            },
           ),
         ],
       ),
@@ -1454,12 +1466,13 @@ class _PlayerProfileSheet extends ConsumerWidget {
               final stats = data['stats'];
               final charm = stats is SocialStats ? stats.charm : 0;
               final popularity = stats is SocialStats ? stats.popularity : 0;
+              final rankTier = data['rankTier'] as String? ?? 'Bronze';
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _statItem('✨', 'Charm', '$charm'),
-                  _statItem('👥', 'Popularity', '$popularity'),
-                  _statItem('🏆', 'Rank', '—'),
+                  _statItem('👥', 'Popular', '$popularity'),
+                  _statItem('🏆', 'Rank', rankTier),
                 ],
               );
             },
@@ -1467,7 +1480,7 @@ class _PlayerProfileSheet extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _statItem('✨', 'Charm', '...'),
-                _statItem('👥', 'Popularity', '...'),
+                _statItem('👥', 'Popular', '...'),
                 _statItem('🏆', 'Rank', '...'),
               ],
             ),
@@ -1475,7 +1488,7 @@ class _PlayerProfileSheet extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _statItem('✨', 'Charm', '—'),
-                _statItem('👥', 'Popularity', '—'),
+                _statItem('👥', 'Popular', '—'),
                 _statItem('🏆', 'Rank', '—'),
               ],
             ),

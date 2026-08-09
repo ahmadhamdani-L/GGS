@@ -44,7 +44,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             // Header
             Row(children: [
               IconButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
               ),
               const SizedBox(width: 8),

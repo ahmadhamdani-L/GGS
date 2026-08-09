@@ -310,6 +310,6 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
         ],
       ),
       ),
-    )));
+    ));
   }
 }

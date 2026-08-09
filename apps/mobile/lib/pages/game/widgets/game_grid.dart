@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../models/player.dart';
 import 'game_seat_card.dart';
 
-/// Reusable player grid — same proportions as lobby seat cards.
+/// Reusable player grid — SAME staggered layout as lobby waiting room.
+/// Uses row-based layout matching _SeatsGrid in room_v2_page.dart:
+///   8 players  → 4-4
+///  12 players  → 4-4-4
+///  16 players  → 4-4-4-4
+///  18 players  → 5-4-4-5  (U-shape with gap in 4-seat rows)
 class PlayerGrid18 extends StatelessWidget {
   final List<PlayerState> players;
   final PlayerState? me;
@@ -32,70 +37,101 @@ class PlayerGrid18 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pad to multiple of 4 (minimum 8 slots to match lobby look)
-    final minSlots = players.length < 8 ? 8 : players.length;
-    final slotCount = ((minSlots + 3) ~/ 4) * 4;
-    final padded = List<PlayerState?>.from(players);
-    while (padded.length < slotCount) {
-      padded.add(null);
-    }
+    final count = players.length.clamp(8, 18);
 
-    // Use 4 columns — matches lobby grid layout
-    // All cards (filled + empty) use the same fixed aspect ratio so they are equal width.
+    // Match lobby staggered row layout
+    final List<int> rowCounts = count <= 8
+        ? [4, 4]
+        : count <= 12
+            ? [4, 4, 4]
+            : count <= 16
+                ? [4, 4, 4, 4]
+                : [5, 4, 4, 5]; // 18
+
+    final maxCols = rowCounts.reduce((a, b) => a > b ? a : b);
+    int seatIdx = 0;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: GridView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        physics: const BouncingScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 6,
-          crossAxisSpacing: 6,
-          childAspectRatio: 0.7, // Equal width for all cards (filled & empty)
-        ),
-        itemCount: slotCount,
-        itemBuilder: (_, index) {
-          final player = index < padded.length ? padded[index] : null;
-          if (player == null) {
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFF131820),
-                border: Border.all(color: const Color(0xFF262D38)),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    color: const Color(0xFFDAA520).withValues(alpha: 0.3),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Column(
+        children: rowCounts.map((rowCount) {
+          final rowWidgets = <Widget>[];
+          final needsGap = rowCount < maxCols;
+
+          for (int i = 0; i < rowCount; i++) {
+            final idx = seatIdx;
+            final player = idx < players.length ? players[idx] : null;
+
+            rowWidgets.add(
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: player != null
+                      ? _buildPlayerCard(player, idx)
+                      : _buildEmptySlot(idx),
                 ),
               ),
             );
+
+            // Insert gap in middle for 4-seat rows when maxCols is 5 (U-shape)
+            if (needsGap && i == 1) {
+              rowWidgets.add(const Expanded(child: SizedBox.shrink()));
+            }
+
+            seatIdx++;
           }
-          final isDead = !player.isAlive;
-          final hasTest = testamentPlayerIds.contains(player.id);
-          final isMe = player.id == me?.id;
-          return GestureDetector(
-            onTap: (isDead && hasTest && onTapDead != null)
-                ? () => onTapDead!(player.id)
-                : (onTapPlayer != null ? () => onTapPlayer!(player) : null),
-            onLongPress: (!isMe && onLongPressPlayer != null)
-                ? () => onLongPressPlayer!(player)
-                : null,
-            child: cardBuilder != null
-                ? cardBuilder!(player, index)
-                : GameSeatCard(
-                    player: player,
-                    index: index,
-                    isMe: isMe,
-                    isDead: isDead,
-                    hasTestament: hasTest,
-                  ),
+
+          return Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: rowWidgets,
+            ),
           );
-        },
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPlayerCard(PlayerState player, int index) {
+    final isDead = !player.isAlive;
+    final hasTest = testamentPlayerIds.contains(player.id);
+    final isMe = player.id == me?.id;
+
+    return GestureDetector(
+      onTap: (isDead && hasTest && onTapDead != null)
+          ? () => onTapDead!(player.id)
+          : (onTapPlayer != null ? () => onTapPlayer!(player) : null),
+      onLongPress: (!isMe && onLongPressPlayer != null)
+          ? () => onLongPressPlayer!(player)
+          : null,
+      child: cardBuilder != null
+          ? cardBuilder!(player, index)
+          : GameSeatCard(
+              player: player,
+              index: index,
+              isMe: isMe,
+              isDead: isDead,
+              hasTestament: hasTest,
+            ),
+    );
+  }
+
+  Widget _buildEmptySlot(int index) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFF131820),
+        border: Border.all(color: const Color(0xFF262D38)),
+      ),
+      child: Center(
+        child: Text(
+          '${index + 1}',
+          style: TextStyle(
+            color: const Color(0xFFDAA520).withValues(alpha: 0.3),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }

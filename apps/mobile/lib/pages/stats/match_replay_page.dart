@@ -40,7 +40,7 @@ class _MatchReplayPageState extends ConsumerState<MatchReplayPage> {
         });
       } else {
         setState(() {
-          _error = res.message ?? 'Gagal memuat replay pertandingan.';
+          _error = res.error ?? 'Gagal memuat replay pertandingan.';
           _isLoading = false;
         });
       }

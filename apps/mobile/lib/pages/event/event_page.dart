@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/social_provider.dart';
 
 class EventPage extends ConsumerStatefulWidget {
   const EventPage({super.key});
@@ -42,6 +43,9 @@ class _EventPageState extends ConsumerState<EventPage> {
     final api = ref.read(apiServiceProvider);
     final res = await api.claimEventReward(eventId);
     if (res.isSuccess && mounted) {
+      // Refresh balances so coins/diamonds update immediately
+      ref.read(authProvider.notifier).refreshProfile();
+      ref.read(socialProvider.notifier).refreshDiamonds();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('🎉 Reward berhasil diklaim!'),
@@ -50,6 +54,14 @@ class _EventPageState extends ConsumerState<EventPage> {
         ),
       );
       _loadEvents();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res.error ?? 'Gagal klaim reward'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 

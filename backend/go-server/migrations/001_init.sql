@@ -351,6 +351,7 @@ CREATE TABLE IF NOT EXISTS user_purchases (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   item_id VARCHAR(50) REFERENCES shop_items(id) NOT NULL,
   purchased_at TIMESTAMPTZ DEFAULT now(),
+  expires_at TIMESTAMPTZ,
   UNIQUE(user_id, item_id)
 );
 
@@ -654,7 +655,6 @@ CREATE TABLE IF NOT EXISTS daily_missions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_daily_missions_user_id ON daily_missions(user_id);
-CREATE INDEX IF NOT EXISTS idx_daily_missions_expires_at ON daily_missions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_daily_missions_user_active ON daily_missions(user_id, expires_at) WHERE is_claimed = FALSE;
 
 -- ─── NOTIFICATIONS ───────────────────────────────────────────

@@ -68,9 +68,26 @@ var missionTemplates = []MissionTemplate{
 	{ID: "m10", Type: MissionTypePlayAsRole, Title: "Penyihir Licik", Description: "Main sebagai Witch 1 kali", Target: 1, XPReward: 100, CoinReward: 25, Role: "witch"},
 	
 	// Ability missions
-	{ID: "m11", Type: MissionTypeUseAbility, Title: "Healer", Description: "Gunakan kemampuan Doctor untuk protect 2 kali", Target: 2, XPReward: 150, CoinReward: 35, Ability: "protect"},
-	{ID: "m12", Type: MissionTypeUseAbility, Title: "Penyelidik", Description: "Gunakan kemampuan Seer untuk scan 3 pemain", Target: 3, XPReward: 150, CoinReward: 35, Ability: "scan"},
+	{ID: "m11", Type: MissionTypeUseAbility, Title: "Penyihir Handal", Description: "Gunakan kemampuan 1 kali", Target: 1, XPReward: 120, CoinReward: 25, Ability: "any"},
+	{ID: "m12", Type: MissionTypeUseAbility, Title: "Spiritualist", Description: "Gunakan kemampuan Seer/Guard", Target: 2, XPReward: 200, CoinReward: 40, Ability: "any"},
 	{ID: "m13", Type: MissionTypeUseAbility, Title: "Hunter", Description: "Eliminasi 2 pemain sebagai Werewolf", Target: 2, XPReward: 200, CoinReward: 40, Ability: "kill"},
+}
+
+// Available weekly mission templates (rotated weekly)
+var weeklyMissionTemplates = []MissionTemplate{
+	{ID: "w_1", Type: MissionTypePlayGames, Title: "Pemain Setia", Description: "Mainkan 15 game", Target: 15, XPReward: 1000, CoinReward: 200},
+	{ID: "w_2", Type: MissionTypeWinGame, Title: "Sang Penakluk", Description: "Menangkan 7 game", Target: 7, XPReward: 1500, CoinReward: 300},
+	{ID: "w_3", Type: MissionTypeSurvive, Title: "Penyintas Sejati", Description: "Bertahan hidup 20 ronde", Target: 20, XPReward: 1200, CoinReward: 250},
+	{ID: "w_4", Type: MissionTypeVoteCorrect, Title: "Detektif Handal", Description: "Voting benar 10 kali", Target: 10, XPReward: 1000, CoinReward: 200},
+}
+
+func getNextMonday() time.Time {
+	now := time.Now()
+	daysUntilMonday := (8 - int(now.Weekday())) % 7
+	if daysUntilMonday == 0 {
+		daysUntilMonday = 7 // Next week's Monday
+	}
+	return now.AddDate(0, 0, daysUntilMonday).Truncate(24 * time.Hour)
 }
 
 // GetDailyMissions returns active daily missions for a user
@@ -109,14 +126,94 @@ func GetDailyMissions(userID string) ([]DailyMission, error) {
 		missions = append(missions, m)
 	}
 
-	// If no missions or less than 3, generate new ones
-	if len(missions) < 3 {
-		missions, err = generateDailyMissions(userID, tomorrow, 3-len(missions))
-		if err != nil {
-			return missions, err
+	var daily, weekly []DailyMission
+	for _, m := range missions {
+		if len(m.TemplateID) > 2 && m.TemplateID[:2] == "w_" {
+			weekly = append(weekly, m)
+		} else {
+			daily = append(daily, m)
 		}
 	}
 
+	// If no daily missions or less than 3, generate new ones
+	if len(daily) < 3 {
+		newDaily, err := generateDailyMissions(userID, tomorrow, 3-len(daily))
+		if err == nil {
+			daily = append(daily, newDaily...)
+			missions = append(missions, newDaily...)
+		}
+	}
+
+	// If no weekly missions or less than 2, generate new ones
+	if len(weekly) < 2 {
+		newWeekly, err := generateWeeklyMissions(userID, getNextMonday(), 2-len(weekly))
+		if err == nil {
+			weekly = append(weekly, newWeekly...)
+			missions = append(missions, newWeekly...)
+		}
+	}
+
+	return missions, nil
+}
+
+// generateWeeklyMissions creates new weekly missions for a user
+func generateWeeklyMissions(userID string, expiresAt time.Time, count int) ([]DailyMission, error) {
+	if count <= 0 {
+		return nil, nil
+	}
+
+	// Use week of year as seed
+	_, weekOfYear := time.Now().ISOWeek()
+	startIdx := weekOfYear % len(weeklyMissionTemplates)
+
+	var missions []DailyMission
+	usedTemplates := make(map[string]bool)
+
+	for i := 0; i < count && i < len(weeklyMissionTemplates); i++ {
+		idx := (startIdx + i) % len(weeklyMissionTemplates)
+		template := weeklyMissionTemplates[idx]
+		
+		if usedTemplates[template.ID] {
+			for j := 1; j < len(weeklyMissionTemplates); j++ {
+				altIdx := (idx + j) % len(weeklyMissionTemplates)
+				if !usedTemplates[weeklyMissionTemplates[altIdx].ID] {
+					template = weeklyMissionTemplates[altIdx]
+					break
+				}
+			}
+		}
+		usedTemplates[template.ID] = true
+
+		mission := DailyMission{
+			ID:          fmt.Sprintf("wm_%s_%d_%d", userID[:8], weekOfYear, i),
+			UserID:      userID,
+			TemplateID:  template.ID,
+			Title:       template.Title,
+			Description: template.Description,
+			Type:        template.Type,
+			Target:      template.Target,
+			Progress:    0,
+			XPReward:    template.XPReward,
+			CoinReward:  template.CoinReward,
+			IsCompleted: false,
+			IsClaimed:   false,
+			ExpiresAt:   expiresAt,
+			CreatedAt:   time.Now(),
+		}
+
+		if DB != nil {
+			_, err := DB.Exec(`
+				INSERT INTO daily_missions (id, user_id, template_id, title, description, type, target, progress, xp_reward, coin_reward, is_completed, is_claimed, expires_at, created_at)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			`, mission.ID, mission.UserID, mission.TemplateID, mission.Title, mission.Description,
+				mission.Type, mission.Target, mission.Progress, mission.XPReward, mission.CoinReward,
+				mission.IsCompleted, mission.IsClaimed, mission.ExpiresAt, mission.CreatedAt)
+			if err != nil {
+				continue
+			}
+		}
+		missions = append(missions, mission)
+	}
 	return missions, nil
 }
 

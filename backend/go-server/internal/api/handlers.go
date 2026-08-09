@@ -1610,9 +1610,10 @@ func (s *Server) HandleQuests(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Transform missions into the quest format the FE expects
-	daily := make([]map[string]interface{}, 0, len(missions))
+	daily := make([]map[string]interface{}, 0)
+	weekly := make([]map[string]interface{}, 0)
 	for _, m := range missions {
-		daily = append(daily, map[string]interface{}{
+		missionMap := map[string]interface{}{
 			"id":             m.ID,
 			"title":          m.Title,
 			"description":    m.Description,
@@ -1623,11 +1624,13 @@ func (s *Server) HandleQuests(w http.ResponseWriter, r *http.Request) {
 			"rewardCoins":    m.CoinReward,
 			"rewardXp":       m.XPReward,
 			"rewardDiamonds": 0,
-		})
+		}
+		if len(m.TemplateID) > 2 && m.TemplateID[:2] == "w_" {
+			weekly = append(weekly, missionMap)
+		} else {
+			daily = append(daily, missionMap)
+		}
 	}
-
-	// Weekly quests — placeholder for future implementation
-	weekly := []map[string]interface{}{}
 
 	jsonResponse(w, 200, map[string]interface{}{
 		"daily":  daily,

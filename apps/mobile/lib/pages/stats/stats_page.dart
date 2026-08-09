@@ -50,7 +50,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
                     padding: const EdgeInsets.all(20),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        IconButton(onPressed: () => context.go('/home'), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
+                        IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
                         const SizedBox(width: 8),
                         const Text('Statistik', style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
                       ]),
@@ -128,7 +128,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
 
     return GestureDetector(
       onTap: () {
-        context.push('/replay/${match['id']}');
+        context.push('/replay/${match['matchId']}');
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -184,6 +184,7 @@ class _StatsPageState extends ConsumerState<StatsPage> {
           icon: const Icon(Icons.play_circle_outline, color: AppColors.primary, size: 28),
         ),
       ]),
+      ),
     );
   }
 }

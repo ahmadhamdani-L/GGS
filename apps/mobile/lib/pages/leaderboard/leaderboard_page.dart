@@ -48,7 +48,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(children: [
-                IconButton(onPressed: () => context.go('/home'), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
+                IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
                 const SizedBox(width: 8),
                 const Text('Leaderboard', style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
                 const Spacer(),

@@ -1,5 +1,3 @@
-package models;
-
 class Guild {
   final String id;
   final String name;

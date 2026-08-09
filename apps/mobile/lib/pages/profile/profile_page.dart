@@ -49,7 +49,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             // Header
             Row(children: [
-              IconButton(onPressed: () => context.go('/home'), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
+              IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20)),
               const SizedBox(width: 8),
               const Text('Profil', style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
               const Spacer(),
@@ -254,6 +254,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final popularity = (_stats?['popularity'] as num?)?.toInt() ?? 0;
     final userId = ref.read(authProvider).userId ?? '';
     final shortId = userId.length > 8 ? userId.substring(0, 8).toUpperCase() : userId.toUpperCase();
+    final rankTier = (_stats?['rankTier'] as String?) ?? 'Bronze';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -293,7 +294,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               // Name
               Text(profile?.displayName ?? 'Player', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
-              // ID badge
+              // ID & Rank badge
               Row(children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -304,6 +305,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Text('ID ', style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w600)),
                     Text(shortId, style: const TextStyle(color: Color(0xFFDAA520), fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  ]),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: const Color(0xFF60A5FA).withValues(alpha: 0.15),
+                    border: Border.all(color: const Color(0xFF60A5FA).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.shield_rounded, size: 10, color: Color(0xFF60A5FA)),
+                    const SizedBox(width: 3),
+                    Text(rankTier.toUpperCase(), style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 9, fontWeight: FontWeight.w800)),
                   ]),
                 ),
               ]),

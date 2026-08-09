@@ -100,14 +100,27 @@ class ChibiNotifier extends StateNotifier<ChibiConfig> {
       return true;
     } catch (e) {
       _lastSyncError = e.toString();
-      debugPrint('Backend sync exception: $e');
       return false;
     } finally {
       _isSyncing = false;
     }
   }
 
-  /// Force immediate save (for when leaving the page)
+  /// Purchase or rent a premium wardrobe item
+  Future<bool> purchasePremiumItem(int price, String duration) async {
+    try {
+      final response = await _apiService.purchaseWardrobe(price, duration);
+      if (response.isSuccess) {
+        // Force refresh user profile to update coins
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Force immediate save and sync (e.g., when exiting wardrobe)
   Future<void> saveImmediately() async {
     _saveDebounce?.cancel();
     _syncDebounce?.cancel();

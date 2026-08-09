@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../services/api_service.dart';
+import '../../providers/auth_provider.dart';
 
 class RankPage extends ConsumerStatefulWidget {
   const RankPage({super.key});

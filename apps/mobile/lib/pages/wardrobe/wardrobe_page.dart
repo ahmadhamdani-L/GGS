@@ -363,6 +363,18 @@ class _WardrobePageState extends ConsumerState<WardrobePage>
             child: Column(
               children: [
                 const SizedBox(height: 12),
+                // Gender Selector
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Text('Gender: ', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _GenderSelector(selected: config.gender, onSelect: notifier.setGender)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 // Tab bar
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -429,10 +441,6 @@ class _SkinTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle('Gender'),
-          const SizedBox(height: 10),
-          _GenderSelector(selected: config.gender, onSelect: notifier.setGender),
-          const SizedBox(height: 16),
           const _SectionTitle('Bentuk Muka'),
           const SizedBox(height: 10),
           _FaceShapeSelector(selected: config.faceShape, onSelect: notifier.setFaceShape),
@@ -891,6 +899,22 @@ class _ClothesTab extends StatelessWidget {
   final ChibiNotifier notifier;
   const _ClothesTab({required this.config, required this.notifier});
 
+  void _handleSelectShirt(BuildContext context, ShirtStyle style) async {
+    if (style == ShirtStyle.formal || style == ShirtStyle.dress) {
+      final emoji = style == ShirtStyle.formal ? '👔' : '👗';
+      final name = style == ShirtStyle.formal ? 'Baju Formal' : 'Dress';
+      final purchased = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => _WardrobePurchaseDialog(itemName: name, emoji: emoji),
+      );
+      if (purchased == true) {
+        notifier.setShirtStyle(style);
+      }
+    } else {
+      notifier.setShirtStyle(style);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -900,7 +924,7 @@ class _ClothesTab extends StatelessWidget {
         children: [
           const _SectionTitle('Gaya Baju'),
           const SizedBox(height: 10),
-          _ShirtStyleGrid(selected: config.shirtStyle, shirtColor: config.shirtColor, onSelect: notifier.setShirtStyle),
+          _ShirtStyleGrid(selected: config.shirtStyle, shirtColor: config.shirtColor, onSelect: (s) => _handleSelectShirt(context, s)),
           const SizedBox(height: 16),
           const _SectionTitle('Warna Baju'),
           const SizedBox(height: 10),
@@ -1185,12 +1209,30 @@ class _ShirtStyleGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 50,
-                  height: 45,
-                  child: CustomPaint(
-                    painter: _ShirtPreviewPainter(style: style, color: shirtColor),
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 50,
+                      height: 45,
+                      child: CustomPaint(
+                        painter: _ShirtPreviewPainter(style: style, color: shirtColor),
+                      ),
+                    ),
+                    if (style == ShirtStyle.formal || style == ShirtStyle.dress)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.lock, size: 10, color: Color(0xFFFBBF24)),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1788,6 +1830,121 @@ class _FaceShapeSelector extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _WardrobePurchaseDialog extends ConsumerStatefulWidget {
+  final String itemName;
+  final String emoji;
+  const _WardrobePurchaseDialog({required this.itemName, required this.emoji});
+
+  @override
+  ConsumerState<_WardrobePurchaseDialog> createState() => _WardrobePurchaseDialogState();
+}
+
+class _WardrobePurchaseDialogState extends ConsumerState<_WardrobePurchaseDialog> {
+  String _selectedDuration = '1d';
+  bool _isPurchasing = false;
+
+  final Map<String, int> _prices = {
+    '1d': 100,
+    '3d': 250,
+    '7d': 500,
+    'perm': 2000,
+  };
+
+  final Map<String, String> _labels = {
+    '1d': '1 Hari',
+    '3d': '3 Hari',
+    '7d': '7 Hari',
+    'perm': 'Permanen',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final price = _prices[_selectedDuration]!;
+
+    return AlertDialog(
+      backgroundColor: const Color(0xFF151A28),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.3))),
+      title: Column(
+        children: [
+          Text(widget.emoji, style: const TextStyle(fontSize: 40)),
+          const SizedBox(height: 8),
+          Text('Sewa ${widget.itemName}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800), textAlign: TextAlign.center),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Pilih durasi sewa untuk item premium ini:', style: TextStyle(color: AppColors.textSecondary, fontSize: 13), textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ..._prices.keys.map((key) {
+            final isSelected = _selectedDuration == key;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedDuration = key),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected ? const Color(0xFFDAA520).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(color: isSelected ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_labels[key]!, style: TextStyle(color: isSelected ? const Color(0xFFDAA520) : Colors.white, fontWeight: FontWeight.w700)),
+                    Row(
+                      children: [
+                        const Text('🪙', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 4),
+                        Text('${_prices[key]}', style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: _isPurchasing ? null : () => Navigator.pop(context, false),
+                style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isPurchasing ? null : () async {
+                  setState(() => _isPurchasing = true);
+                  final success = await ref.read(chibiProvider.notifier).purchasePremiumItem(price, _selectedDuration);
+                  if (mounted) {
+                    Navigator.pop(context, success);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDAA520),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isPurchasing 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('Beli', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

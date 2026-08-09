@@ -230,12 +230,19 @@ func (s *Server) HandleSocialStats(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, 500, "failed to get stats")
 		return
 	}
+	playerStats, _ := db.GetPlayerStats(userID)
+	rankTier := "Bronze"
+	if playerStats != nil && playerStats.RankTier != "" {
+		rankTier = playerStats.RankTier
+	}
+
 	streak := getStreak(userID)
 	album, _ := db.GetGiftAlbum(userID)
 	jsonResponse(w, 200, map[string]interface{}{
-		"stats":  stats,
-		"streak": streak,
-		"album":  album,
+		"stats":    stats,
+		"streak":   streak,
+		"album":    album,
+		"rankTier": rankTier,
 	})
 }
 

@@ -219,10 +219,6 @@ class _MainShellState extends ConsumerState<MainShell> {
                       Navigator.pop(ctx);
                       context.push('/guild');
                     }),
-                    _moreMenuItem(Icons.assignment_rounded, 'Quest & Misi', 'Misi harian & mingguan', const Color(0xFF95E1D3), () {
-                      Navigator.pop(ctx);
-                      context.push('/quest');
-                    }),
                     _moreMenuItem(Icons.history_rounded, 'Riwayat Match', 'History pertandingan', const Color(0xFF74B9FF), () {
                       Navigator.pop(ctx);
                       context.push('/stats');

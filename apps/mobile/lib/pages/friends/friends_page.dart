@@ -84,7 +84,7 @@ class _FriendsPageState extends ConsumerState<FriendsPage> with SingleTickerProv
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(children: [
                 IconButton(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () => context.pop(),
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
                 ),
                 const SizedBox(width: 8),

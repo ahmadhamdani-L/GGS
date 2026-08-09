@@ -92,7 +92,7 @@ class _InventoryPageState extends ConsumerState<InventoryPage> with SingleTicker
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(children: [
               IconButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
               ),
               const SizedBox(width: 8),

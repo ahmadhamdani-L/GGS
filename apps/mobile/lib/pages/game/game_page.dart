@@ -577,27 +577,6 @@ class GameBackground extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Moon (smaller, top-right corner)
-          Positioned(
-            top: 40,
-            right: 20,
-            child: AnimatedContainer(
-              duration: const Duration(seconds: 1),
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isNight ? const Color(0xFFCC3333) : const Color(0xFF4A5568)).withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-            ),
-          ),
           // Stars
           ...List.generate(12, (i) {
             final x = (i * 37.0 + 20) % (MediaQuery.of(context).size.width - 10);

@@ -310,6 +310,26 @@ class _ShopTopBar extends StatelessWidget {
           const SizedBox(width: 12),
           const Text('Toko', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
           const Spacer(),
+          // Inventory link
+          GestureDetector(
+            onTap: () => context.push('/inventory'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.backpack_rounded, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text('Tas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           // Coin badge
           _BalanceBadge(emoji: '🪙', value: coins, color: const Color(0xFFDAA520), onTap: () {}),
           const SizedBox(width: 8),

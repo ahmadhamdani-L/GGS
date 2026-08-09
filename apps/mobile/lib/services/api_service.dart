@@ -205,6 +205,11 @@ class ApiService {
     return _post('/api/shop', {'itemId': itemId});
   }
 
+  /// Purchase/Rent a wardrobe item (deducts coins)
+  Future<ApiResponse<Map<String, dynamic>>> purchaseWardrobe(int price, String duration) async {
+    return _post('/api/wardrobe/purchase', {'price': price, 'duration': duration});
+  }
+
   // --- Daily Missions ---
 
   /// Get daily missions for user
@@ -543,7 +548,7 @@ class ApiService {
   Future<ApiResponse<Map<String, dynamic>>> createGuild(String name, String tag, String description) async {
     try {
       final res = await http.post(
-        Uri.parse('${Config.apiUrl}/guilds'),
+        Uri.parse('${AppConfig.apiUrl}/guilds'),
         headers: _headers,
         body: jsonEncode({'name': name, 'tag': tag, 'description': description}),
       );
@@ -558,7 +563,7 @@ class ApiService {
 
   Future<ApiResponse<Map<String, dynamic>>> getGuild(String id) async {
     try {
-      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id'), headers: _headers);
+      final res = await http.get(Uri.parse('${AppConfig.apiUrl}/guilds/$id'), headers: _headers);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return ApiResponse(data: jsonDecode(res.body), statusCode: res.statusCode);
       }
@@ -570,7 +575,7 @@ class ApiService {
 
   Future<ApiResponse<bool>> joinGuild(String id) async {
     try {
-      final res = await http.post(Uri.parse('${Config.apiUrl}/guilds/$id/join'), headers: _headers);
+      final res = await http.post(Uri.parse('${AppConfig.apiUrl}/guilds/$id/join'), headers: _headers);
       return ApiResponse(data: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode);
     } catch (e) {
       return ApiResponse(error: e.toString(), statusCode: 500);
@@ -579,7 +584,7 @@ class ApiService {
 
   Future<ApiResponse<bool>> leaveGuild() async {
     try {
-      final res = await http.post(Uri.parse('${Config.apiUrl}/guilds/leave'), headers: _headers);
+      final res = await http.post(Uri.parse('${AppConfig.apiUrl}/guilds/leave'), headers: _headers);
       return ApiResponse(data: res.statusCode >= 200 && res.statusCode < 300, statusCode: res.statusCode);
     } catch (e) {
       return ApiResponse(error: e.toString(), statusCode: 500);
@@ -588,7 +593,7 @@ class ApiService {
 
   Future<ApiResponse<List<dynamic>>> searchGuilds(String query) async {
     try {
-      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/search?q=${Uri.encodeComponent(query)}'), headers: _headers);
+      final res = await http.get(Uri.parse('${AppConfig.apiUrl}/guilds/search?q=${Uri.encodeComponent(query)}'), headers: _headers);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
       }
@@ -600,7 +605,7 @@ class ApiService {
 
   Future<ApiResponse<List<dynamic>>> getGuildMembers(String id) async {
     try {
-      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id/members'), headers: _headers);
+      final res = await http.get(Uri.parse('${AppConfig.apiUrl}/guilds/$id/members'), headers: _headers);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
       }
@@ -612,7 +617,7 @@ class ApiService {
 
   Future<ApiResponse<List<dynamic>>> getGuildChat(String id) async {
     try {
-      final res = await http.get(Uri.parse('${Config.apiUrl}/guilds/$id/chat'), headers: _headers);
+      final res = await http.get(Uri.parse('${AppConfig.apiUrl}/guilds/$id/chat'), headers: _headers);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return ApiResponse(data: jsonDecode(res.body) as List<dynamic>, statusCode: res.statusCode);
       }
@@ -625,7 +630,7 @@ class ApiService {
   Future<ApiResponse<bool>> sendGuildChat(String id, String content) async {
     try {
       final res = await http.post(
-        Uri.parse('${Config.apiUrl}/guilds/$id/chat/send'),
+        Uri.parse('${AppConfig.apiUrl}/guilds/$id/chat/send'),
         headers: _headers,
         body: jsonEncode({'content': content}),
       );
@@ -635,5 +640,13 @@ class ApiService {
     }
   }
 
-}
+  String _parseError(String body) {
+    try {
+      final json = jsonDecode(body);
+      return json['error'] as String? ?? 'Unknown error';
+    } catch (e) {
+      return body;
+    }
+  }
 
+}

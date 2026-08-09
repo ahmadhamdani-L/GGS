@@ -114,7 +114,8 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
   void _dismissResult() {
     setState(() => _showResult = false);
     ref.read(spinProvider.notifier).clearLastResult();
-    // Re-refresh balances on dismiss to ensure latest values are shown
+    // Reload spin status & balances to reflect latest state
+    ref.read(spinProvider.notifier).loadStatus();
     ref.read(socialProvider.notifier).refreshDiamonds();
     ref.read(authProvider.notifier).refreshProfile();
   }
@@ -657,89 +658,86 @@ class _LuckySpinPageState extends ConsumerState<LuckySpinPage>
     final isEmpty = prize.prizeType == 'empty';
     final rarityColor = Color(prize.rarity.colorValue);
 
-    return GestureDetector(
-      onTap: _dismissResult,
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.7),
-        child: Center(
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.elasticOut,
-            builder: (ctx, value, child) => Transform.scale(
-              scale: value,
-              child: child,
+    return Container(
+      color: Colors.black.withValues(alpha: 0.7),
+      child: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.elasticOut,
+          builder: (ctx, value, child) => Transform.scale(
+            scale: value,
+            child: child,
+          ),
+          child: Container(
+            width: 280,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF1A1D2E),
+                  Color(prize.rarity.segmentColorValue),
+                ],
+              ),
+              border: Border.all(color: rarityColor.withValues(alpha: 0.6), width: 2),
+              boxShadow: [
+                BoxShadow(color: rarityColor.withValues(alpha: 0.3), blurRadius: 30),
+              ],
             ),
-            child: Container(
-              width: 280,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF1A1D2E),
-                    Color(prize.rarity.segmentColorValue),
-                  ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isEmpty ? '😅' : '🎉',
+                  style: const TextStyle(fontSize: 48),
                 ),
-                border: Border.all(color: rarityColor.withValues(alpha: 0.6), width: 2),
-                boxShadow: [
-                  BoxShadow(color: rarityColor.withValues(alpha: 0.3), blurRadius: 30),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isEmpty ? '😅' : '🎉',
-                    style: const TextStyle(fontSize: 48),
+                const SizedBox(height: 12),
+                Text(
+                  isEmpty ? 'Tidak Beruntung' : 'Selamat!',
+                  style: TextStyle(color: rarityColor, fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(prize.displayIcon, style: const TextStyle(fontSize: 36)),
+                const SizedBox(height: 8),
+                Text(
+                  prize.name,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: rarityColor.withValues(alpha: 0.15),
+                    border: Border.all(color: rarityColor.withValues(alpha: 0.4)),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isEmpty ? 'Tidak Beruntung' : 'Selamat!',
-                    style: TextStyle(color: rarityColor, fontSize: 20, fontWeight: FontWeight.w900),
+                  child: Text(
+                    prize.rarity.label,
+                    style: TextStyle(color: rarityColor, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
                   ),
-                  const SizedBox(height: 8),
-                  Text(prize.displayIcon, style: const TextStyle(fontSize: 36)),
-                  const SizedBox(height: 8),
-                  Text(
-                    prize.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                ),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: _dismissResult,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: rarityColor.withValues(alpha: 0.15),
-                      border: Border.all(color: rarityColor.withValues(alpha: 0.4)),
-                    ),
-                    child: Text(
-                      prize.rarity.label,
-                      style: TextStyle(color: rarityColor, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: _dismissResult,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFDAA520), Color(0xFFF4D03F)],
-                        ),
-                      ),
-                      child: const Text(
-                        'KLAIM',
-                        style: TextStyle(color: Color(0xFF1A0E00), fontSize: 14, fontWeight: FontWeight.w900),
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFDAA520), Color(0xFFF4D03F)],
                       ),
                     ),
+                    child: const Text(
+                      'KLAIM',
+                      style: TextStyle(color: Color(0xFF1A0E00), fontSize: 14, fontWeight: FontWeight.w900),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
