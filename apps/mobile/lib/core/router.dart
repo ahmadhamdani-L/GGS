@@ -28,6 +28,7 @@ import '../pages/inventory/inventory_page.dart';
 import '../pages/splash/splash_page.dart';
 import '../pages/friends/friends_page.dart';
 import '../pages/wardrobe/wardrobe_page.dart';
+import '../pages/voice_room/voice_room_page.dart';
 import '../pages/room/room_page.dart';
 import '../pages/tutorial/tutorial_page.dart';
 import '../pages/event/event_page.dart';
@@ -241,6 +242,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/room-v2/:roomId',
         builder: (context, state) => RoomV2Page(
+          roomId: state.pathParameters['roomId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/voice-room/:roomId',
+        builder: (context, state) => VoiceRoomPage(
           roomId: state.pathParameters['roomId']!,
         ),
       ),

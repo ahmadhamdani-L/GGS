@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/ggs/werewolf-server/internal/bot"
 	"github.com/ggs/werewolf-server/internal/game"
 	"github.com/ggs/werewolf-server/internal/logger"
+	"github.com/livekit/protocol/auth"
 )
 
 // ═══════════════════════════════════════════════════════════════
@@ -32,11 +35,17 @@ func (h *Hub) handleCreateRoomV2(client *Client, payload json.RawMessage) {
 	}
 
 	var req struct {
-		UserID string `json:"userId"`
+		UserID   string `json:"userId"`
+		Category string `json:"category"`
 	}
 	if err := json.Unmarshal(payload, &req); err != nil {
 		sendErrorV2(client, "INVALID_PAYLOAD", "Invalid create_room payload")
 		return
+	}
+
+	category := req.Category
+	if category == "" {
+		category = "game" // default to game if not specified
 	}
 
 	// Max 3 private rooms per user
@@ -57,7 +66,7 @@ func (h *Hub) handleCreateRoomV2(client *Client, payload json.RawMessage) {
 
 	displayName, avatarID, _, chibi := h.getPlayerProfile(req.UserID)
 
-	room := h.roomMgr.CreatePrivateRoom(req.UserID, displayName, avatarID, chibi)
+	room := h.roomMgr.CreatePrivateRoom(req.UserID, displayName, avatarID, chibi, category)
 
 	// Join the creator to the room
 	errMsg := h.roomMgr.JoinRoom(room, client, req.UserID, displayName, avatarID, chibi)
@@ -506,6 +515,11 @@ func (h *Hub) handleStartGameV2(client *Client, payload json.RawMessage) {
 		sendErrorV2(client, "NOT_HOST", "Hanya host yang bisa memulai game")
 		return
 	}
+	if room.Category == "voice" {
+		room.mu.Unlock()
+		sendErrorV2(client, "INVALID_CATEGORY", "Room suara tidak bisa memulai game")
+		return
+	}
 	if room.State != StateWaiting {
 		room.mu.Unlock()
 		sendErrorV2(client, "INVALID_STATE", "Room tidak dalam status waiting")
@@ -685,6 +699,58 @@ func (h *Hub) broadcastLobbyListV2() {
 		"count": len(rooms),
 	})
 	h.BroadcastAll("lobby_update", json.RawMessage(payload))
+}
+
+// ─── LiveKit Integration ──────────────────────────────────────
+
+func (h *Hub) handleGetLiveKitTokenV2(client *Client, payload json.RawMessage) {
+	var req struct {
+		RoomID     string `json:"roomId"`
+		PlayerName string `json:"playerName"`
+		IsSpeaker  bool   `json:"isSpeaker"`
+	}
+	if err := json.Unmarshal(payload, &req); err != nil {
+		sendErrorV2(client, "INVALID_PAYLOAD", "Invalid payload")
+		return
+	}
+
+	room := h.roomMgr.GetRoom(req.RoomID)
+	if room == nil {
+		sendErrorV2(client, "ROOM_NOT_FOUND", "Room tidak ditemukan")
+		return
+	}
+
+	apiKey := os.Getenv("LIVEKIT_API_KEY")
+	apiSecret := os.Getenv("LIVEKIT_API_SECRET")
+
+	if apiKey == "" || apiSecret == "" {
+		sendErrorV2(client, "LIVEKIT_NOT_CONFIGURED", "LiveKit API keys are missing in .env")
+		return
+	}
+
+	at := auth.NewAccessToken(apiKey, apiSecret)
+	grant := &auth.VideoGrant{
+		RoomJoin: true,
+		Room:     req.RoomID,
+		CanPublish: req.IsSpeaker,
+		CanPublishData: true,
+		CanSubscribe: true,
+	}
+	at.AddGrant(grant).
+		SetIdentity(client.UserID).
+		SetName(req.PlayerName).
+		SetValidFor(time.Hour * 24)
+
+	token, err := at.ToJWT()
+	if err != nil {
+		sendErrorV2(client, "TOKEN_ERROR", "Gagal generate token")
+		return
+	}
+
+	sendEvent(client, "v2_livekit_token", map[string]interface{}{
+		"token": token,
+		"url":   os.Getenv("LIVEKIT_URL"),
+	})
 }
 
 // ─── Helper: send structured error ──────────────────────────

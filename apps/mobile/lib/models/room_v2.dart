@@ -6,6 +6,7 @@ class RoomStateV2 {
   final String code;
   final String name;
   final String type; // "public" | "private"
+  final String category; // "game" | "voice"
   final String state; // WAITING, COUNTDOWN, STARTING, PLAYING, RESULT, RESTARTING
   final String hostId;
   final int maxSeats;
@@ -18,6 +19,7 @@ class RoomStateV2 {
     required this.code,
     required this.name,
     required this.type,
+    required this.category,
     required this.state,
     required this.hostId,
     required this.maxSeats,
@@ -32,6 +34,7 @@ class RoomStateV2 {
       code: json['code'] as String? ?? '',
       name: json['name'] as String? ?? '',
       type: json['type'] as String? ?? 'private',
+      category: json['category'] as String? ?? 'game',
       state: json['state'] as String? ?? 'WAITING',
       hostId: json['hostId'] as String? ?? '',
       maxSeats: json['maxSeats'] as int? ?? 16,

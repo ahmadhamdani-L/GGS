@@ -60,7 +60,11 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
 
     ref.listen<RoomStateV2?>(roomV2Provider, (prev, next) {
       if (prev == null && next != null && mounted) {
-        context.push('/room-v2/${next.roomId}');
+        if (next.category == 'voice') {
+          context.push('/voice-room/${next.roomId}');
+        } else {
+          context.push('/room-v2/${next.roomId}');
+        }
       }
     });
 
@@ -238,7 +242,11 @@ class _LobbyV2PageState extends ConsumerState<LobbyV2Page> {
                     setState(() => _actionInProgress = true);
                     final userId = ref.read(authProvider).userId;
                     if (userId != null) {
-                      ref.read(roomV2Provider.notifier).createRoom(userId);
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => _CreateRoomCategorySheet(userId: userId),
+                      );
                     }
                     // Re-enable after 2 seconds
                     Future.delayed(const Duration(seconds: 2), () {
@@ -446,6 +454,89 @@ class _LobbyRoomCard extends ConsumerWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CreateRoomCategorySheet extends ConsumerWidget {
+  final String userId;
+  const _CreateRoomCategorySheet({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Pilih Tipe Room',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 20),
+          _buildOption(
+            context,
+            ref,
+            title: 'Game Werewolf',
+            subtitle: 'Bermain peran, bunuh, dan berdebat!',
+            icon: Icons.sports_esports,
+            color: Colors.redAccent,
+            category: 'game',
+          ),
+          const SizedBox(height: 12),
+          _buildOption(
+            context,
+            ref,
+            title: 'Room Nongkrong',
+            subtitle: 'Voice chat, kirim gift, dan santai.',
+            icon: Icons.mic_rounded,
+            color: Colors.blueAccent,
+            category: 'voice',
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOption(BuildContext context, WidgetRef ref,
+      {required String title, required String subtitle, required IconData icon, required Color color, required String category}) {
+    return GestureDetector(
+      onTap: () {
+        ref.read(roomV2Provider.notifier).createRoom(userId, category: category);
+        Navigator.pop(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
               ),
             ),
           ],

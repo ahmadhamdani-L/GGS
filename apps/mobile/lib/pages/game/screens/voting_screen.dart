@@ -237,11 +237,18 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
     );
   }
 
+  // Player name colors — each player gets a consistent color
+  static const _nameColors = [
+    Color(0xFFFF6B6B), Color(0xFF4ECDC4), Color(0xFFFFE66D), Color(0xFF95E1D3),
+    Color(0xFFF38181), Color(0xFF6C5CE7), Color(0xFF00B894), Color(0xFFFD79A8),
+    Color(0xFF0984E3), Color(0xFFE17055), Color(0xFFA29BFE), Color(0xFF55A3F0),
+    Color(0xFFFF7675), Color(0xFF74B9FF), Color(0xFFFFC048), Color(0xFF81ECEC),
+  ];
+
   Color _getNameColor(String senderId) {
     if (senderId == widget.me?.id) return AppColors.primary;
-    final p = widget.game.players.where((p) => p.id == senderId).firstOrNull;
-    if (p == null) return Colors.white;
-    return (p.seatIndex % 2 == 0) ? const Color(0xFF64B5F6) : const Color(0xFF81C784);
+    final hash = senderId.hashCode.abs();
+    return _nameColors[hash % _nameColors.length];
   }
 
   Widget _buildChatOverlay(List<GameChatMessage> chatState) {
@@ -353,6 +360,6 @@ class _VotingScreenState extends ConsumerState<VotingScreen> {
             ),
         ],
       ),
-    ))));
+    )));
   }
 }

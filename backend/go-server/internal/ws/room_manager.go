@@ -128,6 +128,7 @@ type ManagedRoom struct {
 	Code      string    `json:"code"`
 	Name      string    `json:"name"`
 	Type      RoomType  `json:"type"`
+	Category  string    `json:"category"` // "game" or "voice"
 	State     RoomState `json:"state"`
 	HostID    string    `json:"hostId"`
 	MaxSeats  int       `json:"maxSeats"`
@@ -228,7 +229,7 @@ func (rm *RoomManager) initPublicRooms() {
 // ─── Room CRUD ───────────────────────────────────────────────
 
 // CreatePrivateRoom creates a new private room and returns it
-func (rm *RoomManager) CreatePrivateRoom(hostID, displayName string, avatarID int, chibi map[string]interface{}) *ManagedRoom {
+func (rm *RoomManager) CreatePrivateRoom(hostID, displayName string, avatarID int, chibi map[string]interface{}, category string) *ManagedRoom {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -240,6 +241,7 @@ func (rm *RoomManager) CreatePrivateRoom(hostID, displayName string, avatarID in
 		Code:      code,
 		Name:      displayName + "'s Room",
 		Type:      RoomTypePrivate,
+		Category:  category,
 		State:     StateWaiting,
 		HostID:    hostID,
 		MaxSeats:  MaxSeats,
@@ -836,6 +838,7 @@ func (rm *RoomManager) buildRoomSnapshot(room *ManagedRoom) map[string]interface
 		"code":     room.Code,
 		"name":     room.Name,
 		"type":     room.Type,
+		"category": room.Category,
 		"state":    room.State,
 		"hostId":   room.HostID,
 		"maxSeats": room.MaxSeats,

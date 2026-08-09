@@ -437,6 +437,8 @@ func (h *Hub) handleMessage(cm *ClientMessage) {
 		h.handleStartGameV2(client, msg.Payload)
 	case "v2_room_chat":
 		h.handleRoomChatV2(client, msg.Payload)
+	case "v2_get_livekit_token":
+		h.handleGetLiveKitTokenV2(client, msg.Payload)
 	case "spectate_game":
 		h.handleSpectateGame(client, msg.Payload)
 	case "global_chat":

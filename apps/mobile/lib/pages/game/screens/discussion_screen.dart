@@ -7,6 +7,7 @@ import '../../../core/theme.dart';
 import '../../../models/game_state.dart';
 import '../../../models/player.dart';
 import '../../../models/ws_message.dart';
+import '../../../providers/game_provider.dart';
 import '../../../providers/room_provider.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/player_profile_dialog.dart';

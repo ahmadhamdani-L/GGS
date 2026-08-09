@@ -37,8 +37,10 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   path_provider: ^2.1.5
 
-  # Audio
+  # Audio & RTC
   audioplayers: ^6.1.0
+  livekit_client: ^2.4.1
+  permission_handler: ^11.3.1
 
   # Image picker & crop (for user avatar upload)
   image_picker: ^1.1.2

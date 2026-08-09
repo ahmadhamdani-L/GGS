@@ -25,9 +25,12 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
   final WebSocketService _ws;
   StreamSubscription? _sub;
   final _errorController = StreamController<String>.broadcast();
+  final _livekitTokenController = StreamController<Map<String, String>>.broadcast();
 
   /// Stream of error messages from server (for UI snackbars)
   Stream<String> get errors => _errorController.stream;
+  /// Stream of livekit tokens
+  Stream<Map<String, String>> get livekitTokens => _livekitTokenController.stream;
 
   RoomV2Notifier(this._ws) : super(null) {
     _sub = _ws.messages.listen(_onMessage);
@@ -92,13 +95,31 @@ class RoomV2Notifier extends StateNotifier<RoomStateV2?> {
           );
         }
         break;
+      case 'v2_livekit_token':
+        final token = msg.payload['token'] as String?;
+        final url = msg.payload['url'] as String?;
+        if (token != null && url != null) {
+          _livekitTokenController.add({'token': token, 'url': url});
+        }
+        break;
     }
   }
 
   // ─── Actions (send to backend, never modify local state) ───
 
-  void createRoom(String userId) {
-    _ws.send(WsMessage(type: 'v2_create_room', payload: {'userId': userId}));
+  void getLiveKitToken(String roomId, String playerName, bool isSpeaker) {
+    _ws.send(WsMessage(type: 'v2_get_livekit_token', payload: {
+      'roomId': roomId,
+      'playerName': playerName,
+      'isSpeaker': isSpeaker,
+    }));
+  }
+
+  void createRoom(String userId, {String category = 'game'}) {
+    _ws.send(WsMessage(type: 'v2_create_room', payload: {
+      'userId': userId,
+      'category': category,
+    }));
   }
 
   void joinRoom(String userId, String roomCode) {
