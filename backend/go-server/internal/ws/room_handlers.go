@@ -729,12 +729,16 @@ func (h *Hub) handleGetLiveKitTokenV2(client *Client, payload json.RawMessage) {
 	}
 
 	at := auth.NewAccessToken(apiKey, apiSecret)
+	canPublish := req.IsSpeaker
+	canPublishData := true
+	canSubscribe := true
+
 	grant := &auth.VideoGrant{
 		RoomJoin: true,
 		Room:     req.RoomID,
-		CanPublish: req.IsSpeaker,
-		CanPublishData: true,
-		CanSubscribe: true,
+		CanPublish: &canPublish,
+		CanPublishData: &canPublishData,
+		CanSubscribe: &canSubscribe,
 	}
 	at.AddGrant(grant).
 		SetIdentity(client.UserID).
