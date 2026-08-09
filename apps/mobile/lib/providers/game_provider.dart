@@ -127,6 +127,61 @@ class GameNotifier extends StateNotifier<GameState?> {
   }
 }
 
+// ─── Game Chat Provider ──────────────────────────────────────
+
+class GameChatMessage {
+  final String senderId;
+  final String content;
+  final bool isGhost;
+  final bool isTeam;
+  final DateTime timestamp;
+
+  const GameChatMessage({
+    required this.senderId,
+    required this.content,
+    required this.isGhost,
+    required this.isTeam,
+    required this.timestamp,
+  });
+}
+
+class GameChatNotifier extends StateNotifier<List<GameChatMessage>> {
+  final WebSocketService _ws;
+  StreamSubscription? _sub;
+
+  GameChatNotifier(this._ws) : super([]) {
+    _sub = _ws.messages.listen(_onMessage);
+  }
+
+  void _onMessage(WsMessage msg) {
+    if (msg.type == 'chat_message' || msg.type == 'ghost_chat_message' || msg.type == 'team_chat_message') {
+      final chatMsg = GameChatMessage(
+        senderId: msg.payload['senderId'] as String? ?? '',
+        content: msg.payload['content'] as String? ?? '',
+        isGhost: msg.type == 'ghost_chat_message',
+        isTeam: msg.type == 'team_chat_message',
+        timestamp: DateTime.now(),
+      );
+      // Keep last 150 messages
+      state = [...state, chatMsg].length > 150
+          ? [...state, chatMsg].sublist(state.length - 149)
+          : [...state, chatMsg];
+    }
+  }
+
+  void clear() => state = [];
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}
+
+final gameChatProvider = StateNotifierProvider<GameChatNotifier, List<GameChatMessage>>((ref) {
+  return GameChatNotifier(ref.watch(webSocketProvider));
+});
+
 final gameProvider = StateNotifierProvider<GameNotifier, GameState?>((ref) {
   return GameNotifier(ref.watch(webSocketProvider));
 });

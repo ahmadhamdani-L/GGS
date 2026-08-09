@@ -173,7 +173,12 @@ class _GamePageState extends ConsumerState<GamePage> with SingleTickerProviderSt
       final victim = game.players.where((p) => p.id == latestDeath.playerId).firstOrNull;
       if (victim != null && !_showDeathAnnouncement) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _triggerDeathAnnouncement(victim, latestDeath.phase == 'night' ? 'night' : 'vote');
+          if (mounted) {
+            final delay = _showNarrator ? const Duration(milliseconds: 3600) : Duration.zero;
+            Future.delayed(delay, () {
+              if (mounted) _triggerDeathAnnouncement(victim, latestDeath.phase == 'night' ? 'night' : 'vote');
+            });
+          }
         });
       }
     }

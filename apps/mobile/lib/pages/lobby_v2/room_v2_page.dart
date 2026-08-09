@@ -68,6 +68,7 @@ class RoomV2Page extends ConsumerWidget {
     final isReady = myPlayer?.isReady ?? false;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFF0A0E1A),
       body: SafeArea(
         child: Stack(
@@ -81,7 +82,7 @@ class RoomV2Page extends ConsumerWidget {
                 _RoomTopBar(room: room, isHost: isHost, myId: myId),
                 // Seats grid (takes most space)
                 Expanded(
-                  flex: 7,
+                  flex: 6,
                   child: _SeatsGrid(room: room, myId: myId, isHost: isHost, isSeated: isSeated, isReady: isReady),
                 ),
                 // Action bar (emote, gift, social)
@@ -90,9 +91,9 @@ class RoomV2Page extends ConsumerWidget {
                   myId: myId,
                   isSeated: isSeated,
                 ),
-                // Permanent chat panel (smaller)
+                // Permanent chat panel
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: _PermanentChatPanel(room: room, myId: myId),
                 ),
               ],
@@ -280,6 +281,32 @@ class _RoomTopBar extends ConsumerWidget {
             ]),
           ),
           const SizedBox(width: 6),
+          // +Bot button (host only, when room has space)
+          if (isHost && room.humanCount < room.settings.maxPlayers)
+            GestureDetector(
+              onTap: () {
+                for (int i = 0; i < room.seats.length; i++) {
+                  if (room.seats[i].isEmpty) {
+                    ref.read(roomV2Provider.notifier).addBot(room.roomId, i);
+                    break;
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.white.withValues(alpha: 0.05),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.smart_toy_outlined, color: Colors.white38, size: 12),
+                  SizedBox(width: 4),
+                  Text('+Bot', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w600)),
+                ]),
+              ),
+            ),
+          if (isHost) const SizedBox(width: 6),
           // Settings (host only)
           if (isHost)
             GestureDetector(
@@ -935,11 +962,11 @@ class _CenterActionConsole extends ConsumerWidget {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            height: 54,
+            height: 38,
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               gradient: buttonEnabled
                   ? const LinearGradient(colors: [Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B)])
                   : null,
@@ -948,16 +975,16 @@ class _CenterActionConsole extends ConsumerWidget {
                 color: buttonEnabled ? const Color(0xFFDAA520) : Colors.white.withValues(alpha: 0.15),
                 width: buttonEnabled ? 1.5 : 1,
               ),
-              boxShadow: buttonEnabled ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.4), blurRadius: 10)] : null,
+              boxShadow: buttonEnabled ? [BoxShadow(color: const Color(0xFFDAA520).withValues(alpha: 0.3), blurRadius: 6)] : null,
             ),
             child: Center(
               child: Text(
                 buttonLabel,
                 style: TextStyle(
                   color: buttonEnabled ? Colors.white : Colors.white38,
-                  fontSize: 16,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
+                  letterSpacing: 1,
                 ),
               ),
             ),
@@ -967,16 +994,16 @@ class _CenterActionConsole extends ConsumerWidget {
         GestureDetector(
           onTap: onStandUp,
           child: Container(
-            height: 32,
+            height: 24,
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
               color: Colors.red.withValues(alpha: 0.15),
               border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
             ),
             child: const Center(
-              child: Text('BERDIRI', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+              child: Text('BERDIRI', style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold)),
             ),
           ),
         ),

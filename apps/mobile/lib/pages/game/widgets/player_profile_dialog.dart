@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme.dart';
 import '../../../models/player.dart';
@@ -179,6 +180,31 @@ void showPlayerProfileDialog(BuildContext context, PlayerState player, {bool isM
                 ],
               ),
             ),
+          // Gift / Curse button
+          if (!isMe && !player.isBot) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  // Use go_router extension to push to the gift screen
+                  GoRouter.of(ctx).push('/social/gift/${player.id}/${player.name}');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDAA520).withValues(alpha: 0.15),
+                  foregroundColor: const Color(0xFFDAA520),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: const Color(0xFFDAA520).withValues(alpha: 0.5)),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.card_giftcard_rounded, size: 16),
+                label: const Text('Kirim Gift / Curse', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           // Close button
           SizedBox(

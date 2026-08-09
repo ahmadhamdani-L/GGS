@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../models/game_state.dart';
 import '../../../models/player.dart';
-import '../../../providers/room_provider_v2.dart';
 
 // ═══════════════════════════════════════════════════════════
 // GAME END — Winner + Rewards
@@ -45,15 +44,9 @@ class _GameEndScreenState extends ConsumerState<GameEndScreen> {
 
   void _navigateAfterGame() {
     if (!mounted) return;
-    // If player is in a V2 room, go back to room (play again flow)
-    final roomV2 = ref.read(roomV2Provider);
-    if (roomV2 != null) {
-      context.go('/room-v2/${roomV2.roomId}');
-    } else {
-      // Go to results page — shows detailed match recap with countdown back to room
-      final gameId = widget.game.id;
-      context.go('/results/$gameId');
-    }
+    // Go to results page — shows detailed match recap with countdown back to room
+    final gameId = widget.game.id;
+    context.go('/results/$gameId');
   }
 
   @override

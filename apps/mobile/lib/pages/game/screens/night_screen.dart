@@ -31,41 +31,13 @@ class NightScreen extends ConsumerStatefulWidget {
 
 class _NightScreenState extends ConsumerState<NightScreen> {
   final _chatCtrl = TextEditingController();
-  final List<Map<String, String>> _teamMessages = [];
-  StreamSubscription? _sub;
-  // #15 FIX: Track submitted night action so we can show confirmation checkmark.
-  // Prevents double-tap and gives immediate visual feedback.
   String? _submittedTargetId;
-
   @override
-  void initState() {
-    super.initState();
-    // M-11 FIX: Guard against duplicate subscription on hot-reload.
-    // _sub is null-checked before subscribing; dispose() always cancels it.
-    if (_sub == null) {
-      _sub = ref.read(webSocketProvider).messages.listen((msg) {
-        if (!mounted) return;
-        if (msg.type == 'team_chat_message') {
-          setState(() {
-            _teamMessages.add({
-              'senderId': msg.payload['senderId'] as String? ?? '',
-              'content': msg.payload['content'] as String? ?? '',
-            });
-          });
-          ref.read(audioServiceProvider).playChatSfx();
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() { _sub?.cancel(); _chatCtrl.dispose(); super.dispose(); }
+  void dispose() { _chatCtrl.dispose(); super.dispose(); }
 
   @override
   void didUpdateWidget(NightScreen old) {
     super.didUpdateWidget(old);
-    // #15 FIX: Clear submitted state when round/phase advances so the
-    // checkmark doesn't persist into the next night phase.
     if (old.game.round != widget.game.round ||
         old.game.phase != widget.game.phase) {
       if (mounted) setState(() => _submittedTargetId = null);
@@ -244,18 +216,22 @@ class _NightScreenState extends ConsumerState<NightScreen> {
               ],
             ),
           )))),
-        // Chat Night counter at bottom
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Row(children: [
-            Container(
-              width: 8, height: 8,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: canTeamChat ? AppColors.success : AppColors.textMuted),
+        if (canTeamChat)
+          Expanded(
+            flex: 4,
+            child: SwipeableChatPanel(
+              game: game,
+              me: me,
+              teamMessages: ref.watch(gameChatProvider).where((m) => m.isTeam).map((m) => {
+                'senderId': m.senderId,
+                'content': m.content,
+              }).toList(),
+              chatCtrl: _chatCtrl,
+              onSendTeam: _sendTeamChat,
             ),
-            const SizedBox(width: 6),
-            Text('Chat Night  ${_teamMessages.length}', style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
-          ]),
-        ),
+          )
+        else
+          const Spacer(flex: 2),
       ],
     );
   }

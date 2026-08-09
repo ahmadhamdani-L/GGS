@@ -42,39 +42,15 @@ class DiscussionScreen extends ConsumerStatefulWidget {
 
 class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
   final _chatCtrl = TextEditingController();
-  final List<Map<String, String>> _messages = [];
-  StreamSubscription? _sub;
   bool _chatVisible = true;
 
   @override
-  void initState() {
-    super.initState();
-    if (_sub == null) {
-      _sub = ref.read(webSocketProvider).messages.listen((msg) {
-        if (!mounted) return;
-        if (msg.type == 'chat_message' || msg.type == 'ghost_chat_message') {
-          setState(() => _messages.add({
-            'senderId': msg.payload['senderId'] as String? ?? '',
-            'content': msg.payload['content'] as String? ?? '',
-            'isGhost': msg.type == 'ghost_chat_message' ? 'true' : 'false',
-          }));
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() { _sub?.cancel(); _chatCtrl.dispose(); super.dispose(); }
+  void dispose() { _chatCtrl.dispose(); super.dispose(); }
 
   void _send() {
     final text = _chatCtrl.text.trim();
     if (text.isEmpty || widget.me == null) return;
     ref.read(webSocketProvider).send(WsMessage.sendChat(senderId: widget.me!.id, content: text));
-    setState(() => _messages.add({
-      'senderId': widget.me!.id, 
-      'content': text,
-      'isGhost': widget.me!.isAlive ? 'false' : 'true',
-    }));
     _chatCtrl.clear();
   }
 
@@ -82,6 +58,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
   Widget build(BuildContext context) {
     final alive = widget.game.alivePlayers.length;
     final dead = widget.game.players.length - alive;
+    final chatState = ref.watch(gameChatProvider).where((m) => !m.isTeam).toList();
 
     return Stack(
       children: [
@@ -130,7 +107,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
         if (_chatVisible)
           Positioned(
             left: 8, right: 8, bottom: 0,
-            child: _buildChatOverlay(),
+            child: _buildChatOverlay(chatState),
           ),
 
         // Toggle chat button (top-right floating)
@@ -156,7 +133,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _chatVisible ? 'Hide' : 'Chat ${_messages.length}',
+                  _chatVisible ? 'Hide' : 'Chat ${chatState.length}',
                   style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w700),
                 ),
               ]),
@@ -167,7 +144,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
     );
   }
 
-  Widget _buildChatOverlay() {
+  Widget _buildChatOverlay(List<GameChatMessage> chatState) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
@@ -185,7 +162,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
         children: [
           // Messages (scrollable, transparent bg)
           Flexible(
-            child: _messages.isEmpty
+            child: chatState.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(8),
                     child: Text('Belum ada pesan...', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
@@ -194,11 +171,11 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                     shrinkWrap: true,
                     reverse: true,
                     padding: EdgeInsets.zero,
-                    itemCount: _messages.length,
+                    itemCount: chatState.length,
                     itemBuilder: (_, i) {
-                      final msg = _messages[_messages.length - 1 - i];
-                      final senderId = msg['senderId'] ?? '';
-                      final isGhost = msg['isGhost'] == 'true';
+                      final msg = chatState[chatState.length - 1 - i];
+                      final senderId = msg.senderId;
+                      final isGhost = msg.isGhost;
                       final sender = widget.game.players.where((p) => p.id == senderId).firstOrNull;
                       final nameColor = isGhost ? AppColors.textMuted : _getNameColor(senderId);
 
@@ -217,7 +194,7 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                                       style: TextStyle(color: nameColor, fontSize: 13, fontWeight: FontWeight.w700),
                                     ),
                                     TextSpan(
-                                      text: msg['content'] ?? '',
+                                      text: msg.content,
                                       style: TextStyle(
                                         color: isGhost ? AppColors.textMuted : Colors.white, 
                                         fontSize: 13, 
@@ -256,11 +233,6 @@ class _DayDiscussionScreenState extends ConsumerState<DiscussionScreen> {
                       ref.read(webSocketProvider).send(
                         WsMessage.sendChat(senderId: widget.me!.id, content: preset),
                       );
-                      setState(() => _messages.add({
-                        'senderId': widget.me!.id, 
-                        'content': preset,
-                        'isGhost': widget.me!.isAlive ? 'false' : 'true',
-                      }));
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

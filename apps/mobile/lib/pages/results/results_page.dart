@@ -9,6 +9,7 @@ import '../../models/player.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/room_provider.dart';
+import '../../providers/room_provider_v2.dart';
 import '../../providers/social_provider.dart';
 import '../../widgets/chibi_avatar.dart';
 import '../../widgets/game_avatar.dart';
@@ -95,16 +96,27 @@ class _ResultsPageState extends ConsumerState<ResultsPage>
     if (!mounted) return;
     // Signal play-again to server so room resets for next game
     final userId = ref.read(authProvider).userId;
-    if (userId != null) {
+    final roomV2 = ref.read(roomV2Provider);
+    
+    if (userId != null && roomV2 != null) {
+      ref.read(roomV2Provider.notifier).playAgain(userId, roomV2.roomId);
+    } else if (userId != null) {
       ref.read(roomProvider.notifier).sendPlayAgain(userId);
     }
+    
     // Clear game state but keep room — players return to lobby/room
     ref.read(gameProvider.notifier).clear();
-    final room = ref.read(roomProvider).room;
-    if (room != null) {
-      context.go('/lobby/${room.code}');
+    ref.read(gameChatProvider.notifier).clear();
+    
+    if (roomV2 != null) {
+      context.go('/room-v2/${roomV2.roomId}');
     } else {
-      context.go('/home');
+      final room = ref.read(roomProvider).room;
+      if (room != null) {
+        context.go('/room'); // Fallback for V1
+      } else {
+        context.go('/home');
+      }
     }
   }
 

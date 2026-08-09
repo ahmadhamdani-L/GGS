@@ -38,6 +38,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     Future.microtask(() {
       if (!mounted) return;
       ref.read(gameProvider.notifier).clear();
+      ref.read(gameChatProvider.notifier).clear();
       ref.read(roomProvider.notifier).clear();
       ref.read(socialProvider.notifier).refreshDiamonds();
     });
